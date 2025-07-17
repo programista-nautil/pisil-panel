@@ -16,24 +16,24 @@ export default function FormComponent() {
 		invoiceEmail: '',
 		email: '',
 		website: '',
-		
+
 		// Kierownictwo i reprezentacja
 		ceoName: '',
 		authorizedPersons: '',
-		
+
 		// Dane rejestracyjne
 		registrationData: '',
 		ownershipForm: '',
 		employmentSize: '',
-		
+
 		// Licencje i certyfikaty
 		transportLicense: '',
 		iso9002Certificate: '',
 		insuranceOC: '',
-		
+
 		// Działalność
 		businessDescription: '',
-		
+
 		// Usługi transportowe
 		transportMorski: false,
 		transportKolejowy: false,
@@ -43,24 +43,24 @@ export default function FormComponent() {
 		taborWlasny: false,
 		taborObcy: false,
 		transportInne: false,
-		
+
 		// Usługi magazynowe
 		magazynWlasny: false,
 		magazynObcy: false,
-		
+
 		// Organizacja przewozów
 		organizacjaPrzewozow: false,
 		agencjeCelne: false,
-		
+
 		// Sieć
 		krajowaSiec: '',
 		zagranicznaSSiec: '',
 		inneFormy: '',
-		
+
 		// Członkostwo
 		organizacje: '',
 		rekomendacje: '',
-		
+
 		// Finalizacja
 		declarationStatute: false,
 		signatoryName: '',
@@ -76,6 +76,73 @@ export default function FormComponent() {
 			...prev,
 			[name]: type === 'checkbox' ? checked : value,
 		}))
+	}
+
+	// Funkcja wypełniania testowych danych
+	const fillTestData = () => {
+		setFormData({
+			// Dane podstawowe firmy
+			companyName: 'TestLogistics Sp. z o.o.',
+			nip: '1234567890',
+			regon: '123456789',
+			address: 'ul. Testowa 123, 00-001 Warszawa',
+			correspondenceAddress: 'ul. Testowa 123, 00-001 Warszawa',
+			phones: '+48 123 456 789, +48 987 654 321',
+			invoiceEmail: 'faktury@testlogistics.pl',
+			email: 'kontakt@testlogistics.pl',
+			website: 'https://testlogistics.pl',
+
+			// Kierownictwo i reprezentacja
+			ceoName: 'Jan Kowalski',
+			authorizedPersons: 'Anna Nowak - Dyrektor ds. Handlowych, Piotr Wiśniewski - Zastępca Dyrektora',
+
+			// Dane rejestracyjne
+			registrationData: 'Data rejestracji: 15.03.2020, Sąd Rejonowy dla m.st. Warszawy, KRS: 0000123456',
+			ownershipForm: 'Spółka z ograniczoną odpowiedzialnością',
+			employmentSize: '25-50 pracowników',
+
+			// Licencje i certyfikaty
+			transportLicense: 'Tak, licencja nr TR/2020/001234 ważna do 31.12.2025',
+			iso9002Certificate: 'Tak, certyfikat ISO 9001:2015 nr PL/ISO/2021/001',
+			insuranceOC: 'Tak, PZU S.A., polisa nr 123456789, suma ubezpieczenia: 1.000.000 PLN',
+
+			// Działalność
+			businessDescription:
+				'Kompleksowe usługi logistyczne obejmujące transport krajowy i międzynarodowy, magazynowanie oraz dystrybucję towarów. Specjalizujemy się w transporcie drogowym oraz usługach spedycyjnych dla branży automotive i FMCG.',
+
+			// Usługi transportowe
+			transportMorski: false,
+			transportKolejowy: true,
+			transportLotniczy: false,
+			logistyka: true,
+			transportDrogowy: true,
+			taborWlasny: true,
+			taborObcy: true,
+			transportInne: false,
+
+			// Usługi magazynowe
+			magazynWlasny: true,
+			magazynObcy: false,
+
+			// Organizacja przewozów
+			organizacjaPrzewozow: true,
+			agencjeCelne: false,
+
+			// Sieć
+			krajowaSiec: '3 oddziały (Warszawa, Kraków, Gdańsk)',
+			zagranicznaSSiec: '2 firmy własne w Niemczech / 15 korespondentów w Europie',
+			inneFormy: 'Współpraca z brokerami transportowymi, platformy cyfrowe (TimoCom, Trans.eu)',
+
+			// Członkostwo
+			organizacje:
+				'Zrzeszenie Międzynarodowych Przewoźników Drogowych w Polsce (od 2020), Polska Izba Gospodarki Elektronicznej (od 2021)',
+			rekomendacje: 'LogiMax Sp. z o.o., TransEuropa S.A., SpeedCargo Logistics',
+
+			// Finalizacja
+			declarationStatute: true,
+			signatoryName: 'Jan Kowalski',
+			signatoryPosition: 'Prezes Zarządu',
+		})
 	}
 
 	const nextStep = () => {
@@ -98,7 +165,7 @@ export default function FormComponent() {
 						name='companyName'
 						value={formData.companyName}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						required
 					/>
 				</div>
@@ -111,7 +178,7 @@ export default function FormComponent() {
 							name='nip'
 							value={formData.nip}
 							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 							placeholder='0000000000'
 							required
 						/>
@@ -124,7 +191,7 @@ export default function FormComponent() {
 							name='regon'
 							value={formData.regon}
 							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 							placeholder='000000000'
 							required
 						/>
@@ -137,7 +204,7 @@ export default function FormComponent() {
 						name='address'
 						value={formData.address}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						rows='2'
 						required
 					/>
@@ -149,7 +216,7 @@ export default function FormComponent() {
 						name='correspondenceAddress'
 						value={formData.correspondenceAddress}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						rows='2'
 						required
 					/>
@@ -170,7 +237,7 @@ export default function FormComponent() {
 						name='phones'
 						value={formData.phones}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						placeholder='np. +48 123 456 789, +48 987 654 321'
 						required
 					/>
@@ -184,7 +251,7 @@ export default function FormComponent() {
 							name='invoiceEmail'
 							value={formData.invoiceEmail}
 							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 							required
 						/>
 					</div>
@@ -196,7 +263,7 @@ export default function FormComponent() {
 							name='email'
 							value={formData.email}
 							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 							required
 						/>
 					</div>
@@ -209,7 +276,7 @@ export default function FormComponent() {
 						name='website'
 						value={formData.website}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						placeholder='https://'
 					/>
 				</div>
@@ -221,7 +288,7 @@ export default function FormComponent() {
 						name='ceoName'
 						value={formData.ceoName}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						required
 					/>
 				</div>
@@ -234,7 +301,7 @@ export default function FormComponent() {
 						name='authorizedPersons'
 						value={formData.authorizedPersons}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						rows='3'
 						required
 					/>
@@ -256,7 +323,7 @@ export default function FormComponent() {
 						name='registrationData'
 						value={formData.registrationData}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						rows='2'
 						required
 					/>
@@ -270,7 +337,7 @@ export default function FormComponent() {
 							name='ownershipForm'
 							value={formData.ownershipForm}
 							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 							placeholder='np. Sp. z o.o., S.A., jednoosobowa działalność'
 							required
 						/>
@@ -283,7 +350,7 @@ export default function FormComponent() {
 							name='employmentSize'
 							value={formData.employmentSize}
 							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 							placeholder='np. 1-10, 11-50, 51-250, 250+'
 							required
 						/>
@@ -292,14 +359,14 @@ export default function FormComponent() {
 
 				<div>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>
-						Czy firma posiada licencję na pośrednictwo przy przewozie rzeczy wydaną do 15.08.2013 roku? 
-						(Jeżeli tak proszę o podanie nr, daty ważności licencji nazwy organu wydającego) *
+						Czy firma posiada licencję na pośrednictwo przy przewozie rzeczy wydaną do 15.08.2013 roku? (Jeżeli tak
+						proszę o podanie nr, daty ważności licencji nazwy organu wydającego) *
 					</label>
 					<textarea
 						name='transportLicense'
 						value={formData.transportLicense}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						rows='2'
 						placeholder='np. Nie posiada / Tak, nr: ..., data ważności: ..., organ: ...'
 						required
@@ -314,7 +381,7 @@ export default function FormComponent() {
 						name='iso9002Certificate'
 						value={formData.iso9002Certificate}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						rows='2'
 						placeholder='np. Nie posiada / Tak, zakres: ...'
 						required
@@ -329,7 +396,7 @@ export default function FormComponent() {
 						name='insuranceOC'
 						value={formData.insuranceOC}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						rows='2'
 						placeholder='np. Nie posiada / Tak, ubezpieczyciel: ...'
 						required
@@ -342,7 +409,7 @@ export default function FormComponent() {
 						name='businessDescription'
 						value={formData.businessDescription}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						rows='3'
 						required
 					/>
@@ -370,7 +437,7 @@ export default function FormComponent() {
 								/>
 								<span className='text-sm text-gray-700'>Transport morski</span>
 							</label>
-							
+
 							<label className='flex items-center space-x-3'>
 								<input
 									type='checkbox'
@@ -381,7 +448,7 @@ export default function FormComponent() {
 								/>
 								<span className='text-sm text-gray-700'>Transport kolejowy</span>
 							</label>
-							
+
 							<label className='flex items-center space-x-3'>
 								<input
 									type='checkbox'
@@ -392,7 +459,7 @@ export default function FormComponent() {
 								/>
 								<span className='text-sm text-gray-700'>Transport lotniczy</span>
 							</label>
-							
+
 							<label className='flex items-center space-x-3'>
 								<input
 									type='checkbox'
@@ -404,7 +471,7 @@ export default function FormComponent() {
 								<span className='text-sm text-gray-700'>Logistyka</span>
 							</label>
 						</div>
-						
+
 						<div className='space-y-3'>
 							<label className='flex items-center space-x-3'>
 								<input
@@ -416,7 +483,7 @@ export default function FormComponent() {
 								/>
 								<span className='text-sm text-gray-700'>Transport drogowy</span>
 							</label>
-							
+
 							<label className='flex items-center space-x-3'>
 								<input
 									type='checkbox'
@@ -427,7 +494,7 @@ export default function FormComponent() {
 								/>
 								<span className='text-sm text-gray-700'>Taborem własnym</span>
 							</label>
-							
+
 							<label className='flex items-center space-x-3'>
 								<input
 									type='checkbox'
@@ -438,7 +505,7 @@ export default function FormComponent() {
 								/>
 								<span className='text-sm text-gray-700'>Taborem obcym</span>
 							</label>
-							
+
 							<label className='flex items-center space-x-3'>
 								<input
 									type='checkbox'
@@ -466,7 +533,7 @@ export default function FormComponent() {
 							/>
 							<span className='text-sm text-gray-700'>Magazyn własny</span>
 						</label>
-						
+
 						<label className='flex items-center space-x-3'>
 							<input
 								type='checkbox'
@@ -516,20 +583,22 @@ export default function FormComponent() {
 							name='krajowaSiec'
 							value={formData.krajowaSiec}
 							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 							placeholder='np. 5 oddziałów / Brak'
 							required
 						/>
 					</div>
 
 					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-1'>b/ zagraniczna (ilość firm własnych / ilość korespondentów) *</label>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>
+							b/ zagraniczna (ilość firm własnych / ilość korespondentów) *
+						</label>
 						<input
 							type='text'
 							name='zagranicznaSSiec'
 							value={formData.zagranicznaSSiec}
 							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 							placeholder='np. 2 firmy własne / 15 korespondentów / Brak'
 							required
 						/>
@@ -541,7 +610,7 @@ export default function FormComponent() {
 							name='inneFormy'
 							value={formData.inneFormy}
 							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 							rows='2'
 							placeholder='Opisz inne formy współpracy lub napisz "Brak"'
 							required
@@ -565,7 +634,7 @@ export default function FormComponent() {
 						name='organizacje'
 						value={formData.organizacje}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						rows='3'
 						placeholder='Wymień organizacje, do których firma należy wraz z datami przystąpienia lub napisz "Brak"'
 						required
@@ -580,7 +649,7 @@ export default function FormComponent() {
 						name='rekomendacje'
 						value={formData.rekomendacje}
 						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 						rows='4'
 						placeholder='Podaj dane firm rekomendujących lub napisz "Brak"'
 						required
@@ -589,7 +658,7 @@ export default function FormComponent() {
 
 				<div className='border-t border-gray-200 pt-6'>
 					<h3 className='text-lg font-medium text-gray-900 mb-4'>Oświadczenie</h3>
-					
+
 					<div className='flex items-start space-x-3 mb-6'>
 						<input
 							type='checkbox'
@@ -601,14 +670,15 @@ export default function FormComponent() {
 							required
 						/>
 						<label htmlFor='declarationStatute' className='text-sm text-gray-700'>
-							Oświadczam, że zapoznałem/zapoznałam się z treścią Statutu PISiL i jednocześnie zobowiązuję się do przestrzegania zawartych w nim postanowień. *
+							Oświadczam, że zapoznałem/zapoznałam się z treścią Statutu PISiL i jednocześnie zobowiązuję się do
+							przestrzegania zawartych w nim postanowień. *
 						</label>
 					</div>
 				</div>
 
 				<div className='border-t border-gray-200 pt-6'>
 					<h3 className='text-lg font-medium text-gray-900 mb-4'>Podpis</h3>
-					
+
 					<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 						<div>
 							<label className='block text-sm font-medium text-gray-700 mb-1'>Imię i nazwisko *</label>
@@ -617,7 +687,7 @@ export default function FormComponent() {
 								name='signatoryName'
 								value={formData.signatoryName}
 								onChange={handleInputChange}
-								className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+								className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 								required
 							/>
 						</div>
@@ -629,7 +699,7 @@ export default function FormComponent() {
 								name='signatoryPosition'
 								value={formData.signatoryPosition}
 								onChange={handleInputChange}
-								className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+								className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
 								placeholder='np. Prezes, Dyrektor'
 								required
 							/>
@@ -643,19 +713,17 @@ export default function FormComponent() {
 	const isStepValid = step => {
 		switch (step) {
 			case 1:
-				return formData.companyName && formData.nip && formData.regon && formData.address && formData.correspondenceAddress
+				return (
+					formData.companyName && formData.nip && formData.regon && formData.address && formData.correspondenceAddress
+				)
 			case 2:
 				return (
-					formData.phones &&
-					formData.invoiceEmail &&
-					formData.email &&
-					formData.ceoName &&
-					formData.authorizedPersons
+					formData.phones && formData.invoiceEmail && formData.email && formData.ceoName && formData.authorizedPersons
 				)
 			case 3:
 				return (
-					formData.registrationData && 
-					formData.ownershipForm && 
+					formData.registrationData &&
+					formData.ownershipForm &&
 					formData.employmentSize &&
 					formData.transportLicense &&
 					formData.iso9002Certificate &&
@@ -663,11 +731,7 @@ export default function FormComponent() {
 					formData.businessDescription
 				)
 			case 4:
-				return (
-					formData.krajowaSiec &&
-					formData.zagranicznaSSiec &&
-					formData.inneFormy
-				)
+				return formData.krajowaSiec && formData.zagranicznaSSiec && formData.inneFormy
 			case 5:
 				return (
 					formData.organizacje &&
@@ -695,6 +759,23 @@ export default function FormComponent() {
 						style={{ width: `${(currentStep / 5) * 100}%` }}></div>
 				</div>
 			</div>
+
+			{/* Przycisk testowych danych - tylko w developmencie */}
+			{process.env.NODE_ENV === 'development' && (
+				<div className='mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg'>
+					<div className='flex items-center justify-between'>
+						<div>
+							<h3 className='text-sm font-medium text-yellow-800'>Tryb deweloperski</h3>
+							<p className='text-sm text-yellow-700'>Wypełnij formularz testowymi danymi</p>
+						</div>
+						<button
+							onClick={fillTestData}
+							className='px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700 transition-colors'>
+							Wypełnij testowe dane
+						</button>
+					</div>
+				</div>
+			)}
 
 			{/* Form steps */}
 			<div className='min-h-[400px]'>
