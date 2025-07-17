@@ -15,16 +15,32 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 	// Ulepszona funkcja do zawijania tekstu z poprawą dla długich słów
 	const wrapText = (pdf, text, x, y, maxWidth, lineHeight = 6) => {
 		const lines = pdf.splitTextToSize(text, maxWidth)
-		lines.forEach((line, index) => {
-			pdf.text(line, x, y + index * lineHeight)
-		})
+		pdf.text(lines, x, y)
 		return y + lines.length * lineHeight
+	}
+
+	// Funkcja do konwersji ArrayBuffer na string binarny
+	const arrayBufferToString = buffer => {
+		let binary = ''
+		const bytes = new Uint8Array(buffer)
+		const len = bytes.byteLength
+		for (let i = 0; i < len; i++) {
+			binary += String.fromCharCode(bytes[i])
+		}
+		return binary
 	}
 
 	const generatePDF = async () => {
 		setIsGenerating(true)
 
 		try {
+			// Wczytaj czcionki, które obsługują polskie znaki
+			const fontRegularBytes = await fetch('/fonts/Roboto-Regular.ttf').then(res => res.arrayBuffer())
+			const fontBoldBytes = await fetch('/fonts/Roboto-Bold.ttf').then(res => res.arrayBuffer())
+
+			const fontRegularString = arrayBufferToString(fontRegularBytes)
+			const fontBoldString = arrayBufferToString(fontBoldBytes)
+
 			// Tworzenie PDF z obsługą UTF-8
 			const pdf = new jsPDF({
 				orientation: 'p',
@@ -34,13 +50,20 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				compress: true,
 			})
 
+			// Dodaj czcionki do wirtualnego systemu plików PDF
+			pdf.addFileToVFS('Roboto-Regular.ttf', fontRegularString)
+			pdf.addFont('Roboto-Regular.ttf', 'Roboto', 'normal')
+
+			pdf.addFileToVFS('Roboto-Bold.ttf', fontBoldString)
+			pdf.addFont('Roboto-Bold.ttf', 'Roboto', 'bold')
+
 			const pageWidth = pdf.internal.pageSize.getWidth()
 			const margin = 20
 			const contentWidth = pageWidth - margin * 2
 
 			// Nagłówek dokumentu
 			pdf.setFontSize(18)
-			pdf.setFont('helvetica', 'bold')
+			pdf.setFont('Roboto', 'bold')
 			pdf.text('DEKLARACJA CZŁONKOWSKA', pageWidth / 2, 25, { align: 'center' })
 
 			pdf.setFontSize(14)
@@ -54,275 +77,350 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 
 			// ===== DANE PODSTAWOWE FIRMY =====
 			pdf.setFontSize(12)
-			pdf.setFont('helvetica', 'bold')
+			pdf.setFont('Roboto', 'bold')
 			pdf.text('I. DANE PODSTAWOWE FIRMY', margin, yPosition)
 			yPosition += 12
 
-			pdf.setFont('helvetica', 'normal')
+			pdf.setFont('Roboto', 'normal')
 			pdf.setFontSize(10)
 
-			// Nazwa firmy
-			pdf.text('Pełna nazwa firmy:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.companyName), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Pełna nazwa firmy: ${formatText(formData.companyName)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
-			// NIP i REGON w jednej linii
 			pdf.text(`NIP: ${formatText(formData.nip)}`, margin, yPosition)
 			pdf.text(`REGON: ${formatText(formData.regon)}`, margin + 80, yPosition)
 			yPosition += 8
 
-			// Adres
-			pdf.text('Dokładny adres:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.address), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(pdf, `Dokładny adres: ${formatText(formData.address)}`, margin, yPosition, contentWidth)
 			yPosition += 3
 
-			// Adres korespondencyjny
-			pdf.text('Adres do korespondencji:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.correspondenceAddress), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Adres do korespondencji: ${formatText(formData.correspondenceAddress)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 8
 
 			// ===== KONTAKT =====
-			pdf.setFont('helvetica', 'bold')
+			pdf.setFont('Roboto', 'bold')
 			pdf.setFontSize(12)
 			pdf.text('II. DANE KONTAKTOWE', margin, yPosition)
 			yPosition += 12
 
-			pdf.setFont('helvetica', 'normal')
+			pdf.setFont('Roboto', 'normal')
 			pdf.setFontSize(10)
 
-			pdf.text('Numery telefonów:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.phones), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(pdf, `Numery telefonów: ${formatText(formData.phones)}`, margin, yPosition, contentWidth)
 			yPosition += 3
 
-			pdf.text('Adres e-mail:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.email), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(pdf, `Adres e-mail: ${formatText(formData.email)}`, margin, yPosition, contentWidth)
 			yPosition += 3
 
-			pdf.text('Adres e-mail do przesyłania faktur:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.invoiceEmail), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Adres e-mail do przesyłania faktur: ${formatText(formData.invoiceEmail)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
 			if (formData.website) {
-				pdf.text('Strona internetowa:', margin, yPosition)
-				yPosition = wrapText(pdf, formatText(formData.website), margin + 5, yPosition + 5, contentWidth - 5)
+				yPosition = wrapText(
+					pdf,
+					`Strona internetowa: ${formatText(formData.website)}`,
+					margin,
+					yPosition,
+					contentWidth
+				)
 				yPosition += 3
 			}
 			yPosition += 8
 
 			// ===== KIEROWNICTWO =====
-			pdf.setFont('helvetica', 'bold')
+			pdf.setFont('Roboto', 'bold')
 			pdf.setFontSize(12)
 			pdf.text('III. KIEROWNICTWO I REPREZENTACJA', margin, yPosition)
 			yPosition += 12
 
-			pdf.setFont('helvetica', 'normal')
+			pdf.setFont('Roboto', 'normal')
 			pdf.setFontSize(10)
 
-			pdf.text('Imię i nazwisko kierownika firmy:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.ceoName), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Imię i nazwisko kierownika firmy: ${formatText(formData.ceoName)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
-			pdf.text('Osoby upoważnione do reprezentowania firmy wobec PISiL:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.authorizedPersons), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Osoby upoważnione do reprezentowania firmy wobec PISiL: ${formatText(formData.authorizedPersons)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 8
 
-			// Sprawdź czy trzeba nową stronę
 			if (yPosition > 220) {
 				pdf.addPage()
 				yPosition = 30
 			}
 
 			// ===== DANE REJESTRACYJNE =====
-			pdf.setFont('helvetica', 'bold')
+			pdf.setFont('Roboto', 'bold')
 			pdf.setFontSize(12)
 			pdf.text('IV. DANE REJESTRACYJNE I CERTYFIKATY', margin, yPosition)
 			yPosition += 12
 
-			pdf.setFont('helvetica', 'normal')
+			pdf.setFont('Roboto', 'normal')
 			pdf.setFontSize(10)
 
-			pdf.text('Data rejestracji firmy, sąd rejestrowy, nr rejestru:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.registrationData), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Data rejestracji firmy, sąd rejestrowy, nr rejestru: ${formatText(formData.registrationData)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
-			pdf.text('Forma własności:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.ownershipForm), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Forma własności: ${formatText(formData.ownershipForm)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
-			pdf.text('Wielkość zatrudnienia:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.employmentSize), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Wielkość zatrudnienia: ${formatText(formData.employmentSize)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
-			pdf.text('Licencja na pośrednictwo przy przewozie rzeczy:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.transportLicense), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Licencja na pośrednictwo przy przewozie rzeczy: ${formatText(formData.transportLicense)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
-			pdf.text('Certyfikat ISO 9002:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.iso9002Certificate), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Certyfikat ISO 9002: ${formatText(formData.iso9002Certificate)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
-			pdf.text('Ubezpieczenie o.c. spedytora:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.insuranceOC), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Ubezpieczenie o.c. spedytora: ${formatText(formData.insuranceOC)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
-			pdf.text('Opis prowadzonej działalności firmy:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.businessDescription), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Opis prowadzonej działalności firmy: ${formatText(formData.businessDescription)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 8
 
-			// Sprawdź czy trzeba nową stronę
 			if (yPosition > 180) {
 				pdf.addPage()
 				yPosition = 30
 			}
 
 			// ===== WACHLARZ USŁUG =====
-			pdf.setFont('helvetica', 'bold')
+			pdf.setFont('Roboto', 'bold')
 			pdf.setFontSize(12)
 			pdf.text('V. WACHLARZ ŚWIADCZONYCH USŁUG', margin, yPosition)
 			yPosition += 12
 
-			pdf.setFont('helvetica', 'normal')
+			pdf.setFont('Roboto', 'normal')
 			pdf.setFontSize(10)
 
-			// Usługi transportowe
-			const transportServices = []
-			if (formData.transportMorski) transportServices.push('Transport morski')
-			if (formData.transportKolejowy) transportServices.push('Transport kolejowy')
-			if (formData.transportLotniczy) transportServices.push('Transport lotniczy')
-			if (formData.logistyka) transportServices.push('Logistyka')
-			if (formData.transportDrogowy) transportServices.push('Transport drogowy')
-			if (formData.taborWlasny) transportServices.push('Taborem własnym')
-			if (formData.taborObcy) transportServices.push('Taborem obcym')
-			if (formData.transportInne) transportServices.push('Inne usługi transportowe')
+			const transportServices = [
+				formData.transportMorski && 'Transport morski',
+				formData.transportKolejowy && 'Transport kolejowy',
+				formData.transportLotniczy && 'Transport lotniczy',
+				formData.logistyka && 'Logistyka',
+				formData.transportDrogowy && 'Transport drogowy',
+				formData.taborWlasny && 'Taborem własnym',
+				formData.taborObcy && 'Taborem obcym',
+				formData.transportInne && 'Inne usługi transportowe',
+			].filter(Boolean)
 
-			pdf.text('Usługi transportowe:', margin, yPosition)
-			if (transportServices.length > 0) {
-				yPosition = wrapText(pdf, formatText(transportServices.join(', ')), margin + 5, yPosition + 5, contentWidth - 5)
-			} else {
-				yPosition = wrapText(pdf, 'Brak', margin + 5, yPosition + 5, contentWidth - 5)
-			}
-			yPosition += 3
-
-			// Usługi magazynowe
-			const magazynServices = []
-			if (formData.magazynWlasny) magazynServices.push('Magazyn własny')
-			if (formData.magazynObcy) magazynServices.push('Magazyn obcy')
-
-			pdf.text('Usługi magazynowo-dystrybucyjne:', margin, yPosition)
-			if (magazynServices.length > 0) {
-				yPosition = wrapText(pdf, formatText(magazynServices.join(', ')), margin + 5, yPosition + 5, contentWidth - 5)
-			} else {
-				yPosition = wrapText(pdf, 'Brak', margin + 5, yPosition + 5, contentWidth - 5)
-			}
-			yPosition += 3
-
-			// Organizacja przewozów
-			pdf.text('Organizacja przewozów drobnicy zbiorowe:', margin, yPosition)
 			yPosition = wrapText(
 				pdf,
-				formData.organizacjaPrzewozow ? 'Tak' : 'Nie',
-				margin + 5,
-				yPosition + 5,
-				contentWidth - 5
+				`Usługi transportowe: ${transportServices.length > 0 ? formatText(transportServices.join(', ')) : 'Brak'}`,
+				margin,
+				yPosition,
+				contentWidth
 			)
 			yPosition += 3
 
-			// Agencje celne
-			pdf.text('Agencje celne:', margin, yPosition)
-			yPosition = wrapText(pdf, formData.agencjeCelne ? 'Tak' : 'Nie', margin + 5, yPosition + 5, contentWidth - 5)
+			const magazynServices = [
+				formData.magazynWlasny && 'Magazyn własny',
+				formData.magazynObcy && 'Magazyn obcy',
+			].filter(Boolean)
+
+			yPosition = wrapText(
+				pdf,
+				`Usługi magazynowo-dystrybucyjne: ${
+					magazynServices.length > 0 ? formatText(magazynServices.join(', ')) : 'Brak'
+				}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
-			// Sieć krajowa
-			pdf.text('Sieć krajowa (ilość oddziałów):', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.krajowaSiec), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Organizacja przewozów drobnicy zbiorowe: ${formData.organizacjaPrzewozow ? 'Tak' : 'Nie'}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
-			// Sieć zagraniczna
-			pdf.text('Sieć zagraniczna (ilość firm własnych / ilość korespondentów):', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.zagranicznaSSiec), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Agencje celne: ${formData.agencjeCelne ? 'Tak' : 'Nie'}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
-			// Inne formy współpracy
-			pdf.text('Inne formy współpracy:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.inneFormy), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Sieć krajowa (ilość oddziałów): ${formatText(formData.krajowaSiec)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
+			yPosition += 3
+
+			yPosition = wrapText(
+				pdf,
+				`Sieć zagraniczna (ilość firm własnych / ilość korespondentów): ${formatText(formData.zagranicznaSSiec)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
+			yPosition += 3
+
+			yPosition = wrapText(
+				pdf,
+				`Inne formy współpracy: ${formatText(formData.inneFormy)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 8
 
 			// ===== CZŁONKOSTWO =====
-			pdf.setFont('helvetica', 'bold')
+			pdf.setFont('Roboto', 'bold')
 			pdf.setFontSize(12)
 			pdf.text('VI. CZŁONKOSTWO W ORGANIZACJACH', margin, yPosition)
 			yPosition += 12
 
-			pdf.setFont('helvetica', 'normal')
+			pdf.setFont('Roboto', 'normal')
 			pdf.setFontSize(10)
 
-			pdf.text('Do jakich organizacji firma należy i od kiedy:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.organizacje), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Do jakich organizacji firma należy i od kiedy: ${formatText(formData.organizacje)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 3
 
-			pdf.text('Firmy-Członkowie Izby rekomendujący przystąpienie do PISiL:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.rekomendacje), margin + 5, yPosition + 5, contentWidth - 5)
+			yPosition = wrapText(
+				pdf,
+				`Firmy-Członkowie Izby rekomendujący przystąpienie do PISiL: ${formatText(formData.rekomendacje)}`,
+				margin,
+				yPosition,
+				contentWidth
+			)
 			yPosition += 8
 
-			// Sprawdź czy trzeba nową stronę dla oświadczenia
 			if (yPosition > 210) {
 				pdf.addPage()
 				yPosition = 30
 			}
 
 			// ===== OŚWIADCZENIE =====
-			pdf.setFont('helvetica', 'bold')
+			pdf.setFont('Roboto', 'bold')
 			pdf.setFontSize(12)
 			pdf.text('VII. OŚWIADCZENIE', margin, yPosition)
 			yPosition += 12
 
-			pdf.setFont('helvetica', 'normal')
+			pdf.setFont('Roboto', 'normal')
 			pdf.setFontSize(10)
 
 			const declarationText =
 				'Oświadczam, że zapoznałem/zapoznałam się z treścią Statutu PISiL i jednocześnie zobowiązuję się do przestrzegania zawartych w nim postanowień.'
-			yPosition = wrapText(pdf, `[✓] ${declarationText}`, margin, yPosition, contentWidth)
+			const checkbox = formData.declarationStatute ? '[✓]' : '[  ]'
+			yPosition = wrapText(pdf, `${checkbox} ${declarationText}`, margin, yPosition, contentWidth)
 			yPosition += 15
 
-			// Sprawdź czy trzeba nową stronę dla podpisu
 			if (yPosition > 240) {
 				pdf.addPage()
 				yPosition = 30
 			}
 
 			// ===== PODPIS =====
-			pdf.setFont('helvetica', 'bold')
+			pdf.setFont('Roboto', 'bold')
 			pdf.setFontSize(12)
 			pdf.text('VIII. PODPIS', margin, yPosition)
 			yPosition += 12
 
-			pdf.setFont('helvetica', 'normal')
+			pdf.setFont('Roboto', 'normal')
 			pdf.setFontSize(10)
 
-			pdf.text('Imię i nazwisko:', margin, yPosition)
-			yPosition = wrapText(pdf, formatText(formData.signatoryName), margin + 5, yPosition + 5, 80)
-
-			pdf.text('Stanowisko:', margin + 90, yPosition - 8)
-			wrapText(pdf, formatText(formData.signatoryPosition), margin + 95, yPosition - 3, 80)
+			pdf.text(`Imię i nazwisko: ${formatText(formData.signatoryName)}`, margin, yPosition)
+			pdf.text(`Stanowisko: ${formatText(formData.signatoryPosition)}`, margin + 90, yPosition)
 			yPosition += 15
 
-			// Miejsce na podpis
-			pdf.text('Podpis:', margin, yPosition)
-			pdf.text('Data:', margin + 90, yPosition)
+			pdf.text('Data:', margin, yPosition)
+			pdf.text('Podpis:', margin + 90, yPosition)
 			yPosition += 10
 
-			pdf.text('_________________________________', margin, yPosition)
-			pdf.text('_________________', margin + 90, yPosition)
+			pdf.line(margin, yPosition, margin + 60, yPosition) // Linia pod datą
+			pdf.line(margin + 90, yPosition, margin + 150, yPosition) // Linia pod podpisem
 
 			// Stopka
-			yPosition += 20
-			if (yPosition > 280) {
-				pdf.addPage()
-				yPosition = 260
-			}
+			const pageHeight = pdf.internal.pageSize.getHeight()
 			pdf.setFontSize(8)
-			pdf.setFont('helvetica', 'italic')
-			pdf.text('Deklaracja członkowska - Polska Izba Specjalistów IT i Logistyki', pageWidth / 2, yPosition, {
+			pdf.setFont('Roboto', 'normal')
+			pdf.text('Deklaracja członkowska - Polska Izba Specjalistów IT i Logistyki', pageWidth / 2, pageHeight - 15, {
 				align: 'center',
 			})
 
@@ -330,7 +428,6 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 			const pdfBlob = pdf.output('blob')
 			const url = URL.createObjectURL(pdfBlob)
 
-			// Automatyczne pobieranie
 			const a = document.createElement('a')
 			a.href = url
 			a.download = `deklaracja_czlonkowska_${formData.companyName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
