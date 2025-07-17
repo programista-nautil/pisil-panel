@@ -353,79 +353,288 @@ export default function FormComponent() {
 
 	const renderStep4 = () => (
 		<div className='space-y-6'>
-			<h2 className='text-xl font-semibold text-gray-900'>Oświadczenia i finalizacja</h2>
+			<h2 className='text-xl font-semibold text-gray-900'>Wachlarz świadczonych usług</h2>
 
-			<div className='space-y-4'>
-				<div className='flex items-start space-x-3'>
-					<input
-						type='checkbox'
-						name='declarationTruth'
-						id='declarationTruth'
-						checked={formData.declarationTruth}
-						onChange={handleInputChange}
-						className='mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-						required
-					/>
-					<label htmlFor='declarationTruth' className='text-sm text-gray-700'>
-						Oświadczam, że podane przeze mnie dane są prawdziwe i zgodne z rzeczywistością.
+			<div className='space-y-6'>
+				<div>
+					<h3 className='text-lg font-medium text-gray-900 mb-4'>Usługi transportowe *</h3>
+					<div className='grid grid-cols-2 gap-4'>
+						<div className='space-y-3'>
+							<label className='flex items-center space-x-3'>
+								<input
+									type='checkbox'
+									name='transportMorski'
+									checked={formData.transportMorski}
+									onChange={handleInputChange}
+									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+								/>
+								<span className='text-sm text-gray-700'>Transport morski</span>
+							</label>
+							
+							<label className='flex items-center space-x-3'>
+								<input
+									type='checkbox'
+									name='transportKolejowy'
+									checked={formData.transportKolejowy}
+									onChange={handleInputChange}
+									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+								/>
+								<span className='text-sm text-gray-700'>Transport kolejowy</span>
+							</label>
+							
+							<label className='flex items-center space-x-3'>
+								<input
+									type='checkbox'
+									name='transportLotniczy'
+									checked={formData.transportLotniczy}
+									onChange={handleInputChange}
+									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+								/>
+								<span className='text-sm text-gray-700'>Transport lotniczy</span>
+							</label>
+							
+							<label className='flex items-center space-x-3'>
+								<input
+									type='checkbox'
+									name='logistyka'
+									checked={formData.logistyka}
+									onChange={handleInputChange}
+									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+								/>
+								<span className='text-sm text-gray-700'>Logistyka</span>
+							</label>
+						</div>
+						
+						<div className='space-y-3'>
+							<label className='flex items-center space-x-3'>
+								<input
+									type='checkbox'
+									name='transportDrogowy'
+									checked={formData.transportDrogowy}
+									onChange={handleInputChange}
+									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+								/>
+								<span className='text-sm text-gray-700'>Transport drogowy</span>
+							</label>
+							
+							<label className='flex items-center space-x-3'>
+								<input
+									type='checkbox'
+									name='taborWlasny'
+									checked={formData.taborWlasny}
+									onChange={handleInputChange}
+									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+								/>
+								<span className='text-sm text-gray-700'>Taborem własnym</span>
+							</label>
+							
+							<label className='flex items-center space-x-3'>
+								<input
+									type='checkbox'
+									name='taborObcy'
+									checked={formData.taborObcy}
+									onChange={handleInputChange}
+									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+								/>
+								<span className='text-sm text-gray-700'>Taborem obcym</span>
+							</label>
+							
+							<label className='flex items-center space-x-3'>
+								<input
+									type='checkbox'
+									name='transportInne'
+									checked={formData.transportInne}
+									onChange={handleInputChange}
+									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+								/>
+								<span className='text-sm text-gray-700'>inne (np. NVOCC, agencje armatorów, itp.)</span>
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div>
+					<h3 className='text-lg font-medium text-gray-900 mb-4'>Usługi magazynowo-dystrybucyjne *</h3>
+					<div className='grid grid-cols-2 gap-4'>
+						<label className='flex items-center space-x-3'>
+							<input
+								type='checkbox'
+								name='magazynWlasny'
+								checked={formData.magazynWlasny}
+								onChange={handleInputChange}
+								className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+							/>
+							<span className='text-sm text-gray-700'>Magazyn własny</span>
+						</label>
+						
+						<label className='flex items-center space-x-3'>
+							<input
+								type='checkbox'
+								name='magazynObcy'
+								checked={formData.magazynObcy}
+								onChange={handleInputChange}
+								className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+							/>
+							<span className='text-sm text-gray-700'>Magazyn obcy</span>
+						</label>
+					</div>
+				</div>
+
+				<div>
+					<h3 className='text-lg font-medium text-gray-900 mb-4'>Organizacja przewozów drobnicy zbiorowe *</h3>
+					<label className='flex items-center space-x-3'>
+						<input
+							type='checkbox'
+							name='organizacjaPrzewozow'
+							checked={formData.organizacjaPrzewozow}
+							onChange={handleInputChange}
+							className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+						/>
+						<span className='text-sm text-gray-700'>Tak</span>
 					</label>
 				</div>
 
-				<div className='flex items-start space-x-3'>
-					<input
-						type='checkbox'
-						name='declarationStatute'
-						id='declarationStatute'
-						checked={formData.declarationStatute}
-						onChange={handleInputChange}
-						className='mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-						required
-					/>
-					<label htmlFor='declarationStatute' className='text-sm text-gray-700'>
-						Oświadczam, że zapoznałem się ze statutem PISiL i zobowiązuję się do jego przestrzegania.
+				<div>
+					<h3 className='text-lg font-medium text-gray-900 mb-4'>Agencje celne</h3>
+					<label className='flex items-center space-x-3'>
+						<input
+							type='checkbox'
+							name='agencjeCelne'
+							checked={formData.agencjeCelne}
+							onChange={handleInputChange}
+							className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+						/>
+						<span className='text-sm text-gray-700'>Tak</span>
 					</label>
 				</div>
 
-				<div className='flex items-start space-x-3'>
-					<input
-						type='checkbox'
-						name='declarationPersonalData'
-						id='declarationPersonalData'
-						checked={formData.declarationPersonalData}
-						onChange={handleInputChange}
-						className='mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-						required
-					/>
-					<label htmlFor='declarationPersonalData' className='text-sm text-gray-700'>
-						Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z RODO.
-					</label>
+				<div className='grid grid-cols-1 gap-4'>
+					<div>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>a/ krajowa (ilość oddziałów) *</label>
+						<input
+							type='text'
+							name='krajowaSiec'
+							value={formData.krajowaSiec}
+							onChange={handleInputChange}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+							placeholder='np. 5 oddziałów / Brak'
+							required
+						/>
+					</div>
+
+					<div>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>b/ zagraniczna (ilość firm własnych / ilość korespondentów) *</label>
+						<input
+							type='text'
+							name='zagranicznaSSiec'
+							value={formData.zagranicznaSSiec}
+							onChange={handleInputChange}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+							placeholder='np. 2 firmy własne / 15 korespondentów / Brak'
+							required
+						/>
+					</div>
+
+					<div>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>c/ inne formy współpracy *</label>
+						<textarea
+							name='inneFormy'
+							value={formData.inneFormy}
+							onChange={handleInputChange}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+							rows='2'
+							placeholder='Opisz inne formy współpracy lub napisz "Brak"'
+							required
+						/>
+					</div>
 				</div>
 			</div>
+		</div>
+	)
 
-			<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+	const renderStep5 = () => (
+		<div className='space-y-6'>
+			<h2 className='text-xl font-semibold text-gray-900'>Członkostwo i finalizacja</h2>
+
+			<div className='space-y-4'>
 				<div>
-					<label className='block text-sm font-medium text-gray-700 mb-1'>Data *</label>
-					<input
-						type='date'
-						name='date'
-						value={formData.date}
+					<label className='block text-sm font-medium text-gray-700 mb-1'>
+						Do jakich organizacji firma należy i od kiedy *
+					</label>
+					<textarea
+						name='organizacje'
+						value={formData.organizacje}
 						onChange={handleInputChange}
 						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+						rows='3'
+						placeholder='Wymień organizacje, do których firma należy wraz z datami przystąpienia lub napisz "Brak"'
 						required
 					/>
 				</div>
 
 				<div>
-					<label className='block text-sm font-medium text-gray-700 mb-1'>Miejsce *</label>
-					<input
-						type='text'
-						name='place'
-						value={formData.place}
+					<label className='block text-sm font-medium text-gray-700 mb-1'>
+						Firmy-Członkowie Izby rekomendujący przystąpienie do PISiL (nazwa, adres, podpis kierownika firmy) *
+					</label>
+					<textarea
+						name='rekomendacje'
+						value={formData.rekomendacje}
 						onChange={handleInputChange}
 						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-						placeholder='np. Warszawa'
+						rows='4'
+						placeholder='Podaj dane firm rekomendujących lub napisz "Brak"'
 						required
 					/>
+				</div>
+
+				<div className='border-t border-gray-200 pt-6'>
+					<h3 className='text-lg font-medium text-gray-900 mb-4'>Oświadczenie</h3>
+					
+					<div className='flex items-start space-x-3 mb-6'>
+						<input
+							type='checkbox'
+							name='declarationStatute'
+							id='declarationStatute'
+							checked={formData.declarationStatute}
+							onChange={handleInputChange}
+							className='mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+							required
+						/>
+						<label htmlFor='declarationStatute' className='text-sm text-gray-700'>
+							Oświadczam, że zapoznałem/zapoznałam się z treścią Statutu PISiL i jednocześnie zobowiązuję się do przestrzegania zawartych w nim postanowień. *
+						</label>
+					</div>
+				</div>
+
+				<div className='border-t border-gray-200 pt-6'>
+					<h3 className='text-lg font-medium text-gray-900 mb-4'>Podpis</h3>
+					
+					<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+						<div>
+							<label className='block text-sm font-medium text-gray-700 mb-1'>Imię i nazwisko *</label>
+							<input
+								type='text'
+								name='signatoryName'
+								value={formData.signatoryName}
+								onChange={handleInputChange}
+								className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+								required
+							/>
+						</div>
+
+						<div>
+							<label className='block text-sm font-medium text-gray-700 mb-1'>Stanowisko *</label>
+							<input
+								type='text'
+								name='signatoryPosition'
+								value={formData.signatoryPosition}
+								onChange={handleInputChange}
+								className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+								placeholder='np. Prezes, Dyrektor'
+								required
+							/>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -434,26 +643,38 @@ export default function FormComponent() {
 	const isStepValid = step => {
 		switch (step) {
 			case 1:
-				return formData.firstName && formData.lastName && formData.pesel && formData.birthDate && formData.birthPlace
+				return formData.companyName && formData.nip && formData.regon && formData.address && formData.correspondenceAddress
 			case 2:
 				return (
-					formData.street &&
-					formData.houseNumber &&
-					formData.postalCode &&
-					formData.city &&
-					formData.voivodeship &&
-					formData.phone &&
-					formData.email
+					formData.phones &&
+					formData.invoiceEmail &&
+					formData.email &&
+					formData.ceoName &&
+					formData.authorizedPersons
 				)
 			case 3:
-				return formData.education && formData.profession && formData.workplace
+				return (
+					formData.registrationData && 
+					formData.ownershipForm && 
+					formData.employmentSize &&
+					formData.transportLicense &&
+					formData.iso9002Certificate &&
+					formData.insuranceOC &&
+					formData.businessDescription
+				)
 			case 4:
 				return (
-					formData.declarationTruth &&
+					formData.krajowaSiec &&
+					formData.zagranicznaSSiec &&
+					formData.inneFormy
+				)
+			case 5:
+				return (
+					formData.organizacje &&
+					formData.rekomendacje &&
 					formData.declarationStatute &&
-					formData.declarationPersonalData &&
-					formData.date &&
-					formData.place
+					formData.signatoryName &&
+					formData.signatoryPosition
 				)
 			default:
 				return false
@@ -497,7 +718,7 @@ export default function FormComponent() {
 					Wstecz
 				</button>
 
-				{currentStep < 4 ? (
+				{currentStep < 5 ? (
 					<button
 						onClick={nextStep}
 						disabled={!isStepValid(currentStep)}

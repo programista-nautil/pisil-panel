@@ -28,43 +28,23 @@ export default function PDFGenerator({ formData, onGenerated, disabled }) {
 
 			let yPosition = 50
 
-			// Dane osobowe
+			// Dane podstawowe firmy
 			pdf.setFont('helvetica', 'bold')
-			pdf.text('DANE OSOBOWE', 20, yPosition)
+			pdf.text('DANE PODSTAWOWE FIRMY', 20, yPosition)
 			yPosition += 10
 
 			pdf.setFont('helvetica', 'normal')
-			pdf.text(`Imię: ${formData.firstName}`, 20, yPosition)
-			pdf.text(`Nazwisko: ${formData.lastName}`, 120, yPosition)
+			pdf.text(`Pełna nazwa firmy: ${formData.companyName}`, 20, yPosition)
 			yPosition += 8
 
-			pdf.text(`PESEL: ${formData.pesel}`, 20, yPosition)
-			pdf.text(`Data urodzenia: ${formData.birthDate}`, 120, yPosition)
+			pdf.text(`NIP: ${formData.nip}`, 20, yPosition)
+			pdf.text(`REGON: ${formData.regon}`, 120, yPosition)
 			yPosition += 8
 
-			pdf.text(`Miejsce urodzenia: ${formData.birthPlace}`, 20, yPosition)
-			yPosition += 15
-
-			// Adres zamieszkania
-			pdf.setFont('helvetica', 'bold')
-			pdf.text('ADRES ZAMIESZKANIA', 20, yPosition)
-			yPosition += 10
-
-			pdf.setFont('helvetica', 'normal')
-			pdf.text(`Ulica: ${formData.street}`, 20, yPosition)
-			pdf.text(`Nr domu: ${formData.houseNumber}`, 120, yPosition)
+			pdf.text(`Adres: ${formData.address}`, 20, yPosition)
 			yPosition += 8
 
-			if (formData.apartmentNumber) {
-				pdf.text(`Nr lokalu: ${formData.apartmentNumber}`, 20, yPosition)
-				yPosition += 8
-			}
-
-			pdf.text(`Kod pocztowy: ${formData.postalCode}`, 20, yPosition)
-			pdf.text(`Miejscowość: ${formData.city}`, 120, yPosition)
-			yPosition += 8
-
-			pdf.text(`Województwo: ${formData.voivodeship}`, 20, yPosition)
+			pdf.text(`Adres korespondencyjny: ${formData.correspondenceAddress}`, 20, yPosition)
 			yPosition += 15
 
 			// Kontakt
@@ -73,62 +53,139 @@ export default function PDFGenerator({ formData, onGenerated, disabled }) {
 			yPosition += 10
 
 			pdf.setFont('helvetica', 'normal')
-			pdf.text(`Telefon: ${formData.phone}`, 20, yPosition)
-			pdf.text(`Email: ${formData.email}`, 120, yPosition)
-			yPosition += 15
+			pdf.text(`Telefony: ${formData.phones}`, 20, yPosition)
+			yPosition += 8
 
-			// Wykształcenie i zawód
+			pdf.text(`Email: ${formData.email}`, 20, yPosition)
+			pdf.text(`Email faktur: ${formData.invoiceEmail}`, 120, yPosition)
+			yPosition += 8
+
+			if (formData.website) {
+				pdf.text(`Strona: ${formData.website}`, 20, yPosition)
+				yPosition += 8
+			}
+			yPosition += 7
+
+			// Kierownictwo
 			pdf.setFont('helvetica', 'bold')
-			pdf.text('WYKSZTAŁCENIE I ZAWÓD', 20, yPosition)
+			pdf.text('KIEROWNICTWO', 20, yPosition)
 			yPosition += 10
 
 			pdf.setFont('helvetica', 'normal')
-			pdf.text(`Wykształcenie: ${formData.education}`, 20, yPosition)
+			pdf.text(`Kierownik firmy: ${formData.ceoName}`, 20, yPosition)
 			yPosition += 8
 
-			pdf.text(`Zawód: ${formData.profession}`, 20, yPosition)
-			yPosition += 8
-
-			pdf.text(`Miejsce pracy: ${formData.workplace}`, 20, yPosition)
+			pdf.text(`Osoby upoważnione: ${formData.authorizedPersons}`, 20, yPosition)
 			yPosition += 15
 
-			// Rodzaj członkostwa
-			const membershipTypeText = {
-				ordinary: 'Członek zwyczajny',
-				supporting: 'Członek wspierający',
-				honorary: 'Członek honorowy',
+			// Dane rejestracyjne - nowa strona jeśli potrzeba
+			if (yPosition > 200) {
+				pdf.addPage()
+				yPosition = 30
 			}
 
 			pdf.setFont('helvetica', 'bold')
-			pdf.text('RODZAJ CZŁONKOSTWA', 20, yPosition)
+			pdf.text('DANE REJESTRACYJNE I CERTYFIKATY', 20, yPosition)
 			yPosition += 10
 
 			pdf.setFont('helvetica', 'normal')
-			pdf.text(`Rodzaj: ${membershipTypeText[formData.membershipType]}`, 20, yPosition)
+			pdf.text(`Rejestracja: ${formData.registrationData}`, 20, yPosition)
+			yPosition += 8
+
+			pdf.text(`Forma własności: ${formData.ownershipForm}`, 20, yPosition)
+			yPosition += 8
+
+			pdf.text(`Zatrudnienie: ${formData.employmentSize}`, 20, yPosition)
+			yPosition += 8
+
+			pdf.text(`Licencja transportowa: ${formData.transportLicense}`, 20, yPosition)
+			yPosition += 8
+
+			pdf.text(`ISO 9002: ${formData.iso9002Certificate}`, 20, yPosition)
+			yPosition += 8
+
+			pdf.text(`Ubezpieczenie OC: ${formData.insuranceOC}`, 20, yPosition)
+			yPosition += 8
+
+			pdf.text(`Opis działalności: ${formData.businessDescription}`, 20, yPosition)
 			yPosition += 15
 
-			// Oświadczenia
+			// Usługi transportowe
 			pdf.setFont('helvetica', 'bold')
-			pdf.text('OŚWIADCZENIA', 20, yPosition)
+			pdf.text('WACHLARZ ŚWIADCZONYCH USŁUG', 20, yPosition)
 			yPosition += 10
 
 			pdf.setFont('helvetica', 'normal')
-			pdf.text('☑ Oświadczam, że podane przeze mnie dane są prawdziwe i zgodne z rzeczywistością.', 20, yPosition)
+
+			const transportServices = []
+			if (formData.transportMorski) transportServices.push('Transport morski')
+			if (formData.transportKolejowy) transportServices.push('Transport kolejowy')
+			if (formData.transportLotniczy) transportServices.push('Transport lotniczy')
+			if (formData.logistyka) transportServices.push('Logistyka')
+			if (formData.transportDrogowy) transportServices.push('Transport drogowy')
+			if (formData.taborWlasny) transportServices.push('Taborem własnym')
+			if (formData.taborObcy) transportServices.push('Taborem obcym')
+			if (formData.transportInne) transportServices.push('Inne usługi transportowe')
+
+			if (transportServices.length > 0) {
+				pdf.text(`Usługi transportowe: ${transportServices.join(', ')}`, 20, yPosition)
+				yPosition += 8
+			}
+
+			const magazynServices = []
+			if (formData.magazynWlasny) magazynServices.push('Magazyn własny')
+			if (formData.magazynObcy) magazynServices.push('Magazyn obcy')
+
+			if (magazynServices.length > 0) {
+				pdf.text(`Usługi magazynowe: ${magazynServices.join(', ')}`, 20, yPosition)
+				yPosition += 8
+			}
+
+			if (formData.organizacjaPrzewozow) {
+				pdf.text('Organizacja przewozów drobnicy zbiorowe: Tak', 20, yPosition)
+				yPosition += 8
+			}
+
+			if (formData.agencjeCelne) {
+				pdf.text('Agencje celne: Tak', 20, yPosition)
+				yPosition += 8
+			}
+
+			pdf.text(`Sieć krajowa: ${formData.krajowaSiec}`, 20, yPosition)
 			yPosition += 8
 
-			pdf.text(
-				'☑ Oświadczam, że zapoznałem się ze statutem PISiL i zobowiązuję się do jego przestrzegania.',
-				20,
-				yPosition
-			)
+			pdf.text(`Sieć zagraniczna: ${formData.zagranicznaSSiec}`, 20, yPosition)
 			yPosition += 8
 
-			pdf.text('☑ Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z RODO.', 20, yPosition)
-			yPosition += 20
+			pdf.text(`Inne formy współpracy: ${formData.inneFormy}`, 20, yPosition)
+			yPosition += 15
 
-			// Data i miejsce
-			pdf.text(`Data: ${formData.date}`, 20, yPosition)
-			pdf.text(`Miejsce: ${formData.place}`, 120, yPosition)
+			// Członkostwo
+			pdf.setFont('helvetica', 'bold')
+			pdf.text('CZŁONKOSTWO W ORGANIZACJACH', 20, yPosition)
+			yPosition += 10
+
+			pdf.setFont('helvetica', 'normal')
+			pdf.text(`Organizacje: ${formData.organizacje}`, 20, yPosition)
+			yPosition += 8
+
+			pdf.text(`Rekomendacje: ${formData.rekomendacje}`, 20, yPosition)
+			yPosition += 15
+
+			// Oświadczenie
+			pdf.setFont('helvetica', 'bold')
+			pdf.text('OŚWIADCZENIE', 20, yPosition)
+			yPosition += 10
+
+			pdf.setFont('helvetica', 'normal')
+			pdf.text('☑ Oświadczam, że zapoznałem się z treścią Statutu PISiL', 20, yPosition)
+			yPosition += 5
+			pdf.text('   i zobowiązuję się do przestrzegania zawartych w nim postanowień.', 20, yPosition)
+			yPosition += 15
+
+			// Podpis
+			pdf.text(`Imię i nazwisko: ${formData.signatoryName}`, 20, yPosition)
+			pdf.text(`Stanowisko: ${formData.signatoryPosition}`, 120, yPosition)
 			yPosition += 15
 
 			// Miejsce na podpis
@@ -142,7 +199,7 @@ export default function PDFGenerator({ formData, onGenerated, disabled }) {
 			// Automatyczne pobieranie
 			const a = document.createElement('a')
 			a.href = url
-			a.download = `deklaracja_${formData.firstName}_${formData.lastName}.pdf`
+			a.download = `deklaracja_${formData.companyName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
 			document.body.appendChild(a)
 			a.click()
 			document.body.removeChild(a)
