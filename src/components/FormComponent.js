@@ -62,31 +62,57 @@ export default function FormComponent() {
 
 	const [currentStep, setCurrentStep] = useState(1)
 	const [pdfGenerated, setPdfGenerated] = useState(false)
+	const [isInitialized, setIsInitialized] = useState(false)
 
+	// Przywracanie sesji - uruchamia się pierwszy
+	// Przywracanie sesji - uruchamia się pierwszy
 	useEffect(() => {
+		console.log('🔄 Przywracanie sesji - useEffect uruchomiony')
+		const savedSession = Cookies.get('formSession')
+		console.log('💾 Zapisana sesja:', savedSession)
+
+		if (savedSession) {
+			try {
+				const sessionData = JSON.parse(savedSession)
+				console.log('📊 Parsed session data:', sessionData)
+				console.log('🔢 Przywracany krok:', sessionData.step)
+
+				reset(sessionData.data)
+				setCurrentStep(sessionData.step)
+
+				console.log('✅ Sesja przywrócona - krok:', sessionData.step)
+			} catch (error) {
+				console.error('❌ Błąd podczas parsowania danych sesji:', error)
+				Cookies.remove('formSession')
+			}
+		} else {
+			console.log('ℹ️ Brak zapisanej sesji')
+		}
+		setIsInitialized(true)
+	}, [reset])
+
+	// Zapisywanie sesji - uruchamia się dopiero po inicjalizacji
+	useEffect(() => {
+		console.log('💾 Zapisywanie sesji useEffect - isInitialized:', isInitialized, 'currentStep:', currentStep)
+
+		if (!isInitialized) {
+			console.log('⏸️ Pomijam zapisywanie - nie zainicjalizowany')
+			return
+		}
+
 		const subscription = watch(values => {
 			const sessionData = {
 				step: currentStep,
 				data: values,
 			}
+			console.log('💾 Zapisuję sesję:', { step: currentStep, dataKeys: Object.keys(values) })
 			Cookies.set('formSession', JSON.stringify(sessionData), { expires: 1 })
 		})
-		return () => subscription.unsubscribe()
-	}, [watch, currentStep])
-
-	useEffect(() => {
-		const savedSession = Cookies.get('formSession')
-		if (savedSession) {
-			try {
-				const sessionData = JSON.parse(savedSession)
-				reset(sessionData.data)
-				setCurrentStep(sessionData.step)
-			} catch (error) {
-				console.error('Błąd podczas parsowania danych sesji:', error)
-				Cookies.remove('formSession')
-			}
+		return () => {
+			console.log('🧹 Anulowanie subskrypcji watch')
+			subscription.unsubscribe()
 		}
-	}, [reset])
+	}, [watch, currentStep, isInitialized])
 
 	const handleUploadSuccess = () => {
 		Cookies.remove('formSession')
@@ -139,8 +165,41 @@ export default function FormComponent() {
 		})
 	}
 
-	const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 5))
-	const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1))
+	const nextStep = () => {
+		const newStep = Math.min(currentStep + 1, 5)
+		setCurrentStep(newStep)
+
+		// ✅ Zapisz krok natychmiast przy zmianie
+		const currentSession = Cookies.get('formSession')
+		if (currentSession) {
+			try {
+				const sessionData = JSON.parse(currentSession)
+				sessionData.step = newStep
+				Cookies.set('formSession', JSON.stringify(sessionData), { expires: 1 })
+				console.log('✅ Krok zapisany w nextStep:', newStep)
+			} catch (error) {
+				console.error('❌ Błąd podczas aktualizacji kroku w nextStep:', error)
+			}
+		}
+	}
+
+	const prevStep = () => {
+		const newStep = Math.max(currentStep - 1, 1)
+		setCurrentStep(newStep)
+
+		// ✅ Zapisz krok natychmiast przy zmianie
+		const currentSession = Cookies.get('formSession')
+		if (currentSession) {
+			try {
+				const sessionData = JSON.parse(currentSession)
+				sessionData.step = newStep
+				Cookies.set('formSession', JSON.stringify(sessionData), { expires: 1 })
+				console.log('✅ Krok zapisany w prevStep:', newStep)
+			} catch (error) {
+				console.error('❌ Błąd podczas aktualizacji kroku w prevStep:', error)
+			}
+		}
+	}
 
 	const renderStep1 = () => (
 		<div className='space-y-6'>
