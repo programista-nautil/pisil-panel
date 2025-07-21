@@ -1,87 +1,71 @@
 'use client'
 
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import PDFGenerator from './PDFGenerator'
 import FileUpload from './FileUpload'
 
 export default function FormComponent() {
-	const [formData, setFormData] = useState({
-		// Dane podstawowe firmy
-		companyName: '',
-		nip: '',
-		regon: '',
-		address: '',
-		correspondenceAddress: '',
-		phones: '',
-		invoiceEmail: '',
-		email: '',
-		website: '',
-
-		// Kierownictwo i reprezentacja
-		ceoName: '',
-		authorizedPersons: '',
-
-		// Dane rejestracyjne
-		registrationData: '',
-		ownershipForm: '',
-		employmentSize: '',
-
-		// Licencje i certyfikaty
-		transportLicense: '',
-		iso9002Certificate: '',
-		insuranceOC: '',
-
-		// Działalność
-		businessDescription: '',
-
-		// Usługi transportowe
-		transportMorski: false,
-		transportKolejowy: false,
-		transportLotniczy: false,
-		logistyka: false,
-		transportDrogowy: false,
-		taborWlasny: false,
-		taborObcy: false,
-		transportInne: false,
-
-		// Usługi magazynowe
-		magazynWlasny: false,
-		magazynObcy: false,
-
-		// Organizacja przewozów
-		organizacjaPrzewozow: false,
-		agencjeCelne: false,
-
-		// Sieć
-		krajowaSiec: '',
-		zagranicznaSSiec: '',
-		inneFormy: '',
-
-		// Członkostwo
-		organizacje: '',
-		rekomendacje: '',
-
-		// Finalizacja
-		declarationStatute: false,
-		signatoryName: '',
-		signatoryPosition: '',
+	const {
+		register,
+		handleSubmit,
+		watch,
+		formState: { errors, isValid },
+		reset,
+		getValues,
+		setValue,
+	} = useForm({
+		mode: 'onChange', // Walidacja przy każdej zmianie
+		defaultValues: {
+			companyName: '',
+			nip: '',
+			regon: '',
+			address: '',
+			correspondenceAddress: '',
+			phones: '',
+			invoiceEmail: '',
+			email: '',
+			website: '',
+			ceoName: '',
+			authorizedPersons: '',
+			registrationData: '',
+			ownershipForm: '',
+			employmentSize: '',
+			transportLicense: '',
+			iso9002Certificate: '',
+			insuranceOC: '',
+			businessDescription: '',
+			transportMorski: false,
+			transportKolejowy: false,
+			transportLotniczy: false,
+			logistyka: false,
+			transportDrogowy: false,
+			taborWlasny: false,
+			taborObcy: false,
+			transportInne: false,
+			magazynWlasny: false,
+			magazynObcy: false,
+			organizacjaPrzewozow: false,
+			agencjeCelne: false,
+			krajowaSiec: '',
+			zagranicznaSSiec: '',
+			inneFormy: '',
+			organizacje: '',
+			rekomendacje: '',
+			declarationStatute: false,
+			signatoryName: '',
+			signatoryPosition: '',
+		},
 	})
 
 	const [currentStep, setCurrentStep] = useState(1)
 	const [pdfGenerated, setPdfGenerated] = useState(false)
 
-	const handleInputChange = e => {
-		const { name, value, type, checked } = e.target
-		setFormData(prev => ({
-			...prev,
-			[name]: type === 'checkbox' ? checked : value,
-		}))
-	}
+	// Pobieramy aktualne dane formularza, aby przekazać je do komponentów potomnych
+	const formData = getValues()
 
-	// Funkcja wypełniania testowych danych
 	const fillTestData = () => {
-		setFormData({
-			// Dane podstawowe firmy
+		reset({
 			companyName: 'TestLogistics Sp. z o.o.',
 			nip: '1234567890',
 			regon: '123456789',
@@ -91,26 +75,16 @@ export default function FormComponent() {
 			invoiceEmail: 'faktury@testlogistics.pl',
 			email: 'kontakt@testlogistics.pl',
 			website: 'https://testlogistics.pl',
-
-			// Kierownictwo i reprezentacja
 			ceoName: 'Jan Kowalski',
 			authorizedPersons: 'Anna Nowak - Dyrektor ds. Handlowych, Piotr Wiśniewski - Zastępca Dyrektora',
-
-			// Dane rejestracyjne
 			registrationData: 'Data rejestracji: 15.03.2020, Sąd Rejonowy dla m.st. Warszawy, KRS: 0000123456',
 			ownershipForm: 'Spółka z ograniczoną odpowiedzialnością',
 			employmentSize: '25-50 pracowników',
-
-			// Licencje i certyfikaty
 			transportLicense: 'Tak, licencja nr TR/2020/001234 ważna do 31.12.2025',
 			iso9002Certificate: 'Tak, certyfikat ISO 9001:2015 nr PL/ISO/2021/001',
 			insuranceOC: 'Tak, PZU S.A., polisa nr 123456789, suma ubezpieczenia: 1.000.000 PLN',
-
-			// Działalność
 			businessDescription:
-				'Kompleksowe usługi logistyczne obejmujące transport krajowy i międzynarodowy, magazynowanie oraz dystrybucję towarów. Specjalizujemy się w transporcie drogowym oraz usługach spedycyjnych dla branży automotive i FMCG.',
-
-			// Usługi transportowe
+				'Kompleksowe usługi logistyczne obejmujące transport krajowy i międzynarodowy, magazynowanie oraz dystrybucję towarów.',
 			transportMorski: false,
 			transportKolejowy: true,
 			transportLotniczy: false,
@@ -119,107 +93,76 @@ export default function FormComponent() {
 			taborWlasny: true,
 			taborObcy: true,
 			transportInne: false,
-
-			// Usługi magazynowe
 			magazynWlasny: true,
 			magazynObcy: false,
-
-			// Organizacja przewozów
 			organizacjaPrzewozow: true,
-			agencjeCelne: false,
-
-			// Sieć
+			agencjeCelne: true,
 			krajowaSiec: '3 oddziały (Warszawa, Kraków, Gdańsk)',
 			zagranicznaSSiec: '2 firmy własne w Niemczech / 15 korespondentów w Europie',
 			inneFormy: 'Współpraca z brokerami transportowymi, platformy cyfrowe (TimoCom, Trans.eu)',
-
-			// Członkostwo
-			organizacje:
-				'Zrzeszenie Międzynarodowych Przewoźników Drogowych w Polsce (od 2020), Polska Izba Gospodarki Elektronicznej (od 2021)',
-			rekomendacje: 'LogiMax Sp. z o.o., TransEuropa S.A., SpeedCargo Logistics',
-
-			// Finalizacja
+			organizacje: 'Zrzeszenie Międzynarodowych Przewoźników Drogowych w Polsce (od 2020)',
+			rekomendacje: 'LogiMax Sp. z o.o., TransEuropa S.A.',
 			declarationStatute: true,
 			signatoryName: 'Jan Kowalski',
 			signatoryPosition: 'Prezes Zarządu',
 		})
 	}
 
-	const nextStep = () => {
-		setCurrentStep(prev => Math.min(prev + 1, 5))
-	}
-
-	const prevStep = () => {
-		setCurrentStep(prev => Math.max(prev - 1, 1))
-	}
+	const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 5))
+	const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1))
 
 	const renderStep1 = () => (
 		<div className='space-y-6'>
 			<h2 className='text-xl font-semibold text-gray-900'>Dane podstawowe firmy</h2>
-
 			<div className='space-y-4'>
 				<div>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>Pełna nazwa firmy *</label>
 					<input
 						type='text'
-						name='companyName'
-						value={formData.companyName}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-						required
+						{...register('companyName', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 					/>
+					{errors.companyName && <p className='text-red-500 text-xs mt-1'>{errors.companyName.message}</p>}
 				</div>
-
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 					<div>
 						<label className='block text-sm font-medium text-gray-700 mb-1'>Numer NIP *</label>
 						<input
 							type='text'
-							name='nip'
-							value={formData.nip}
-							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-							placeholder='0000000000'
-							required
+							{...register('nip', { required: 'To pole jest wymagane.' })}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						/>
+						{errors.nip && <p className='text-red-500 text-xs mt-1'>{errors.nip.message}</p>}
 					</div>
-
 					<div>
 						<label className='block text-sm font-medium text-gray-700 mb-1'>Numer REGON *</label>
 						<input
 							type='text'
-							name='regon'
-							value={formData.regon}
-							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-							placeholder='000000000'
-							required
+							{...register('regon', { required: 'To pole jest wymagane.' })}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						/>
+						{errors.regon && <p className='text-red-500 text-xs mt-1'>{errors.regon.message}</p>}
 					</div>
 				</div>
-
 				<div>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>Dokładny adres *</label>
 					<textarea
-						name='address'
-						value={formData.address}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+						{...register('address', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						rows='2'
-						required
 					/>
+					{errors.address && <p className='text-red-500 text-xs mt-1'>{errors.address.message}</p>}
 				</div>
-
 				<div>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>Adres do korespondencji *</label>
 					<textarea
-						name='correspondenceAddress'
-						value={formData.correspondenceAddress}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+						{...register('correspondenceAddress', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						rows='2'
-						required
 					/>
+					{errors.correspondenceAddress && (
+						<p className='text-red-500 text-xs mt-1'>{errors.correspondenceAddress.message}</p>
+					)}
 				</div>
 			</div>
 		</div>
@@ -234,13 +177,11 @@ export default function FormComponent() {
 					<label className='block text-sm font-medium text-gray-700 mb-1'>Numery telefonów *</label>
 					<input
 						type='text'
-						name='phones'
-						value={formData.phones}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+						{...register('phones', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700'
 						placeholder='np. +48 123 456 789, +48 987 654 321'
-						required
 					/>
+					{errors.phones && <p className='text-red-500 text-xs mt-1'>{errors.phones.message}</p>}
 				</div>
 
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
@@ -248,24 +189,32 @@ export default function FormComponent() {
 						<label className='block text-sm font-medium text-gray-700 mb-1'>Adres e-mail do przesyłania faktur *</label>
 						<input
 							type='email'
-							name='invoiceEmail'
-							value={formData.invoiceEmail}
-							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-							required
+							{...register('invoiceEmail', {
+								required: 'To pole jest wymagane.',
+								pattern: {
+									value: /^\S+@\S+$/i,
+									message: 'Nieprawidłowy format e-mail.',
+								},
+							})}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700'
 						/>
+						{errors.invoiceEmail && <p className='text-red-500 text-xs mt-1'>{errors.invoiceEmail.message}</p>}
 					</div>
 
 					<div>
 						<label className='block text-sm font-medium text-gray-700 mb-1'>Adres e-mail *</label>
 						<input
 							type='email'
-							name='email'
-							value={formData.email}
-							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-							required
+							{...register('email', {
+								required: 'To pole jest wymagane.',
+								pattern: {
+									value: /^\S+@\S+$/i,
+									message: 'Nieprawidłowy format e-mail.',
+								},
+							})}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700'
 						/>
+						{errors.email && <p className='text-red-500 text-xs mt-1'>{errors.email.message}</p>}
 					</div>
 				</div>
 
@@ -273,10 +222,8 @@ export default function FormComponent() {
 					<label className='block text-sm font-medium text-gray-700 mb-1'>Strona internetowa</label>
 					<input
 						type='url'
-						name='website'
-						value={formData.website}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+						{...register('website')}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700'
 						placeholder='https://'
 					/>
 				</div>
@@ -285,12 +232,10 @@ export default function FormComponent() {
 					<label className='block text-sm font-medium text-gray-700 mb-1'>Imię i nazwisko kierownika firmy *</label>
 					<input
 						type='text'
-						name='ceoName'
-						value={formData.ceoName}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-						required
+						{...register('ceoName', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700'
 					/>
+					{errors.ceoName && <p className='text-red-500 text-xs mt-1'>{errors.ceoName.message}</p>}
 				</div>
 
 				<div>
@@ -298,13 +243,11 @@ export default function FormComponent() {
 						Osoby upoważnione do reprezentowania firmy wobec PISiL (imię, nazwisko, stanowisko) *
 					</label>
 					<textarea
-						name='authorizedPersons'
-						value={formData.authorizedPersons}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+						{...register('authorizedPersons', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700'
 						rows='3'
-						required
 					/>
+					{errors.authorizedPersons && <p className='text-red-500 text-xs mt-1'>{errors.authorizedPersons.message}</p>}
 				</div>
 			</div>
 		</div>
@@ -313,106 +256,83 @@ export default function FormComponent() {
 	const renderStep3 = () => (
 		<div className='space-y-6'>
 			<h2 className='text-xl font-semibold text-gray-900'>Dane rejestracyjne i certyfikaty</h2>
-
 			<div className='space-y-4'>
 				<div>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>
 						Data rejestracji firmy, sąd rejestrowy, nr rejestru *
 					</label>
 					<textarea
-						name='registrationData'
-						value={formData.registrationData}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+						{...register('registrationData', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						rows='2'
-						required
 					/>
+					{errors.registrationData && <p className='text-red-500 text-xs mt-1'>{errors.registrationData.message}</p>}
 				</div>
-
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 					<div>
 						<label className='block text-sm font-medium text-gray-700 mb-1'>Forma własności *</label>
 						<input
 							type='text'
-							name='ownershipForm'
-							value={formData.ownershipForm}
-							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-							placeholder='np. Sp. z o.o., S.A., jednoosobowa działalność'
-							required
+							{...register('ownershipForm', { required: 'To pole jest wymagane.' })}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						/>
+						{errors.ownershipForm && <p className='text-red-500 text-xs mt-1'>{errors.ownershipForm.message}</p>}
 					</div>
-
 					<div>
 						<label className='block text-sm font-medium text-gray-700 mb-1'>Wielkość zatrudnienia *</label>
 						<input
 							type='text'
-							name='employmentSize'
-							value={formData.employmentSize}
-							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-							placeholder='np. 1-10, 11-50, 51-250, 250+'
-							required
+							{...register('employmentSize', { required: 'To pole jest wymagane.' })}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						/>
+						{errors.employmentSize && <p className='text-red-500 text-xs mt-1'>{errors.employmentSize.message}</p>}
 					</div>
 				</div>
-
 				<div>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>
-						Czy firma posiada licencję na pośrednictwo przy przewozie rzeczy wydaną do 15.08.2013 roku? (Jeżeli tak
-						proszę o podanie nr, daty ważności licencji nazwy organu wydającego) *
+						Licencja na pośrednictwo przy przewozie rzeczy *
 					</label>
 					<textarea
-						name='transportLicense'
-						value={formData.transportLicense}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+						{...register('transportLicense', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						rows='2'
-						placeholder='np. Nie posiada / Tak, nr: ..., data ważności: ..., organ: ...'
-						required
 					/>
+					{errors.transportLicense && <p className='text-red-500 text-xs mt-1'>{errors.transportLicense.message}</p>}
 				</div>
-
 				<div>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>
-						Czy firma posiada Certyfikat ISO 9002 (w jakim zakresie) *
+						Certyfikat ISO 9002 (w jakim zakresie) *
 					</label>
 					<textarea
-						name='iso9002Certificate'
-						value={formData.iso9002Certificate}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+						{...register('iso9002Certificate', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						rows='2'
-						placeholder='np. Nie posiada / Tak, zakres: ...'
-						required
 					/>
+					{errors.iso9002Certificate && (
+						<p className='text-red-500 text-xs mt-1'>{errors.iso9002Certificate.message}</p>
+					)}
 				</div>
-
 				<div>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>
-						Czy firma posiada ubezpieczenie o.c. spedytora (jeżeli tak, to u jakiego ubezpieczyciela) *
+						Ubezpieczenie o.c. spedytora (ubezpieczyciel) *
 					</label>
 					<textarea
-						name='insuranceOC'
-						value={formData.insuranceOC}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+						{...register('insuranceOC', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						rows='2'
-						placeholder='np. Nie posiada / Tak, ubezpieczyciel: ...'
-						required
 					/>
+					{errors.insuranceOC && <p className='text-red-500 text-xs mt-1'>{errors.insuranceOC.message}</p>}
 				</div>
-
 				<div>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>Opis prowadzonej działalności firmy *</label>
 					<textarea
-						name='businessDescription'
-						value={formData.businessDescription}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+						{...register('businessDescription', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						rows='3'
-						required
 					/>
+					{errors.businessDescription && (
+						<p className='text-red-500 text-xs mt-1'>{errors.businessDescription.message}</p>
+					)}
 				</div>
 			</div>
 		</div>
@@ -421,132 +341,53 @@ export default function FormComponent() {
 	const renderStep4 = () => (
 		<div className='space-y-6'>
 			<h2 className='text-xl font-semibold text-gray-900'>Wachlarz świadczonych usług</h2>
-
 			<div className='space-y-6'>
 				<div>
 					<h3 className='text-lg font-medium text-gray-900 mb-4'>Usługi transportowe *</h3>
 					<div className='grid grid-cols-2 gap-4'>
-						<div className='space-y-3'>
-							<label className='flex items-center space-x-3'>
-								<input
-									type='checkbox'
-									name='transportMorski'
-									checked={formData.transportMorski}
-									onChange={handleInputChange}
-									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-								/>
-								<span className='text-sm text-gray-700'>Transport morski</span>
+						{[
+							'transportMorski',
+							'transportKolejowy',
+							'transportLotniczy',
+							'logistyka',
+							'transportDrogowy',
+							'taborWlasny',
+							'taborObcy',
+							'transportInne',
+						].map(field => (
+							<label key={field} className='flex items-center space-x-3'>
+								<input type='checkbox' {...register(field)} className='h-4 w-4 text-blue-600 rounded' />
+								<span className='text-sm text-gray-700'>
+									{
+										{
+											transportMorski: 'Transport morski',
+											transportKolejowy: 'Transport kolejowy',
+											transportLotniczy: 'Transport lotniczy',
+											logistyka: 'Logistyka',
+											transportDrogowy: 'Transport drogowy',
+											taborWlasny: 'Taborem własnym',
+											taborObcy: 'Taborem obcym',
+											transportInne: 'Inne',
+										}[field]
+									}
+								</span>
 							</label>
-
-							<label className='flex items-center space-x-3'>
-								<input
-									type='checkbox'
-									name='transportKolejowy'
-									checked={formData.transportKolejowy}
-									onChange={handleInputChange}
-									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-								/>
-								<span className='text-sm text-gray-700'>Transport kolejowy</span>
-							</label>
-
-							<label className='flex items-center space-x-3'>
-								<input
-									type='checkbox'
-									name='transportLotniczy'
-									checked={formData.transportLotniczy}
-									onChange={handleInputChange}
-									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-								/>
-								<span className='text-sm text-gray-700'>Transport lotniczy</span>
-							</label>
-
-							<label className='flex items-center space-x-3'>
-								<input
-									type='checkbox'
-									name='logistyka'
-									checked={formData.logistyka}
-									onChange={handleInputChange}
-									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-								/>
-								<span className='text-sm text-gray-700'>Logistyka</span>
-							</label>
-						</div>
-
-						<div className='space-y-3'>
-							<label className='flex items-center space-x-3'>
-								<input
-									type='checkbox'
-									name='transportDrogowy'
-									checked={formData.transportDrogowy}
-									onChange={handleInputChange}
-									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-								/>
-								<span className='text-sm text-gray-700'>Transport drogowy</span>
-							</label>
-
-							<label className='flex items-center space-x-3'>
-								<input
-									type='checkbox'
-									name='taborWlasny'
-									checked={formData.taborWlasny}
-									onChange={handleInputChange}
-									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-								/>
-								<span className='text-sm text-gray-700'>Taborem własnym</span>
-							</label>
-
-							<label className='flex items-center space-x-3'>
-								<input
-									type='checkbox'
-									name='taborObcy'
-									checked={formData.taborObcy}
-									onChange={handleInputChange}
-									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-								/>
-								<span className='text-sm text-gray-700'>Taborem obcym</span>
-							</label>
-
-							<label className='flex items-center space-x-3'>
-								<input
-									type='checkbox'
-									name='transportInne'
-									checked={formData.transportInne}
-									onChange={handleInputChange}
-									className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-								/>
-								<span className='text-sm text-gray-700'>inne (np. NVOCC, agencje armatorów, itp.)</span>
-							</label>
-						</div>
+						))}
 					</div>
 				</div>
-
 				<div>
 					<h3 className='text-lg font-medium text-gray-900 mb-4'>Usługi magazynowo-dystrybucyjne *</h3>
 					<div className='grid grid-cols-2 gap-4'>
 						<label className='flex items-center space-x-3'>
-							<input
-								type='checkbox'
-								name='magazynWlasny'
-								checked={formData.magazynWlasny}
-								onChange={handleInputChange}
-								className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-							/>
+							<input type='checkbox' {...register('magazynWlasny')} className='h-4 w-4 text-blue-600 rounded' />
 							<span className='text-sm text-gray-700'>Magazyn własny</span>
 						</label>
-
 						<label className='flex items-center space-x-3'>
-							<input
-								type='checkbox'
-								name='magazynObcy'
-								checked={formData.magazynObcy}
-								onChange={handleInputChange}
-								className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-							/>
+							<input type='checkbox' {...register('magazynObcy')} className='h-4 w-4 text-blue-600 rounded' />
 							<span className='text-sm text-gray-700'>Magazyn obcy</span>
 						</label>
 					</div>
 				</div>
-
 				<div>
 					<h3 className='text-lg font-medium text-gray-900'>Organizacja przewozów drobnicy zbiorowe *</h3>
 					<p className='text-sm text-gray-600 mb-4'>Agencje celne</p>
@@ -554,66 +395,62 @@ export default function FormComponent() {
 						<label className='flex items-center space-x-3 cursor-pointer'>
 							<input
 								type='radio'
-								name='organizacjaAgencje'
-								checked={formData.organizacjaPrzewozow === true}
-								onChange={() => setFormData(prev => ({ ...prev, organizacjaPrzewozow: true, agencjeCelne: true }))}
-								className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300'
+								value='true'
+								{...register('organizacjaPrzewozow', { required: true })}
+								onChange={() => {
+									setValue('organizacjaPrzewozow', true)
+									setValue('agencjeCelne', true)
+								}}
+								checked={watch('organizacjaPrzewozow') === true}
+								className='h-4 w-4 text-blue-600'
 							/>
 							<span className='text-sm text-gray-700'>Tak</span>
 						</label>
 						<label className='flex items-center space-x-3 cursor-pointer'>
 							<input
 								type='radio'
-								name='organizacjaAgencje'
-								checked={formData.organizacjaPrzewozow === false}
-								onChange={() => setFormData(prev => ({ ...prev, organizacjaPrzewozow: false, agencjeCelne: false }))}
-								className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300'
+								value='false'
+								{...register('organizacjaPrzewozow', { required: true })}
+								onChange={() => {
+									setValue('organizacjaPrzewozow', false)
+									setValue('agencjeCelne', false)
+								}}
+								checked={watch('organizacjaPrzewozow') === false}
+								className='h-4 w-4 text-blue-600'
 							/>
 							<span className='text-sm text-gray-700'>Nie</span>
 						</label>
 					</div>
 				</div>
-
 				<div className='grid grid-cols-1 gap-4'>
 					<div>
 						<label className='block text-sm font-medium text-gray-700 mb-1'>a) krajowa (ilość oddziałów) *</label>
 						<input
 							type='text'
-							name='krajowaSiec'
-							value={formData.krajowaSiec}
-							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-							placeholder='np. 5 oddziałów / Brak'
-							required
+							{...register('krajowaSiec', { required: 'To pole jest wymagane.' })}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						/>
+						{errors.krajowaSiec && <p className='text-red-500 text-xs mt-1'>{errors.krajowaSiec.message}</p>}
 					</div>
-
 					<div>
 						<label className='block text-sm font-medium text-gray-700 mb-1'>
-							b) zagraniczna (ilość firm własnych / ilość korespondentów) *
+							b/ zagraniczna (ilość firm własnych / ilość korespondentów) *
 						</label>
 						<input
 							type='text'
-							name='zagranicznaSSiec'
-							value={formData.zagranicznaSSiec}
-							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-							placeholder='np. 2 firmy własne / 15 korespondentów / Brak'
-							required
+							{...register('zagranicznaSSiec', { required: 'To pole jest wymagane.' })}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						/>
+						{errors.zagranicznaSSiec && <p className='text-red-500 text-xs mt-1'>{errors.zagranicznaSSiec.message}</p>}
 					</div>
-
 					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-1'>c) inne formy współpracy *</label>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>c/ inne formy współpracy *</label>
 						<textarea
-							name='inneFormy'
-							value={formData.inneFormy}
-							onChange={handleInputChange}
-							className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+							{...register('inneFormy', { required: 'To pole jest wymagane.' })}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 							rows='2'
-							placeholder='Opisz inne formy współpracy lub napisz "Brak"'
-							required
 						/>
+						{errors.inneFormy && <p className='text-red-500 text-xs mt-1'>{errors.inneFormy.message}</p>}
 					</div>
 				</div>
 			</div>
@@ -623,85 +460,68 @@ export default function FormComponent() {
 	const renderStep5 = () => (
 		<div className='space-y-6'>
 			<h2 className='text-xl font-semibold text-gray-900'>Członkostwo i finalizacja</h2>
-
 			<div className='space-y-4'>
 				<div>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>
 						Do jakich organizacji firma należy i od kiedy *
 					</label>
 					<textarea
-						name='organizacje'
-						value={formData.organizacje}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+						{...register('organizacje', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						rows='3'
-						placeholder='Wymień organizacje, do których firma należy wraz z datami przystąpienia lub napisz "Brak"'
-						required
 					/>
+					{errors.organizacje && <p className='text-red-500 text-xs mt-1'>{errors.organizacje.message}</p>}
 				</div>
-
 				<div>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>
-						Firmy-Członkowie Izby rekomendujący przystąpienie do PISiL (nazwa, adres, podpis kierownika firmy) *
+						Firmy-Członkowie Izby rekomendujący przystąpienie do PISiL *
 					</label>
 					<textarea
-						name='rekomendacje'
-						value={formData.rekomendacje}
-						onChange={handleInputChange}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+						{...register('rekomendacje', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						rows='4'
-						placeholder='Podaj dane firm rekomendujących lub napisz "Brak"'
-						required
 					/>
+					{errors.rekomendacje && <p className='text-red-500 text-xs mt-1'>{errors.rekomendacje.message}</p>}
 				</div>
-
 				<div className='border-t border-gray-200 pt-6'>
 					<h3 className='text-lg font-medium text-gray-900 mb-4'>Oświadczenie</h3>
-
 					<div className='flex items-start space-x-3 mb-6'>
 						<input
 							type='checkbox'
-							name='declarationStatute'
 							id='declarationStatute'
-							checked={formData.declarationStatute}
-							onChange={handleInputChange}
-							className='mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-							required
+							{...register('declarationStatute', { required: 'Musisz zaakceptować statut.' })}
+							className='mt-1 h-4 w-4 text-blue-600 rounded'
 						/>
 						<label htmlFor='declarationStatute' className='text-sm text-gray-700'>
-							Oświadczam, że zapoznałem/zapoznałam się z treścią Statutu PISiL i jednocześnie zobowiązuję się do
-							przestrzegania zawartych w nim postanowień. *
+							Oświadczam, że zapoznałem/am się z treścią Statutu PISiL i zobowiązuję się do przestrzegania go. *
 						</label>
 					</div>
+					{errors.declarationStatute && (
+						<p className='text-red-500 text-xs mt-1'>{errors.declarationStatute.message}</p>
+					)}
 				</div>
-
 				<div className='border-t border-gray-200 pt-6'>
 					<h3 className='text-lg font-medium text-gray-900 mb-4'>Podpis</h3>
-
 					<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 						<div>
 							<label className='block text-sm font-medium text-gray-700 mb-1'>Imię i nazwisko *</label>
 							<input
 								type='text'
-								name='signatoryName'
-								value={formData.signatoryName}
-								onChange={handleInputChange}
-								className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-								required
+								{...register('signatoryName', { required: 'To pole jest wymagane.' })}
+								className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 							/>
+							{errors.signatoryName && <p className='text-red-500 text-xs mt-1'>{errors.signatoryName.message}</p>}
 						</div>
-
 						<div>
 							<label className='block text-sm font-medium text-gray-700 mb-1'>Stanowisko *</label>
 							<input
 								type='text'
-								name='signatoryPosition'
-								value={formData.signatoryPosition}
-								onChange={handleInputChange}
-								className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-								placeholder='np. Prezes, Dyrektor'
-								required
+								{...register('signatoryPosition', { required: 'To pole jest wymagane.' })}
+								className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 							/>
+							{errors.signatoryPosition && (
+								<p className='text-red-500 text-xs mt-1'>{errors.signatoryPosition.message}</p>
+							)}
 						</div>
 					</div>
 				</div>
@@ -709,44 +529,8 @@ export default function FormComponent() {
 		</div>
 	)
 
-	const isStepValid = step => {
-		switch (step) {
-			case 1:
-				return (
-					formData.companyName && formData.nip && formData.regon && formData.address && formData.correspondenceAddress
-				)
-			case 2:
-				return (
-					formData.phones && formData.invoiceEmail && formData.email && formData.ceoName && formData.authorizedPersons
-				)
-			case 3:
-				return (
-					formData.registrationData &&
-					formData.ownershipForm &&
-					formData.employmentSize &&
-					formData.transportLicense &&
-					formData.iso9002Certificate &&
-					formData.insuranceOC &&
-					formData.businessDescription
-				)
-			case 4:
-				return formData.krajowaSiec && formData.zagranicznaSSiec && formData.inneFormy
-			case 5:
-				return (
-					formData.organizacje &&
-					formData.rekomendacje &&
-					formData.declarationStatute &&
-					formData.signatoryName &&
-					formData.signatoryPosition
-				)
-			default:
-				return false
-		}
-	}
-
 	return (
 		<div className='bg-white rounded-lg shadow-md p-6'>
-			{/* Progress bar */}
 			<div className='mb-8'>
 				<div className='flex justify-between items-center mb-2'>
 					<span className='text-sm font-medium text-gray-700'>Krok {currentStep} z 5</span>
@@ -759,7 +543,6 @@ export default function FormComponent() {
 				</div>
 			</div>
 
-			{/* Przycisk testowych danych - tylko w developmencie */}
 			{process.env.NODE_ENV === 'development' && (
 				<div className='mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg'>
 					<div className='flex items-center justify-between'>
@@ -769,14 +552,13 @@ export default function FormComponent() {
 						</div>
 						<button
 							onClick={fillTestData}
-							className='px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700 transition-colors'>
+							className='px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700'>
 							Wypełnij testowe dane
 						</button>
 					</div>
 				</div>
 			)}
 
-			{/* Form steps */}
 			<div className='min-h-[400px]'>
 				{currentStep === 1 && renderStep1()}
 				{currentStep === 2 && renderStep2()}
@@ -785,15 +567,12 @@ export default function FormComponent() {
 				{currentStep === 5 && renderStep5()}
 			</div>
 
-			{/* Navigation buttons */}
 			<div className='flex justify-between items-center mt-8 pt-6 border-t border-gray-200'>
 				<button
 					onClick={prevStep}
 					disabled={currentStep === 1}
-					className={`px-6 py-2 rounded-md font-medium ${
-						currentStep === 1
-							? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-							: 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+					className={`px-6 py-2 rounded-md font-medium text-gray-700 ${
+						currentStep === 1 ? 'bg-gray-100 cursor-not-allowed' : 'bg-gray-200 hover:bg-gray-300'
 					}`}>
 					Wstecz
 				</button>
@@ -801,27 +580,20 @@ export default function FormComponent() {
 				{currentStep < 5 ? (
 					<button
 						onClick={nextStep}
-						disabled={!isStepValid(currentStep)}
+						disabled={!isValid}
 						className={`px-6 py-2 rounded-md font-medium ${
-							!isStepValid(currentStep)
-								? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-								: 'bg-blue-600 text-white hover:bg-blue-700'
+							!isValid ? 'bg-gray-100 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
 						}`}>
 						Dalej
 					</button>
 				) : (
-					<PDFGenerator
-						formData={formData}
-						onGenerated={() => setPdfGenerated(true)}
-						disabled={!isStepValid(currentStep)}
-					/>
+					<PDFGenerator formData={getValues()} onGenerated={() => setPdfGenerated(true)} disabled={!isValid} />
 				)}
 			</div>
 
-			{/* File upload section */}
 			{pdfGenerated && (
 				<div className='mt-8 pt-6 border-t border-gray-200'>
-					<FileUpload formData={formData} />
+					<FileUpload formData={getValues()} />
 				</div>
 			)}
 		</div>
