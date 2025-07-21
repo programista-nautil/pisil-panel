@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
+import Cookies from 'js-cookie'
 import PDFGenerator from './PDFGenerator'
 import FileUpload from './FileUpload'
 
@@ -10,12 +11,13 @@ export default function FormComponent() {
 		register,
 		handleSubmit,
 		watch,
-		formState: { errors, isValid },
+		formState: { errors, isValid, touchedFields },
 		reset,
 		getValues,
 		setValue,
+		trigger,
 	} = useForm({
-		mode: 'onChange', // Walidacja przy każdej zmianie
+		mode: 'onChange',
 		defaultValues: {
 			companyName: '',
 			nip: '',
@@ -60,6 +62,35 @@ export default function FormComponent() {
 
 	const [currentStep, setCurrentStep] = useState(1)
 	const [pdfGenerated, setPdfGenerated] = useState(false)
+
+	useEffect(() => {
+		const subscription = watch(values => {
+			const sessionData = {
+				step: currentStep,
+				data: values,
+			}
+			Cookies.set('formSession', JSON.stringify(sessionData), { expires: 1 })
+		})
+		return () => subscription.unsubscribe()
+	}, [watch, currentStep])
+
+	useEffect(() => {
+		const savedSession = Cookies.get('formSession')
+		if (savedSession) {
+			try {
+				const sessionData = JSON.parse(savedSession)
+				reset(sessionData.data)
+				setCurrentStep(sessionData.step)
+			} catch (error) {
+				console.error('Błąd podczas parsowania danych sesji:', error)
+				Cookies.remove('formSession')
+			}
+		}
+	}, [reset])
+
+	const handleUploadSuccess = () => {
+		Cookies.remove('formSession')
+	}
 
 	// Pobieramy aktualne dane formularza, aby przekazać je do komponentów potomnych
 	const formData = getValues()
@@ -593,7 +624,7 @@ export default function FormComponent() {
 
 			{pdfGenerated && (
 				<div className='mt-8 pt-6 border-t border-gray-200'>
-					<FileUpload formData={getValues()} />
+					<FileUpload formData={getValues()} onUploadSuccess={handleUploadSuccess} />
 				</div>
 			)}
 		</div>

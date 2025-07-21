@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 
-export default function FileUpload({ formData }) {
+export default function FileUpload({ formData, onUploadSuccess }) {
 	const [file, setFile] = useState(null)
 	const [isUploading, setIsUploading] = useState(false)
 	const [uploadStatus, setUploadStatus] = useState(null)
@@ -88,6 +88,9 @@ export default function FileUpload({ formData }) {
 					message: 'Plik został przesłany pomyślnie! Sprawdzamy podpis i wysyłamy powiadomienia email.',
 				})
 				handleRemoveFile()
+				if (onUploadSuccess) {
+					onUploadSuccess()
+				}
 			} else {
 				const error = await response.json()
 				setUploadStatus({
