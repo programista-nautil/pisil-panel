@@ -548,36 +548,35 @@ export default function FormComponent() {
 				</div>
 
 				<div>
-					<h3 className='text-lg font-medium text-gray-900 mb-4'>Organizacja przewozów drobnicy zbiorowe *</h3>
-					<label className='flex items-center space-x-3'>
-						<input
-							type='checkbox'
-							name='organizacjaPrzewozow'
-							checked={formData.organizacjaPrzewozow}
-							onChange={handleInputChange}
-							className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-						/>
-						<span className='text-sm text-gray-700'>Tak</span>
-					</label>
-				</div>
-
-				<div>
-					<h3 className='text-lg font-medium text-gray-900 mb-4'>Agencje celne</h3>
-					<label className='flex items-center space-x-3'>
-						<input
-							type='checkbox'
-							name='agencjeCelne'
-							checked={formData.agencjeCelne}
-							onChange={handleInputChange}
-							className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-						/>
-						<span className='text-sm text-gray-700'>Tak</span>
-					</label>
+					<h3 className='text-lg font-medium text-gray-900'>Organizacja przewozów drobnicy zbiorowe *</h3>
+					<p className='text-sm text-gray-600 mb-4'>Agencje celne</p>
+					<div className='flex items-center space-x-6'>
+						<label className='flex items-center space-x-3 cursor-pointer'>
+							<input
+								type='radio'
+								name='organizacjaAgencje'
+								checked={formData.organizacjaPrzewozow === true}
+								onChange={() => setFormData(prev => ({ ...prev, organizacjaPrzewozow: true, agencjeCelne: true }))}
+								className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300'
+							/>
+							<span className='text-sm text-gray-700'>Tak</span>
+						</label>
+						<label className='flex items-center space-x-3 cursor-pointer'>
+							<input
+								type='radio'
+								name='organizacjaAgencje'
+								checked={formData.organizacjaPrzewozow === false}
+								onChange={() => setFormData(prev => ({ ...prev, organizacjaPrzewozow: false, agencjeCelne: false }))}
+								className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300'
+							/>
+							<span className='text-sm text-gray-700'>Nie</span>
+						</label>
+					</div>
 				</div>
 
 				<div className='grid grid-cols-1 gap-4'>
 					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-1'>a/ krajowa (ilość oddziałów) *</label>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>a) krajowa (ilość oddziałów) *</label>
 						<input
 							type='text'
 							name='krajowaSiec'
@@ -591,7 +590,7 @@ export default function FormComponent() {
 
 					<div>
 						<label className='block text-sm font-medium text-gray-700 mb-1'>
-							b/ zagraniczna (ilość firm własnych / ilość korespondentów) *
+							b) zagraniczna (ilość firm własnych / ilość korespondentów) *
 						</label>
 						<input
 							type='text'
@@ -605,7 +604,7 @@ export default function FormComponent() {
 					</div>
 
 					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-1'>c/ inne formy współpracy *</label>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>c) inne formy współpracy *</label>
 						<textarea
 							name='inneFormy'
 							value={formData.inneFormy}
