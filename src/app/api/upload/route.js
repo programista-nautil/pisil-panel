@@ -3,6 +3,8 @@ import fs from 'fs'
 import path from 'path'
 import nodemailer from 'nodemailer'
 import { PDFDocument } from 'pdf-lib'
+import prisma from '@/lib/prisma'
+import { FormType } from '@prisma/client'
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'programista@nautil.pl'
 
@@ -49,6 +51,21 @@ export async function POST(request) {
 		const filepath = path.join(uploadsDir, filename)
 
 		fs.writeFileSync(filepath, buffer)
+
+		try {
+			await prisma.submission.create({
+				data: {
+					formData: userData,
+					filePath: filepath,
+					fileName: filename,
+					formType: FormType.DEKLARACJA_CZLONKOWSKA,
+				},
+			})
+		} catch (dbError) {
+			console.error('Błąd zapisu do bazy danych:', dbError)
+			fs.unlinkSync(filepath)
+			return NextResponse.json({ message: 'Błąd serwera podczas zapisu danych.' }, { status: 500 })
+		}
 
 		const transporter = nodemailer.createTransport({
 			host: 'smtp.gmail.com',
