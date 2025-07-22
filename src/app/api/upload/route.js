@@ -73,8 +73,6 @@ export async function POST(request) {
 				}</p>
         <p><strong>Data przesłania:</strong> ${new Date().toLocaleString('pl-PL')}</p>
         
-        <h3>Pełne dane:</h3>
-        <pre>${JSON.stringify(userData, null, 2)}</pre>
       `,
 			attachments: [
 				{
@@ -117,6 +115,12 @@ export async function POST(request) {
 		try {
 			await transporter.sendMail(adminMailOptions)
 			await transporter.sendMail(userMailOptions)
+
+			try {
+				fs.unlinkSync(filepath)
+			} catch (unlinkError) {
+				console.error('Nie udało się usunąć pliku tymczasowego:', filepath, unlinkError)
+			}
 
 			return NextResponse.json({
 				message: 'Plik został przesłany pomyślnie',
