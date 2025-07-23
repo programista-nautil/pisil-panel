@@ -86,7 +86,8 @@ model Submission {
   status    Status   @default(PENDING)
   formType  FormType
   
-  formData  Json     // JSON dla PostgreSQL
+  companyName String   @default("Nieznana firma") 
+  email       String   @default("brak@email.com")
   filePath  String   // Ścieżka do pliku PDF
   fileName  String   // Oryginalna nazwa pliku
 }

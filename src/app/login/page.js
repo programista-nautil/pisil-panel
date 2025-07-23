@@ -39,7 +39,7 @@ export default function LoginPage() {
 							value={username}
 							onChange={e => setUsername(e.target.value)}
 							required
-							className='mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm'
+							className='mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-600'
 						/>
 					</div>
 					<div>
@@ -49,7 +49,7 @@ export default function LoginPage() {
 							value={password}
 							onChange={e => setPassword(e.target.value)}
 							required
-							className='mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm'
+							className='mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-600'
 						/>
 					</div>
 					{error && <p className='text-red-500 text-sm text-center'>{error}</p>}

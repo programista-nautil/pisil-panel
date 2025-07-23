@@ -55,7 +55,8 @@ export async function POST(request) {
 		try {
 			await prisma.submission.create({
 				data: {
-					formData: userData,
+					companyName: userData.companyName,
+					email: userData.email,
 					filePath: filepath,
 					fileName: filename,
 					formType: FormType.DEKLARACJA_CZLONKOWSKA,
