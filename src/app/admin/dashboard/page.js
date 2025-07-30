@@ -50,6 +50,32 @@ export default function AdminDashboard() {
 		fetchSubmissions()
 	}, [])
 
+	const handleVerificationChange = async (submissionId, currentStatus) => {
+		const newStatus = !currentStatus
+
+		// Optymistyczna aktualizacja UI - natychmiast pokazujemy zmianę
+		setSubmissions(current => current.map(sub => (sub.id === submissionId ? { ...sub, isVerified: newStatus } : sub)))
+
+		try {
+			const response = await fetch(`/api/admin/submissions/${submissionId}/verify`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ isVerified: newStatus }),
+			})
+
+			if (!response.ok) {
+				throw new Error('Aktualizacja statusu nie powiodła się.')
+			}
+		} catch (error) {
+			console.error(error)
+			// Wycofaj zmianę w UI w przypadku błędu
+			setSubmissions(current =>
+				current.map(sub => (sub.id === submissionId ? { ...sub, isVerified: currentStatus } : sub))
+			)
+			alert('Nie udało się zaktualizować statusu weryfikacji.')
+		}
+	}
+
 	const handleDeleteSubmission = async submissionId => {
 		if (!window.confirm('Czy na pewno chcesz usunąć to zgłoszenie? Tej operacji nie można cofnąć.')) {
 			return
@@ -119,6 +145,9 @@ export default function AdminDashboard() {
 							<thead className='text-xs text-gray-700 uppercase bg-gray-50'>
 								<tr>
 									<th scope='col' className='px-6 py-4 font-semibold'>
+										Zweryfikowany
+									</th>
+									<th scope='col' className='px-6 py-4 font-semibold'>
 										Nazwa Firmy
 									</th>
 									<th scope='col' className='px-6 py-4 font-semibold'>
@@ -151,6 +180,14 @@ export default function AdminDashboard() {
 								) : (
 									submissions.map(submission => (
 										<tr key={submission.id} className='bg-white border-t hover:bg-gray-50'>
+											<td className='px-6 py-4 text-center'>
+												<input
+													type='checkbox'
+													checked={submission.isVerified}
+													onChange={() => handleVerificationChange(submission.id, submission.isVerified)}
+													className='h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer'
+												/>
+											</td>
 											<td className='px-6 py-4 font-medium text-gray-900 whitespace-nowrap'>
 												{submission.companyName || 'Brak nazwy'}
 											</td>

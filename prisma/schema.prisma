@@ -85,6 +85,8 @@ model Submission {
 
   status    Status   @default(PENDING)
   formType  FormType
+
+  isVerified Boolean  @default(false)
   
   companyName String   @default("Nieznana firma") 
   email       String   @default("brak@email.com")
