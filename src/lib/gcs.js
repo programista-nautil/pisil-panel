@@ -5,6 +5,7 @@ const storage = new Storage({
 })
 
 const bucketName = process.env.GCS_BUCKET_NAME
+const bucket = storage.bucket(bucketName)
 
 /**
  * Przesyła plik do Google Cloud Storage.
@@ -14,7 +15,7 @@ const bucketName = process.env.GCS_BUCKET_NAME
  */
 export const uploadFileToGCS = (buffer, destination) => {
 	return new Promise((resolve, reject) => {
-		const file = storage.bucket(bucketName).file(destination)
+		const file = bucket.file(destination)
 		const stream = file.createWriteStream({
 			metadata: {
 				contentType: 'application/pdf',
@@ -33,4 +34,19 @@ export const uploadFileToGCS = (buffer, destination) => {
 
 		stream.end(buffer)
 	})
+}
+
+/**
+ * Pobiera plik z Google Cloud Storage jako bufor.
+ * @param {string} fileName - Nazwa pliku do pobrania.
+ * @returns {Promise<Buffer>} Bufor z zawartością pliku.
+ */
+export const downloadFileFromGCS = async fileName => {
+	try {
+		const [buffer] = await bucket.file(fileName).download()
+		return buffer
+	} catch (error) {
+		console.error(`Nie udało się pobrać pliku ${fileName} z GCS:`, error)
+		throw new Error('File not found in GCS')
+	}
 }

@@ -144,7 +144,11 @@ export default function AdminDashboard() {
 												<StatusBadge status={submission.status} />
 											</td>
 											<td className='px-6 py-4 text-right'>
-												<a href='#' className='font-medium text-blue-600 hover:underline'>
+												<a
+													href={`/api/admin/submissions/${submission.id}/download`}
+													className='font-medium text-blue-600 hover:underline'
+													target='_blank' // Otwiera w nowej karcie, nie przerywając pracy
+													rel='noopener noreferrer'>
 													Pobierz PDF
 												</a>
 											</td>
