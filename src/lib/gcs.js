@@ -50,3 +50,19 @@ export const downloadFileFromGCS = async fileName => {
 		throw new Error('File not found in GCS')
 	}
 }
+
+/**
+ * Usuwa plik z Google Cloud Storage.
+ * @param {string} fileName - Nazwa pliku do usunięcia.
+ * @returns {Promise<void>}
+ */
+export const deleteFileFromGCS = async fileName => {
+	try {
+		await bucket.file(fileName).delete()
+		console.log(`Plik ${fileName} został usunięty z GCS.`)
+	} catch (error) {
+		console.error(`Nie udało się usunąć pliku ${fileName} z GCS:`, error)
+		// Rzucamy błąd dalej, aby API mogło go obsłużyć
+		throw new Error('Nie udało się usunąć pliku z GCS')
+	}
+}

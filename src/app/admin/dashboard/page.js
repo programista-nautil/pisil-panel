@@ -50,6 +50,27 @@ export default function AdminDashboard() {
 		fetchSubmissions()
 	}, [])
 
+	const handleDeleteSubmission = async submissionId => {
+		if (!window.confirm('Czy na pewno chcesz usunąć to zgłoszenie? Tej operacji nie można cofnąć.')) {
+			return
+		}
+
+		try {
+			const response = await fetch(`/api/admin/submissions/${submissionId}`, {
+				method: 'DELETE',
+			})
+
+			if (!response.ok) {
+				throw new Error('Nie udało się usunąć zgłoszenia.')
+			}
+
+			setSubmissions(currentSubmissions => currentSubmissions.filter(sub => sub.id !== submissionId))
+		} catch (error) {
+			console.error(error)
+			alert('Wystąpił błąd podczas usuwania.')
+		}
+	}
+
 	return (
 		<div className='min-h-screen bg-gray-100'>
 			<div className='max-w-7xl mx-auto p-4 sm:p-6 lg:p-8'>
@@ -143,7 +164,7 @@ export default function AdminDashboard() {
 											<td className='px-6 py-4'>
 												<StatusBadge status={submission.status} />
 											</td>
-											<td className='px-6 py-4 text-right'>
+											<td className='px-6 py-4 text-right flex items-center justify-end gap-4'>
 												<a
 													href={`/api/admin/submissions/${submission.id}/download`}
 													className='font-medium text-blue-600 hover:underline'
@@ -151,6 +172,11 @@ export default function AdminDashboard() {
 													rel='noopener noreferrer'>
 													Pobierz PDF
 												</a>
+												<button
+													onClick={() => handleDeleteSubmission(submission.id)}
+													className='font-medium text-red-600 hover:underline'>
+													Usuń
+												</button>
 											</td>
 										</tr>
 									))
