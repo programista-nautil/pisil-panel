@@ -5,6 +5,7 @@ import nodemailer from 'nodemailer'
 import { PDFDocument } from 'pdf-lib'
 import prisma from '@/lib/prisma'
 import { FormType } from '@prisma/client'
+import { uploadFileToGCS } from '@/lib/gcs'
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'programista@nautil.pl'
 
@@ -42,31 +43,20 @@ export async function POST(request) {
 			hasSignature = false // Bezpieczniej założyć, że nie ma podpisu, jeśli plik jest uszkodzony
 		}
 
-		const uploadsDir = path.join(process.cwd(), 'uploads')
-		if (!fs.existsSync(uploadsDir)) {
-			fs.mkdirSync(uploadsDir, { recursive: true })
-		}
-
 		const filename = `deklaracja_${userData.companyName.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`
-		const filepath = path.join(uploadsDir, filename)
 
-		fs.writeFileSync(filepath, buffer)
+		const gcsFilePath = await uploadFileToGCS(buffer, filename)
 
-		try {
-			await prisma.submission.create({
-				data: {
-					companyName: userData.companyName,
-					email: userData.email,
-					filePath: filepath,
-					fileName: filename,
-					formType: FormType.DEKLARACJA_CZLONKOWSKA,
-				},
-			})
-		} catch (dbError) {
-			console.error('Błąd zapisu do bazy danych:', dbError)
-			fs.unlinkSync(filepath)
-			return NextResponse.json({ message: 'Błąd serwera podczas zapisu danych.' }, { status: 500 })
-		}
+		// Zapis metadanych do bazy danych
+		await prisma.submission.create({
+			data: {
+				companyName: userData.companyName,
+				email: userData.email,
+				filePath: gcsFilePath, // Zapisujemy ścieżkę z GCS
+				fileName: filename,
+				formType: FormType.DEKLARACJA_CZLONKOWSKA,
+			},
+		})
 
 		const transporter = nodemailer.createTransport({
 			host: 'smtp.gmail.com',
@@ -92,12 +82,7 @@ export async function POST(request) {
         <p><strong>Data przesłania:</strong> ${new Date().toLocaleString('pl-PL')}</p>
         
       `,
-			attachments: [
-				{
-					filename: filename,
-					path: filepath,
-				},
-			],
+			attachments: [{ filename, content: buffer, contentType: 'application/pdf' }],
 		}
 
 		const userMailOptions = {
@@ -133,12 +118,6 @@ export async function POST(request) {
 		try {
 			await transporter.sendMail(adminMailOptions)
 			await transporter.sendMail(userMailOptions)
-
-			try {
-				fs.unlinkSync(filepath)
-			} catch (unlinkError) {
-				console.error('Nie udało się usunąć pliku tymczasowego:', filepath, unlinkError)
-			}
 
 			return NextResponse.json({
 				message: 'Plik został przesłany pomyślnie',
