@@ -387,7 +387,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 
 			const declarationText =
 				'Oświadczam, że zapoznałem/zapoznałam się z treścią Statutu PISiL i jednocześnie zobowiązuję się do przestrzegania zawartych w nim postanowień.'
-			const checkbox = formData.declarationStatute ? '[✓]' : '[  ]'
+			const checkbox = formData.declarationStatute ? '[X]' : '[ ]'
 			yPosition = wrapText(pdf, `${checkbox} ${declarationText}`, margin, yPosition, contentWidth)
 			yPosition += 15
 
@@ -405,8 +405,9 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 			pdf.setFont('Roboto', 'normal')
 			pdf.setFontSize(10)
 
-			pdf.text(`Imię i nazwisko: ${formatText(formData.signatoryName)}`, margin, yPosition)
-			pdf.text(`Stanowisko: ${formatText(formData.signatoryPosition)}`, margin + 90, yPosition)
+			pdf.text(`${formatText(formData.signatoryName)}`, margin, yPosition)
+			yPosition += 8 // Odstęp między liniami
+			pdf.text(`${formatText(formData.signatoryPosition)}`, margin, yPosition)
 			yPosition += 15
 
 			pdf.text('Data:', margin, yPosition)
