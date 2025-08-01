@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import nodemailer from 'nodemailer'
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, PDFSignature } from 'pdf-lib'
 import prisma from '@/lib/prisma'
 import { FormType } from '@prisma/client'
 import { uploadFileToGCS } from '@/lib/gcs'
@@ -35,9 +35,9 @@ export async function POST(request) {
 				updateMetadata: false,
 				ignoreEncryption: true,
 			})
-			const form = pdfDoc.getForm()
-			const fields = form.getFields()
-			hasSignature = fields.some(field => field.constructor.name === 'PDFSignature')
+			const fields = pdfDoc.getForm().getFields()
+			// ZMIANA 2: Używamy operatora instanceof - to jest poprawna metoda
+			hasSignature = fields.some(field => field instanceof PDFSignature)
 		} catch (error) {
 			console.error('Błąd podczas analizy PDF w poszukiwaniu podpisu:', error)
 			hasSignature = false // Bezpieczniej założyć, że nie ma podpisu, jeśli plik jest uszkodzony
