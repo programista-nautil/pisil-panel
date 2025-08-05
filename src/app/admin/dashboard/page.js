@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
+import DeleteConfirmationModal from '@/components/DeleteConfirmationModal'
 
 // Komponent do renderowania etykiety statusu z odpowiednim kolorem
 // const StatusBadge = ({ status }) => {
@@ -30,6 +31,9 @@ export default function AdminDashboard() {
 	const [submissions, setSubmissions] = useState([])
 	const [isLoading, setIsLoading] = useState(true)
 	const { data: session } = useSession()
+
+	const [isModalOpen, setIsModalOpen] = useState(false)
+	const [submissionToDelete, setSubmissionToDelete] = useState(null)
 
 	useEffect(() => {
 		const fetchSubmissions = async () => {
@@ -77,13 +81,21 @@ export default function AdminDashboard() {
 		}
 	}
 
-	const handleDeleteSubmission = async submissionId => {
-		if (!window.confirm('Czy na pewno chcesz usunąć to zgłoszenie? Tej operacji nie można cofnąć.')) {
-			return
-		}
+	const openDeleteModal = submission => {
+		setSubmissionToDelete(submission)
+		setIsModalOpen(true)
+	}
+
+	const closeDeleteModal = () => {
+		setSubmissionToDelete(null)
+		setIsModalOpen(false)
+	}
+
+	const handleDeleteSubmission = async () => {
+		if (!submissionToDelete) return
 
 		try {
-			const response = await fetch(`/api/admin/submissions/${submissionId}`, {
+			const response = await fetch(`/api/admin/submissions/${submissionToDelete.id}`, {
 				method: 'DELETE',
 			})
 
@@ -91,10 +103,12 @@ export default function AdminDashboard() {
 				throw new Error('Nie udało się usunąć zgłoszenia.')
 			}
 
-			setSubmissions(currentSubmissions => currentSubmissions.filter(sub => sub.id !== submissionId))
+			setSubmissions(currentSubmissions => currentSubmissions.filter(sub => sub.id !== submissionToDelete.id))
+			closeDeleteModal()
 		} catch (error) {
 			console.error(error)
 			alert('Wystąpił błąd podczas usuwania.')
+			// Nie zamykamy modala w przypadku błędu, żeby użytkownik mógł spróbować ponownie
 		}
 	}
 
@@ -221,7 +235,7 @@ export default function AdminDashboard() {
 														</svg>
 													</Link>
 													<button
-														onClick={() => handleDeleteSubmission(submission.id)}
+														onClick={() => openDeleteModal(submission)}
 														className='p-2 text-red-600 hover:bg-red-100 rounded-md transition-colors'
 														title='Usuń zgłoszenie'>
 														<svg
@@ -246,6 +260,12 @@ export default function AdminDashboard() {
 					</div>
 				</main>
 			</div>
+			<DeleteConfirmationModal
+				isOpen={isModalOpen}
+				onClose={closeDeleteModal}
+				onConfirm={handleDeleteSubmission}
+				itemName={submissionToDelete?.companyName}
+			/>
 		</div>
 	)
 }
