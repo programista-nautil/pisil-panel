@@ -34,6 +34,11 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 		setIsGenerating(true)
 
 		try {
+			const currentDate = new Date().toLocaleDateString('pl-PL', {
+				day: '2-digit',
+				month: '2-digit',
+				year: 'numeric',
+			})
 			// Wczytaj czcionki, które obsługują polskie znaki
 			const fontRegularBytes = await fetch('/fonts/Roboto-Regular.ttf').then(res => res.arrayBuffer())
 			const fontBoldBytes = await fetch('/fonts/Roboto-Bold.ttf').then(res => res.arrayBuffer())
@@ -412,10 +417,14 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 
 			pdf.text('Data:', margin, yPosition)
 			pdf.text('Podpis:', margin + 90, yPosition)
-			yPosition += 10
+			yPosition += 8
+
+			pdf.setFont('Roboto', 'normal')
+			pdf.text(currentDate, margin, yPosition - 2)
+			pdf.setFont('Roboto', 'normal')
 
 			pdf.line(margin, yPosition, margin + 60, yPosition) // Linia pod datą
-			pdf.line(margin + 90, yPosition, margin + 150, yPosition) // Linia pod podpisem
+			pdf.line(margin + 90, yPosition, margin + 170, yPosition) // Linia pod podpisem
 
 			// Stopka
 			const pageHeight = pdf.internal.pageSize.getHeight()

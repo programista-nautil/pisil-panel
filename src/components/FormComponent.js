@@ -557,7 +557,7 @@ export default function FormComponent() {
 					</div>
 					<div>
 						<label className='block text-sm font-medium text-gray-700 mb-1'>
-							b/ zagraniczna (ilość firm własnych / ilość korespondentów) <span className='text-red-500'>*</span>
+							b) zagraniczna (ilość firm własnych / ilość korespondentów) <span className='text-red-500'>*</span>
 						</label>
 						<input
 							type='text'
@@ -568,7 +568,7 @@ export default function FormComponent() {
 					</div>
 					<div>
 						<label className='block text-sm font-medium text-gray-700 mb-1'>
-							c/ inne formy współpracy <span className='text-red-500'>*</span>
+							c) inne formy współpracy <span className='text-red-500'>*</span>
 						</label>
 						<textarea
 							{...register('inneFormy', { required: 'To pole jest wymagane.' })}
@@ -712,7 +712,7 @@ export default function FormComponent() {
 						onClick={nextStep}
 						disabled={!isValid}
 						className={`px-6 py-2 rounded-md font-medium ${
-							!isValid ? 'bg-gray-100 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
+							!isValid ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'bg-blue-600 text-white hover:bg-blue-700'
 						}`}>
 						Dalej
 					</button>
