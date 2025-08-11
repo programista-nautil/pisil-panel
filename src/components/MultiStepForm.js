@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import Cookies from 'js-cookie'
 import FileUpload from './FileUpload'
 import AdditionalDocumentsUpload from './AdditionalDocumentsUpload'
+import StepsIndicator from './StepsIndicator'
 
 export default function MultiStepForm({ formConfig }) {
 	const { formType, defaultValues, steps, PDFGeneratorComponent, sessionCookieName, testData } = formConfig
@@ -30,6 +31,7 @@ export default function MultiStepForm({ formConfig }) {
 
 	const [currentStep, setCurrentStep] = useState(1)
 	const [pdfGenerated, setPdfGenerated] = useState(false)
+	const [pdfUploaded, setPdfUploaded] = useState(false)
 	const [isInitialized, setIsInitialized] = useState(false)
 	const [isResetting, setIsResetting] = useState(false)
 
@@ -60,6 +62,7 @@ export default function MultiStepForm({ formConfig }) {
 	}, [watch, currentStep, isInitialized, sessionCookieName, isResetting])
 
 	const handleUploadSuccess = () => {
+		setPdfUploaded(true)
 		setIsResetting(true)
 		Cookies.remove(sessionCookieName)
 		reset(defaultValues)
@@ -71,6 +74,11 @@ export default function MultiStepForm({ formConfig }) {
 
 	// Renderuje komponent kroku na podstawie aktualnego numeru
 	const CurrentStepComponent = steps[currentStep - 1]
+
+	// Krok akcji (1: pobierz, 2: prześlij PDF, 3: dodatkowe dok.)
+	const actionSteps = ['Pobierz PDF', 'Prześlij podpisany PDF', 'Prześlij dodatkowe dokumenty (opcjonalnie)']
+	const currentActionStep = !pdfGenerated ? 1 : pdfUploaded ? 3 : 2
+	const showActionStepper = currentStep === totalSteps || pdfGenerated
 
 	return (
 		<div className='bg-white rounded-lg shadow-md p-6'>
@@ -107,6 +115,13 @@ export default function MultiStepForm({ formConfig }) {
 			<div className='min-h-[400px]'>
 				<CurrentStepComponent register={register} errors={errors} watch={watch} setValue={setValue} />
 			</div>
+
+			{/* Stepper akcji nad przyciskami nawigacyjnymi */}
+			{showActionStepper && (
+				<div className='mt-6'>
+					<StepsIndicator steps={actionSteps} current={currentActionStep} />
+				</div>
+			)}
 
 			<div className='flex justify-between items-center mt-8 pt-6 border-t border-gray-200'>
 				<button
