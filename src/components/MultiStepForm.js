@@ -78,7 +78,7 @@ export default function MultiStepForm({ formConfig }) {
 	// Krok akcji (1: pobierz, 2: prześlij PDF, 3: dodatkowe dok.)
 	const actionSteps = ['Pobierz PDF', 'Prześlij podpisany PDF', 'Prześlij dodatkowe dokumenty (opcjonalnie)']
 	const currentActionStep = !pdfGenerated ? 1 : pdfUploaded ? 3 : 2
-	const showActionStepper = currentStep === totalSteps || pdfGenerated
+	const showActionStepper = currentStep === totalSteps
 
 	// Refs do sekcji akcji dla sterowania fokusem
 	const uploadPdfRef = useRef(null)
@@ -86,19 +86,19 @@ export default function MultiStepForm({ formConfig }) {
 
 	useEffect(() => {
 		// Po wygenerowaniu PDF skup się na kroku 2 (przesyłka PDF)
-		if (pdfGenerated && !pdfUploaded && uploadPdfRef.current) {
+		if (currentStep === totalSteps && pdfGenerated && !pdfUploaded && uploadPdfRef.current) {
 			uploadPdfRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
 			uploadPdfRef.current.focus({ preventScroll: true })
 		}
-	}, [pdfGenerated, pdfUploaded])
+	}, [pdfGenerated, pdfUploaded, currentStep])
 
 	useEffect(() => {
 		// Po przesłaniu PDF przejdź do kroku dodatkowych dokumentów
-		if (pdfUploaded && additionalDocsRef.current) {
+		if (currentStep === totalSteps && pdfUploaded && additionalDocsRef.current) {
 			additionalDocsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
 			additionalDocsRef.current.focus({ preventScroll: true })
 		}
-	}, [pdfUploaded])
+	}, [pdfUploaded, currentStep])
 
 	return (
 		<div className='bg-white rounded-lg shadow-md p-6'>
@@ -167,7 +167,7 @@ export default function MultiStepForm({ formConfig }) {
 				)}
 			</div>
 
-			{pdfGenerated && (
+			{currentStep === totalSteps && pdfGenerated && (
 				<>
 					<div className='mt-8 pt-6 border-t border-gray-200'>
 						<FileUpload
