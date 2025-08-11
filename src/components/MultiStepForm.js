@@ -80,6 +80,26 @@ export default function MultiStepForm({ formConfig }) {
 	const currentActionStep = !pdfGenerated ? 1 : pdfUploaded ? 3 : 2
 	const showActionStepper = currentStep === totalSteps || pdfGenerated
 
+	// Refs do sekcji akcji dla sterowania fokusem
+	const uploadPdfRef = useRef(null)
+	const additionalDocsRef = useRef(null)
+
+	useEffect(() => {
+		// Po wygenerowaniu PDF skup się na kroku 2 (przesyłka PDF)
+		if (pdfGenerated && !pdfUploaded && uploadPdfRef.current) {
+			uploadPdfRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+			uploadPdfRef.current.focus({ preventScroll: true })
+		}
+	}, [pdfGenerated, pdfUploaded])
+
+	useEffect(() => {
+		// Po przesłaniu PDF przejdź do kroku dodatkowych dokumentów
+		if (pdfUploaded && additionalDocsRef.current) {
+			additionalDocsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+			additionalDocsRef.current.focus({ preventScroll: true })
+		}
+	}, [pdfUploaded])
+
 	return (
 		<div className='bg-white rounded-lg shadow-md p-6'>
 			<div className='mb-8'>
@@ -150,10 +170,14 @@ export default function MultiStepForm({ formConfig }) {
 			{pdfGenerated && (
 				<>
 					<div className='mt-8 pt-6 border-t border-gray-200'>
-						<FileUpload formData={{ ...getValues(), formType }} onUploadSuccess={handleUploadSuccess} />
+						<FileUpload
+							ref={uploadPdfRef}
+							formData={{ ...getValues(), formType }}
+							onUploadSuccess={handleUploadSuccess}
+						/>
 					</div>
 					<div className='mt-8 pt-6 border-t border-gray-200'>
-						<AdditionalDocumentsUpload />
+						<AdditionalDocumentsUpload ref={additionalDocsRef} />
 					</div>
 				</>
 			)}

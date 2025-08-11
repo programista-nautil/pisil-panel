@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, forwardRef } from 'react'
 
-export default function AdditionalDocumentsUpload() {
+const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(_props, ref) {
 	const [files, setFiles] = useState([])
 	const [isDragging, setIsDragging] = useState(false)
 	const inputRef = useRef(null)
@@ -44,7 +44,7 @@ export default function AdditionalDocumentsUpload() {
 	const totalSizeMB = (files.reduce((acc, f) => acc + (f.size || 0), 0) / (1024 * 1024)).toFixed(2)
 
 	return (
-		<div className='space-y-4'>
+		<section ref={ref} tabIndex={-1} aria-label='Krok 3: Dodatkowe dokumenty' className='space-y-4 outline-none'>
 			<h3 className='text-lg font-medium text-gray-900'>Krok 3: Dodatkowe dokumenty (opcjonalnie)</h3>
 			<p className='text-sm text-gray-600'>
 				Możesz dodać załączniki wspierające wniosek (np. program, umowy, grafiki). Obsługiwane: PDF, DOC(X), XLS(X),
@@ -149,6 +149,8 @@ export default function AdditionalDocumentsUpload() {
 					Prześlij dodatkowe dokumenty (wkrótce)
 				</button>
 			</div>
-		</div>
+		</section>
 	)
-}
+})
+
+export default AdditionalDocumentsUpload

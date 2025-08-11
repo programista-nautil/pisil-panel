@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, forwardRef } from 'react'
 
-export default function FileUpload({ formData, onUploadSuccess }) {
+const FileUpload = forwardRef(function FileUpload({ formData, onUploadSuccess }, ref) {
 	const [file, setFile] = useState(null)
 	const [isUploading, setIsUploading] = useState(false)
 	const [uploadStatus, setUploadStatus] = useState(null)
@@ -110,7 +110,7 @@ export default function FileUpload({ formData, onUploadSuccess }) {
 	}
 
 	return (
-		<div className='space-y-4'>
+		<section ref={ref} tabIndex={-1} aria-label='Krok 2: Prześlij podpisany PDF' className='space-y-4 outline-none'>
 			<h3 className='text-lg font-medium text-gray-900'>Krok 2: Prześlij podpisany PDF</h3>
 
 			<div
@@ -207,6 +207,8 @@ export default function FileUpload({ formData, onUploadSuccess }) {
 					{isUploading ? 'Przesyłanie...' : 'Prześlij PDF'}
 				</button>
 			</div>
-		</div>
+		</section>
 	)
-}
+})
+
+export default FileUpload
