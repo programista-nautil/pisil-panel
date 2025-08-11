@@ -163,6 +163,9 @@ export default function AdminDashboard() {
 										Zweryfikowany
 									</th>
 									<th scope='col' className='px-6 py-4 font-semibold'>
+										Typ formularza
+									</th>
+									<th scope='col' className='px-6 py-4 font-semibold'>
 										Nazwa Firmy
 									</th>
 									<th scope='col' className='px-6 py-4 font-semibold'>
@@ -182,13 +185,13 @@ export default function AdminDashboard() {
 							<tbody>
 								{isLoading ? (
 									<tr>
-										<td colSpan='4' className='px-6 py-8 text-center text-gray-500'>
+										<td colSpan='6' className='px-6 py-8 text-center text-gray-500'>
 											Ładowanie danych...
 										</td>
 									</tr>
 								) : submissions.length === 0 ? (
 									<tr className='bg-white'>
-										<td colSpan='4' className='px-6 py-8 text-center text-gray-500'>
+										<td colSpan='6' className='px-6 py-8 text-center text-gray-500'>
 											Brak zgłoszeń do wyświetlenia.
 										</td>
 									</tr>
@@ -202,6 +205,13 @@ export default function AdminDashboard() {
 													onChange={() => handleVerificationChange(submission.id, submission.isVerified)}
 													className='h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer'
 												/>
+											</td>
+											<td className='px-6 py-4 whitespace-nowrap'>
+												{submission.formType === 'DEKLARACJA_CZLONKOWSKA'
+													? 'Deklaracja członkowska'
+													: submission.formType === 'PATRONAT'
+													? 'Patronat'
+													: submission.formType || '—'}
 											</td>
 											<td className='px-6 py-4 font-medium text-gray-900 whitespace-nowrap'>
 												{submission.companyName || 'Brak nazwy'}
