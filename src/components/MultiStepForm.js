@@ -176,9 +176,11 @@ export default function MultiStepForm({ formConfig }) {
 							onUploadSuccess={handleUploadSuccess}
 						/>
 					</div>
-					<div className='mt-8 pt-6 border-t border-gray-200'>
-						<AdditionalDocumentsUpload ref={additionalDocsRef} />
-					</div>
+					{pdfUploaded && (
+						<div className='mt-8 pt-6 border-t border-gray-200'>
+							<AdditionalDocumentsUpload ref={additionalDocsRef} />
+						</div>
+					)}
 				</>
 			)}
 		</div>
