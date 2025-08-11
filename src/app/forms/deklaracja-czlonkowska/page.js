@@ -1,4 +1,7 @@
-import FormComponent from '@/components/FormComponent'
+'use client'
+
+import MultiStepForm from '@/components/MultiStepForm'
+import { deklaracjaFormConfig } from './formConfig'
 import BackButton from '@/components/BackButton'
 
 export default function DeclarationFormPage() {
@@ -13,7 +16,7 @@ export default function DeclarationFormPage() {
 						Wypełnij formularz, pobierz jako PDF, podpisz elektronicznie i prześlij
 					</p>
 				</header>{' '}
-				<FormComponent />
+				<MultiStepForm formConfig={deklaracjaFormConfig} />
 			</div>
 		</div>
 	)

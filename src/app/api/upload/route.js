@@ -4,7 +4,6 @@ import path from 'path'
 import nodemailer from 'nodemailer'
 import { PDFDocument, PDFSignature } from 'pdf-lib'
 import prisma from '@/lib/prisma'
-import { FormType } from '@prisma/client'
 import { uploadFileToGCS } from '@/lib/gcs'
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'programista@nautil.pl'
@@ -54,7 +53,7 @@ export async function POST(request) {
 				email: userData.email,
 				filePath: gcsFilePath, // Zapisujemy ścieżkę z GCS
 				fileName: filename,
-				formType: FormType.DEKLARACJA_CZLONKOWSKA,
+				formType: userData.formType,
 			},
 		})
 
