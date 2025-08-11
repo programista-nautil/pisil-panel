@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import Cookies from 'js-cookie'
 import FileUpload from './FileUpload'
+import AdditionalDocumentsUpload from './AdditionalDocumentsUpload'
 
 export default function MultiStepForm({ formConfig }) {
 	const { formType, defaultValues, steps, PDFGeneratorComponent, sessionCookieName, testData } = formConfig
@@ -132,9 +133,14 @@ export default function MultiStepForm({ formConfig }) {
 			</div>
 
 			{pdfGenerated && (
-				<div className='mt-8 pt-6 border-t border-gray-200'>
-					<FileUpload formData={{ ...getValues(), formType }} onUploadSuccess={handleUploadSuccess} />
-				</div>
+				<>
+					<div className='mt-8 pt-6 border-t border-gray-200'>
+						<FileUpload formData={{ ...getValues(), formType }} onUploadSuccess={handleUploadSuccess} />
+					</div>
+					<div className='mt-8 pt-6 border-t border-gray-200'>
+						<AdditionalDocumentsUpload />
+					</div>
+				</>
 			)}
 		</div>
 	)
