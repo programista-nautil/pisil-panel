@@ -75,6 +75,7 @@ enum Status {
 // Typ formularza
 enum FormType {
   DEKLARACJA_CZLONKOWSKA
+  PATRONAT
 }
 
 // Model reprezentujący pojedyncze zgłoszenie formularza

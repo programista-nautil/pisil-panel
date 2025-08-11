@@ -42,14 +42,24 @@ export async function POST(request) {
 			hasSignature = false // Bezpieczniej założyć, że nie ma podpisu, jeśli plik jest uszkodzony
 		}
 
-		const filename = `deklaracja_${userData.companyName.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`
+		// Dynamiczna nazwa pliku zależnie od typu formularza + bezpieczne fallbacki
+		const formType = userData.formType
+		const safe = val => (val ? val.toString().replace(/[^a-zA-Z0-9]/g, '_') : '')
+		const isDeclaration = formType === 'DEKLARACJA_CZLONKOWSKA'
+		const displayCompanyOrOrg = userData.companyName || userData.organizerName || userData.eventName || 'Nieznana firma'
+		const baseName = isDeclaration
+			? `deklaracja_${safe(userData.companyName) || safe(displayCompanyOrOrg)}`
+			: formType === 'PATRONAT'
+			? `patronat_${safe(userData.eventName) || safe(userData.organizerName) || safe(displayCompanyOrOrg)}`
+			: `formularz_${safe(displayCompanyOrOrg)}`
+		const filename = `${baseName}_${Date.now()}.pdf`
 
 		const gcsFilePath = await uploadFileToGCS(buffer, filename)
 
 		// Zapis metadanych do bazy danych
 		await prisma.submission.create({
 			data: {
-				companyName: userData.companyName,
+				companyName: userData.companyName || userData.organizerName || userData.eventName || undefined,
 				email: userData.email,
 				filePath: gcsFilePath, // Zapisujemy ścieżkę z GCS
 				fileName: filename,
@@ -70,16 +80,29 @@ export async function POST(request) {
 		const adminMailOptions = {
 			from: process.env.SMTP_USER || 'programista@nautil.pl',
 			to: ADMIN_EMAIL,
-			subject: `Nowa deklaracja członkowska - ${userData.companyName}`,
-			html: `
+			subject: isDeclaration
+				? `Nowa deklaracja członkowska - ${displayCompanyOrOrg}`
+				: formType === 'PATRONAT'
+				? `Nowy wniosek o patronat - ${displayCompanyOrOrg}`
+				: `Nowe zgłoszenie - ${displayCompanyOrOrg}`,
+			html: isDeclaration
+				? `
         <h2>Nowa deklaracja członkowska</h2>
-        <p><strong>Firma:</strong> ${userData.companyName}</p>
+        <p><strong>Firma:</strong> ${displayCompanyOrOrg}</p>
         <p><strong>Email:</strong> ${userData.email}</p>
         <p><strong>Status podpisu:</strong> ${
 					hasSignature ? '✅ Potwierdzono obecność pola podpisu' : '❌ Nie znaleziono pola podpisu'
 				}</p>
         <p><strong>Data przesłania:</strong> ${new Date().toLocaleString('pl-PL')}</p>
-        
+      `
+				: `
+        <h2>Nowy wniosek o patronat</h2>
+        <p><strong>Organizator/Wydarzenie:</strong> ${displayCompanyOrOrg}</p>
+        <p><strong>Email:</strong> ${userData.email}</p>
+        <p><strong>Status podpisu:</strong> ${
+					hasSignature ? '✅ Potwierdzono obecność pola podpisu' : '❌ Nie znaleziono pola podpisu'
+				}</p>
+        <p><strong>Data przesłania:</strong> ${new Date().toLocaleString('pl-PL')}</p>
       `,
 			attachments: [{ filename, content: buffer, contentType: 'application/pdf' }],
 		}
@@ -87,31 +110,52 @@ export async function POST(request) {
 		const userMailOptions = {
 			from: process.env.SMTP_USER || 'programista@nautil.pl',
 			to: userData.email,
-			subject: 'Potwierdzenie otrzymania deklaracji członkowskiej - PISiL',
-			html: `
-        <h2>Dziękujemy za przesłanie deklaracji członkowskiej</h2>
-        <p>Szanowni Państwo,</p>
-        <p>Otrzymaliśmy Państwa deklarację członkowską do Polskiej Izby Specjalistów IT i Logistyki.</p>
-        
-        <h3>Podsumowanie:</h3>
-        <ul>
-          <li><strong>Firma:</strong> ${userData.companyName}</li>
-          <li><strong>Email:</strong> ${userData.email}</li>
-          <li><strong>Status podpisu:</strong> ${
+			subject: isDeclaration
+				? 'Potwierdzenie otrzymania deklaracji członkowskiej - PISiL'
+				: 'Potwierdzenie otrzymania wniosku o patronat - PISiL',
+			html: isDeclaration
+				? `
+				<h2>Dziękujemy za przesłanie deklaracji członkowskiej</h2>
+				<p>Szanowni Państwo,</p>
+				<p>Otrzymaliśmy Państwa deklarację członkowską do Polskiej Izby Specjalistów IT i Logistyki.</p>
+				<h3>Podsumowanie:</h3>
+				<ul>
+					<li><strong>Firma:</strong> ${displayCompanyOrOrg}</li>
+					<li><strong>Email:</strong> ${userData.email}</li>
+					<li><strong>Status podpisu:</strong> ${
 						hasSignature ? '✅ Potwierdzono obecność podpisu' : '❌ Brak wymaganego podpisu'
 					}</li>
-          <li><strong>Data przesłania:</strong> ${new Date().toLocaleString('pl-PL')}</li>
-        </ul>
-        
-        ${
+					<li><strong>Data przesłania:</strong> ${new Date().toLocaleString('pl-PL')}</li>
+				</ul>
+				${
 					hasSignature
 						? '<p style="color: green;">Twoja deklaracja została przesłana pomyślnie i zostanie rozpatrzona przez administrację.</p>'
 						: '<p style="color: red;"><b>Uwaga:</b> W przesłanym pliku nie wykryto pola podpisu elektronicznego. Prosimy o ponowne przesłanie poprawnie podpisanego dokumentu.</p>'
 				}
-        
-        <p>W razie pytań prosimy o kontakt.</p>
-        <p>Pozdrawiamy,<br>Zespół PISiL</p>
-      `,
+				<p>W razie pytań prosimy o kontakt.</p>
+				<p>Pozdrawiamy,<br>Zespół PISiL</p>
+			`
+				: `
+				<h2>Dziękujemy za przesłanie wniosku o patronat</h2>
+				<p>Szanowni Państwo,</p>
+				<p>Otrzymaliśmy Państwa wniosek o patronat do Polskiej Izby Spedycji i Logistyki.</p>
+				<h3>Podsumowanie:</h3>
+				<ul>
+					<li><strong>Organizator/Wydarzenie:</strong> ${displayCompanyOrOrg}</li>
+					<li><strong>Email:</strong> ${userData.email}</li>
+          <li><strong>Status podpisu:</strong> ${
+						hasSignature ? '✅ Potwierdzono obecność podpisu' : '❌ Brak wymaganego podpisu'
+					}</li>
+					<li><strong>Data przesłania:</strong> ${new Date().toLocaleString('pl-PL')}</li>
+				</ul>
+        ${
+					hasSignature
+						? '<p style="color: green;">Wniosek został przesłany pomyślnie i zostanie rozpatrzony przez administrację.</p>'
+						: '<p style="color: red;"><b>Uwaga:</b> W przesłanym pliku nie wykryto pola podpisu elektronicznego. Prosimy o ponowne przesłanie poprawnie podpisanego dokumentu.</p>'
+				}
+				<p>W razie pytań prosimy o kontakt.</p>
+				<p>Pozdrawiamy,<br>Zespół PISiL</p>
+			`,
 		}
 
 		try {
