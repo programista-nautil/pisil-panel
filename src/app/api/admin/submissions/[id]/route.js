@@ -14,17 +14,26 @@ export async function DELETE(request, { params }) {
 	try {
 		const submission = await prisma.submission.findUnique({
 			where: { id },
+			include: { attachments: true },
 		})
 
 		if (!submission) {
 			return NextResponse.json({ message: 'Nie znaleziono zgłoszenia' }, { status: 404 })
 		}
 
+		// Kasujemy główny plik
 		await deleteFileFromGCS(submission.fileName)
 
-		await prisma.submission.delete({
-			where: { id },
-		})
+		// Kasujemy załączniki (ignorujemy błędy pojedynczych plików aby nie blokować operacji)
+		if (submission.attachments?.length) {
+			await Promise.allSettled(
+				submission.attachments.map(a =>
+					deleteFileFromGCS(a.filePath).catch(err => console.error('Attachment delete err', err))
+				)
+			)
+		}
+
+		await prisma.submission.delete({ where: { id } })
 
 		return NextResponse.json({ message: 'Zgłoszenie zostało pomyślnie usunięte' }, { status: 200 })
 	} catch (error) {
