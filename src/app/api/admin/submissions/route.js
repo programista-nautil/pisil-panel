@@ -11,9 +11,8 @@ export async function GET() {
 
 	try {
 		const submissions = await prisma.submission.findMany({
-			orderBy: {
-				createdAt: 'desc',
-			},
+			orderBy: { createdAt: 'desc' },
+			include: { attachments: true },
 		})
 		return NextResponse.json(submissions)
 	} catch (error) {
