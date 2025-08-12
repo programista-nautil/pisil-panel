@@ -83,13 +83,14 @@ const FileUpload = forwardRef(function FileUpload({ formData, onUploadSuccess },
 			})
 
 			if (response.ok) {
+				const result = await response.json()
 				setUploadStatus({
 					type: 'success',
 					message: 'Plik został przesłany pomyślnie! Sprawdzamy podpis i wysyłamy powiadomienia email.',
 				})
 				handleRemoveFile()
 				if (onUploadSuccess) {
-					onUploadSuccess()
+					onUploadSuccess(result.submission)
 				}
 			} else {
 				const error = await response.json()

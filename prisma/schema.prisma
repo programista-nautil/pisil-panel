@@ -91,6 +91,17 @@ model Submission {
   
   companyName String   @default("Nieznana firma") 
   email       String   @default("brak@email.com")
-  filePath  String   // Ścieżka do pliku PDF
+  filePath  String   // ścieżka do podpisanego PDF
   fileName  String   // Oryginalna nazwa pliku
+
+  attachments Attachment[]
+}
+
+model Attachment {
+  id           String     @id @default(cuid())
+  createdAt    DateTime   @default(now())
+  fileName     String
+  filePath     String    
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId String
 }

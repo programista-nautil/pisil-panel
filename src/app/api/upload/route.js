@@ -57,7 +57,7 @@ export async function POST(request) {
 		const gcsFilePath = await uploadFileToGCS(buffer, filename)
 
 		// Zapis metadanych do bazy danych
-		await prisma.submission.create({
+		const newSubmission = await prisma.submission.create({
 			data: {
 				companyName: userData.companyName || userData.organizerName || userData.eventName || undefined,
 				email: userData.email,
@@ -164,6 +164,7 @@ export async function POST(request) {
 
 			return NextResponse.json({
 				message: 'Plik został przesłany pomyślnie',
+				submission: newSubmission,
 				hasSignature,
 			})
 		} catch (emailError) {

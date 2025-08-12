@@ -2,9 +2,11 @@
 
 import { useState, useRef, forwardRef } from 'react'
 
-const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(_props, ref) {
+const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload({ submissionId }, ref) {
 	const [files, setFiles] = useState([])
 	const [isDragging, setIsDragging] = useState(false)
+	const [isUploading, setIsUploading] = useState(false)
+	const [status, setStatus] = useState({ message: '', type: '' })
 	const inputRef = useRef(null)
 
 	const accept = '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg'
@@ -42,6 +44,37 @@ const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(
 	const clearAll = () => setFiles([])
 
 	const totalSizeMB = (files.reduce((acc, f) => acc + (f.size || 0), 0) / (1024 * 1024)).toFixed(2)
+
+	const handleUpload = async () => {
+		if (files.length === 0) {
+			alert('Nie wybrano żadnych plików.')
+			return
+		}
+		setIsUploading(true)
+		setStatus({ message: '', type: '' })
+
+		const formData = new FormData()
+		files.forEach(file => formData.append('additionalFiles[]', file))
+
+		try {
+			const response = await fetch(`/api/admin/submissions/${submissionId}/attachments`, {
+				method: 'POST',
+				body: formData,
+			})
+
+			if (!response.ok) {
+				throw new Error('Wystąpił błąd podczas przesyłania załączników.')
+			}
+
+			setStatus({ message: 'Załączniki zostały pomyślnie wysłane!', type: 'success' })
+			clearAll()
+		} catch (error) {
+			console.error(error)
+			setStatus({ message: error.message, type: 'error' })
+		} finally {
+			setIsUploading(false)
+		}
+	}
 
 	return (
 		<section ref={ref} tabIndex={-1} aria-label='Krok 3: Dodatkowe dokumenty' className='space-y-4 outline-none'>
@@ -141,14 +174,24 @@ const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(
 				)}
 			</div>
 
-			<div className='flex justify-center'>
+			<div className='flex justify-center flex-col items-center gap-4'>
 				<button
-					disabled
-					className='px-6 py-2 rounded-md font-medium bg-gray-100 text-gray-400 cursor-not-allowed'
-					title='Logika wysyłki zostanie dodana wkrótce'>
-					Prześlij dodatkowe dokumenty (wkrótce)
+					onClick={handleUpload}
+					disabled={isUploading || files.length === 0}
+					className={`px-6 py-2 rounded-md font-medium transition-colors ${
+						isUploading || files.length === 0
+							? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+							: 'bg-blue-600 text-white hover:bg-blue-700'
+					}`}>
+					{isUploading ? 'Przesyłanie...' : 'Prześlij dodatkowe dokumenty'}
 				</button>
 			</div>
+
+			{status.message && (
+				<p className={`text-sm text-center ${status.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+					{status.message}
+				</p>
+			)}
 		</section>
 	)
 })

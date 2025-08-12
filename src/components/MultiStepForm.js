@@ -32,6 +32,7 @@ export default function MultiStepForm({ formConfig }) {
 	const [currentStep, setCurrentStep] = useState(1)
 	const [pdfGenerated, setPdfGenerated] = useState(false)
 	const [pdfUploaded, setPdfUploaded] = useState(false)
+	const [submissionId, setSubmissionId] = useState(null)
 	const [isInitialized, setIsInitialized] = useState(false)
 	const [isResetting, setIsResetting] = useState(false)
 
@@ -61,7 +62,8 @@ export default function MultiStepForm({ formConfig }) {
 		return () => subscription.unsubscribe()
 	}, [watch, currentStep, isInitialized, sessionCookieName, isResetting])
 
-	const handleUploadSuccess = () => {
+	const handleUploadSuccess = submission => {
+		setSubmissionId(submission.id)
 		setPdfUploaded(true)
 		setIsResetting(true)
 		Cookies.remove(sessionCookieName)
@@ -178,7 +180,7 @@ export default function MultiStepForm({ formConfig }) {
 					</div>
 					{pdfUploaded && (
 						<div className='mt-8 pt-6 border-t border-gray-200'>
-							<AdditionalDocumentsUpload ref={additionalDocsRef} />
+							<AdditionalDocumentsUpload ref={additionalDocsRef} submissionId={submissionId} />
 						</div>
 					)}
 				</>
