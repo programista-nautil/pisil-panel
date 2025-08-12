@@ -31,6 +31,13 @@ export default function AdminDashboard() {
 	const [submissions, setSubmissions] = useState([])
 	const [expanded, setExpanded] = useState({}) // id -> bool
 	const [isLoading, setIsLoading] = useState(true)
+	const [deletingAttachmentId, setDeletingAttachmentId] = useState(null)
+	const [attachmentModal, setAttachmentModal] = useState({
+		open: false,
+		submissionId: null,
+		attachmentId: null,
+		fileName: '',
+	})
 	const { data: session } = useSession()
 
 	const [isModalOpen, setIsModalOpen] = useState(false)
@@ -115,6 +122,51 @@ export default function AdminDashboard() {
 
 	const toggleExpanded = id => {
 		setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
+	}
+
+	const refreshSingleSubmission = async submissionId => {
+		try {
+			const res = await fetch('/api/admin/submissions')
+			if (!res.ok) return
+			const data = await res.json()
+			setSubmissions(data)
+		} catch (e) {
+			console.error(e)
+		}
+	}
+
+	const handleDownloadAttachment = (submissionId, attId) => {
+		// Po prostu nawigacja do endpointu (przeglądarka pobierze plik)
+		window.location.href = `/api/admin/submissions/${submissionId}/attachments/${attId}/download`
+	}
+
+	const openAttachmentDeleteModal = (submissionId, attId, fileName) => {
+		setAttachmentModal({ open: true, submissionId, attachmentId: attId, fileName })
+	}
+
+	const closeAttachmentDeleteModal = () => {
+		setAttachmentModal({ open: false, submissionId: null, attachmentId: null, fileName: '' })
+	}
+
+	const confirmDeleteAttachment = async () => {
+		const { submissionId, attachmentId } = attachmentModal
+		if (!submissionId || !attachmentId) return
+		setDeletingAttachmentId(attachmentId)
+		try {
+			const res = await fetch(`/api/admin/submissions/${submissionId}/attachments/${attachmentId}`, {
+				method: 'DELETE',
+			})
+			if (!res.ok) {
+				console.error('Usuwanie załącznika nie powiodło się')
+				return
+			}
+			await refreshSingleSubmission(submissionId)
+			closeAttachmentDeleteModal()
+		} catch (e) {
+			console.error(e)
+		} finally {
+			setDeletingAttachmentId(null)
+		}
 	}
 
 	return (
@@ -317,11 +369,9 @@ export default function AdminDashboard() {
 																				</div>
 																			</div>
 																			<div className='flex items-center gap-2 self-end sm:self-auto'>
-																				{/* Przyciski tylko UI – funkcjonalność dodamy później */}
-																				<a
-																					href={att.filePath}
-																					target='_blank'
-																					rel='noopener noreferrer'
+																				<button
+																					type='button'
+																					onClick={() => handleDownloadAttachment(submission.id, att.id)}
 																					className='inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500'>
 																					<svg className='h-4 w-4' viewBox='0 0 20 20' fill='currentColor'>
 																						<path
@@ -331,21 +381,36 @@ export default function AdminDashboard() {
 																						/>
 																					</svg>
 																					<span>Pobierz</span>
-																				</a>
+																				</button>
 																				<button
 																					type='button'
-																					className='inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-100 hover:border-red-300 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500'
-																					// onClick={() => handleDeleteAttachment(att.id)}  // funkcjonalność później
-																					disabled
-																					title='Usuń (wkrótce)'>
-																					<svg className='h-4 w-4' viewBox='0 0 20 20' fill='currentColor'>
-																						<path
-																							fillRule='evenodd'
-																							d='M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z'
-																							clipRule='evenodd'
-																						/>
-																					</svg>
-																					<span>Usuń</span>
+																					onClick={() => openAttachmentDeleteModal(submission.id, att.id, att.fileName)}
+																					disabled={deletingAttachmentId === att.id}
+																					className='inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-100 hover:border-red-300 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-60 disabled:cursor-not-allowed'>
+																					{deletingAttachmentId === att.id ? (
+																						<svg className='h-4 w-4 animate-spin' viewBox='0 0 24 24' fill='none'>
+																							<circle
+																								className='opacity-25'
+																								cx='12'
+																								cy='12'
+																								r='10'
+																								stroke='currentColor'
+																								strokeWidth='4'></circle>
+																							<path
+																								className='opacity-75'
+																								fill='currentColor'
+																								d='M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z'></path>
+																						</svg>
+																					) : (
+																						<svg className='h-4 w-4' viewBox='0 0 20 20' fill='currentColor'>
+																							<path
+																								fillRule='evenodd'
+																								d='M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z'
+																								clipRule='evenodd'
+																							/>
+																						</svg>
+																					)}
+																					<span>{deletingAttachmentId === att.id ? 'Usuwanie...' : 'Usuń'}</span>
 																				</button>
 																			</div>
 																		</li>
@@ -354,11 +419,7 @@ export default function AdminDashboard() {
 															) : (
 																<p className='text-sm text-gray-500 italic'>Brak dodatkowych plików.</p>
 															)}
-															<div className='mt-4 flex justify-end'>
-																<p className='text-[11px] text-gray-400'>
-																	Przyciski akcji są tymczasowo nieaktywne – funkcjonalność zostanie dodana.
-																</p>
-															</div>
+															{/* Stopka sekcji można wykorzystać później */}
 														</div>
 													</td>
 												</tr>
@@ -376,6 +437,13 @@ export default function AdminDashboard() {
 				onClose={closeDeleteModal}
 				onConfirm={handleDeleteSubmission}
 				itemName={submissionToDelete?.companyName}
+			/>
+			<DeleteConfirmationModal
+				isOpen={attachmentModal.open}
+				onClose={closeAttachmentDeleteModal}
+				onConfirm={confirmDeleteAttachment}
+				itemName={attachmentModal.fileName}
+				context='attachment'
 			/>
 		</div>
 	)

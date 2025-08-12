@@ -1,9 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
-export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, itemName }) {
+export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, itemName, context = 'submission' }) {
 	const [isDeleting, setIsDeleting] = useState(false)
+
+	// Heurystyka: jeżeli nazwa > 45 znaków lub zawiera podkreślenia/kropki (plik), zwiększamy szerokość
+	const isLong = useMemo(() => {
+		if (!itemName) return false
+		return itemName.length > 45 || /[_\.]/.test(itemName)
+	}, [itemName])
 
 	if (!isOpen) {
 		return null
@@ -26,7 +32,9 @@ export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, it
 			aria-modal='true'
 			onClick={onClose}>
 			<div
-				className='bg-white rounded-lg shadow-xl p-6 m-4 max-w-sm w-full transform transition-all'
+				className={`bg-white rounded-lg shadow-xl p-6 m-4 w-full transform transition-all ${
+					isLong ? 'max-w-lg sm:max-w-xl' : 'max-w-sm'
+				}`}
 				onClick={e => e.stopPropagation()}>
 				<div className='text-center'>
 					<div className='mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100'>
@@ -49,12 +57,21 @@ export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, it
 						Potwierdzenie usunięcia
 					</h3>
 					<div className='mt-2'>
-						<p className='text-sm text-gray-500'>
-							Czy na pewno chcesz usunąć zgłoszenie dla: <br />
-							<strong className='font-medium text-gray-700'>{itemName}</strong>?
-							<br />
-							Tej operacji nie można cofnąć.
-						</p>
+						{context === 'attachment' ? (
+							<div className='text-sm text-gray-500'>
+								<p>Czy na pewno chcesz usunąć załącznik:</p>
+								<p className='mt-1 font-medium text-gray-700 break-words break-all bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs leading-relaxed max-h-32 overflow-auto'>
+									{itemName}
+								</p>
+								<p className='mt-3'>Operacja nieodwracalna – plik zostanie trwale usunięty z magazynu.</p>
+							</div>
+						) : (
+							<div className='text-sm text-gray-500'>
+								<p>Czy na pewno chcesz usunąć zgłoszenie dla:</p>
+								<p className='mt-1 font-medium text-gray-700 break-words break-all'>{itemName}</p>
+								<p className='mt-3'>Tej operacji nie można cofnąć.</p>
+							</div>
+						)}
 					</div>
 				</div>
 				<div className='mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense'>
@@ -66,13 +83,7 @@ export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, it
 						{isDeleting ? (
 							<>
 								<svg className='animate-spin -ml-1 mr-2 h-4 w-4 text-white' fill='none' viewBox='0 0 24 24'>
-									<circle
-										className='opacity-25'
-										cx='12'
-										cy='12'
-										r='10'
-										stroke='currentColor'
-										strokeWidth='4'></circle>
+									<circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
 									<path
 										className='opacity-75'
 										fill='currentColor'
