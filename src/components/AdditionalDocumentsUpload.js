@@ -2,7 +2,7 @@
 
 import { useState, useRef, forwardRef } from 'react'
 
-const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload({ submissionId }, ref) {
+const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload({ submissionId, onAllUploaded }, ref) {
 	const [files, setFiles] = useState([])
 	const [isDragging, setIsDragging] = useState(false)
 	const [isUploading, setIsUploading] = useState(false)
@@ -67,6 +67,7 @@ const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(
 			}
 
 			setStatus({ type: 'success', message: 'Załączniki zostały pomyślnie wysłane!' })
+			if (onAllUploaded) onAllUploaded()
 			clearAll()
 		} catch (error) {
 			console.error(error)

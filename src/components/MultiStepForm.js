@@ -34,6 +34,7 @@ export default function MultiStepForm({ formConfig }) {
 	const [pdfUploaded, setPdfUploaded] = useState(false)
 	const [submissionId, setSubmissionId] = useState(null)
 	const [isInitialized, setIsInitialized] = useState(false)
+	const [additionalUploaded, setAdditionalUploaded] = useState(false)
 	const [isResetting, setIsResetting] = useState(false)
 
 	useEffect(() => {
@@ -79,7 +80,17 @@ export default function MultiStepForm({ formConfig }) {
 
 	// Krok akcji (1: pobierz, 2: prześlij PDF, 3: dodatkowe dok.)
 	const actionSteps = ['Pobierz PDF', 'Prześlij podpisany PDF', 'Prześlij dodatkowe dokumenty (opcjonalnie)']
-	const currentActionStep = !pdfGenerated ? 1 : pdfUploaded ? 3 : 2
+	let currentActionStep
+	if (!pdfGenerated) {
+		currentActionStep = 1
+	} else if (!pdfUploaded) {
+		currentActionStep = 2
+	} else if (!additionalUploaded) {
+		currentActionStep = 3
+	} else {
+		// Wszystkie zakończone – ustawiamy current poza zakresem aby StepsIndicator zaznaczył wszystkie jako complete
+		currentActionStep = actionSteps.length + 1
+	}
 	const showActionStepper = currentStep === totalSteps
 
 	// Refs do sekcji akcji dla sterowania fokusem
@@ -180,7 +191,11 @@ export default function MultiStepForm({ formConfig }) {
 					</div>
 					{pdfUploaded && (
 						<div className='mt-8 pt-6 border-t border-gray-200'>
-							<AdditionalDocumentsUpload ref={additionalDocsRef} submissionId={submissionId} />
+							<AdditionalDocumentsUpload
+								ref={additionalDocsRef}
+								submissionId={submissionId}
+								onAllUploaded={() => setAdditionalUploaded(true)}
+							/>
 						</div>
 					)}
 				</>
