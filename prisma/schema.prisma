@@ -76,6 +76,8 @@ enum Status {
 enum FormType {
   DEKLARACJA_CZLONKOWSKA
   PATRONAT
+  ANKIETA_SPEDYTOR_ROKU
+  MLODY_SPEDYTOR_ROKU
 }
 
 // Model reprezentujący pojedyncze zgłoszenie formularza
