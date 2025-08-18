@@ -103,7 +103,7 @@ export default function MultiStepForm({ formConfig }) {
 			uploadPdfRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
 			uploadPdfRef.current.focus({ preventScroll: true })
 		}
-	}, [pdfGenerated, pdfUploaded, currentStep])
+	}, [pdfGenerated, pdfUploaded, currentStep, totalSteps])
 
 	useEffect(() => {
 		// Po przesłaniu PDF przejdź do kroku dodatkowych dokumentów
@@ -111,7 +111,7 @@ export default function MultiStepForm({ formConfig }) {
 			additionalDocsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
 			additionalDocsRef.current.focus({ preventScroll: true })
 		}
-	}, [pdfUploaded, currentStep])
+	}, [pdfUploaded, currentStep, totalSteps])
 
 	return (
 		<div className='bg-white rounded-lg shadow-md p-6'>
