@@ -1,9 +1,8 @@
 import { Step1, Step2, Step3, Step4, Step5 } from './components/formSteps'
 import DeklaracjaPDFGenerator from './components/DeklaracjaPDFGenerator'
-import { FormType } from '@prisma/client'
 
 export const deklaracjaFormConfig = {
-	formType: FormType.DEKLARACJA_CZLONKOWSKA,
+	formType: 'DEKLARACJA_CZLONKOWSKA',
 	sessionCookieName: 'formSession_deklaracja',
 	defaultValues: {
 		companyName: '',
