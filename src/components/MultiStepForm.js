@@ -63,6 +63,12 @@ export default function MultiStepForm({ formConfig }) {
 		return () => subscription.unsubscribe()
 	}, [watch, currentStep, isInitialized, sessionCookieName, isResetting])
 
+	useEffect(() => {
+		if (!isInitialized || isResetting) return
+		const sessionData = { step: currentStep, data: getValues() }
+		Cookies.set(sessionCookieName, JSON.stringify(sessionData), { expires: 1 })
+	}, [currentStep, isInitialized, isResetting, sessionCookieName, getValues])
+
 	const handleUploadSuccess = submission => {
 		setSubmissionId(submission.id)
 		setPdfUploaded(true)
