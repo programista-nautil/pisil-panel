@@ -1,9 +1,8 @@
-import { FormType } from '@prisma/client'
 import PatronatPDFGenerator from './components/PatronatPDFGenerator'
 import { Step1, Step2, Step3 } from './components/formSteps'
 
 export const patronatFormConfig = {
-	formType: FormType.PATRONAT,
+	formType: 'PATRONAT',
 	sessionCookieName: 'formSession_patronat',
 	defaultValues: {
 		email: '',

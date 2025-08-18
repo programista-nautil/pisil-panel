@@ -1,9 +1,8 @@
-import { FormType } from '@prisma/client'
 import { Step1 } from './components/formSteps'
 import AnkietaSubmit from '@/app/forms/ankieta-spedytor-roku/components/AnkietaSubmit' // Możemy reużyć ten sam komponent
 
 export const mlodySpedytorRokuConfig = {
-	formType: FormType.MLODY_SPEDYTOR_ROKU,
+	formType: 'MLODY_SPEDYTOR_ROKU',
 	sessionCookieName: 'formSession_mlodySpedytor',
 	steps: [Step1],
 	PDFGeneratorComponent: AnkietaSubmit, // Używamy tego samego komponentu, bo nie generujemy PDF
