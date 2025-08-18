@@ -8,7 +8,9 @@ export default function HomePage() {
 					<h1 className='text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900'>
 						Platforma Formularzy PISiL
 					</h1>
-					<p className='mt-3 text-base md:text-lg text-gray-600'>Wybierz dokument i rozpocznij proces online.</p>
+					<p className='mt-3 text-base md:text-lg text-gray-600'>
+						Wybierz dokument, który chcesz wypełnić i złożyć online.
+					</p>
 				</header>
 
 				<main>
@@ -26,7 +28,7 @@ export default function HomePage() {
 								<h2 className='text-xl font-semibold text-gray-900 truncate'>Deklaracja Członkowska</h2>
 								<p className='mt-2 text-sm text-gray-600'>Dla firm ubiegających się o członkostwo w PISiL.</p>
 								<div className='mt-6 inline-flex items-center text-blue-700 font-medium'>
-									Rozpocznij
+									Przejdź do formularza
 									<svg
 										className='ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5'
 										viewBox='0 0 20 20'
@@ -54,7 +56,7 @@ export default function HomePage() {
 								<h2 className='text-xl font-semibold text-gray-900 truncate'>Uzyskaj Patronat</h2>
 								<p className='mt-2 text-sm text-gray-600'>Wniosek o patronat, udział w wydarzeniu lub wystąpienie.</p>
 								<div className='mt-6 inline-flex items-center text-blue-700 font-medium'>
-									Rozpocznij
+									Przejdź do formularza
 									<svg
 										className='ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5'
 										viewBox='0 0 20 20'
@@ -82,7 +84,7 @@ export default function HomePage() {
 								<h2 className='text-xl font-semibold text-gray-900 truncate'>Ankieta Spedytor Roku</h2>
 								<p className='mt-2 text-sm text-gray-600'>Weź udział i wypełnij ankietę konkursową.</p>
 								<div className='mt-6 inline-flex items-center text-blue-700 font-medium'>
-									Rozpocznij
+									Przejdź do formularza
 									<svg
 										className='ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5'
 										viewBox='0 0 20 20'
@@ -110,7 +112,7 @@ export default function HomePage() {
 								<h2 className='text-xl font-semibold text-gray-900 truncate'>Młody Spedytor Roku</h2>
 								<p className='mt-2 text-sm text-gray-600'>Zgłoś kandydata do konkursu „Młody Spedytor Roku”.</p>
 								<div className='mt-6 inline-flex items-center text-blue-700 font-medium'>
-									Rozpocznij
+									Przejdź do formularza
 									<svg
 										className='ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5'
 										viewBox='0 0 20 20'
