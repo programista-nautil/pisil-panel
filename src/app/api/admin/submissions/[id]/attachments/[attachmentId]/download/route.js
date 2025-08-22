@@ -24,7 +24,10 @@ export async function GET(request, { params }) {
 
 		const headers = new Headers()
 		headers.set('Content-Type', 'application/octet-stream')
-		headers.set('Content-Disposition', `attachment; filename="${attachment.fileName}"`)
+
+		const asciiFilename = attachment.fileName.replace(/[^\x00-\x7F]/g, '_')
+		const utf8Filename = encodeURIComponent(attachment.fileName)
+		headers.set('Content-Disposition', `attachment; filename="${asciiFilename}"; filename*=UTF-8''${utf8Filename}`)
 
 		return new NextResponse(fileBuffer, { status: 200, headers })
 	} catch (error) {
