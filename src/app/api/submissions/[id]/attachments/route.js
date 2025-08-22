@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
 
 export async function POST(request, { params }) {
-	const session = await auth()
-	if (!session) {
-		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	const submissionId = params.id
+	if (!submissionId) {
+		return NextResponse.json({ message: 'Brak ID zgłoszenia' }, { status: 400 })
 	}
 
-	const submissionId = params.id
 	const data = await request.formData()
 	const files = data.getAll('additionalFiles[]')
 
@@ -21,7 +19,7 @@ export async function POST(request, { params }) {
 		const attachmentPromises = files.map(async file => {
 			const bytes = await file.arrayBuffer()
 			const buffer = Buffer.from(bytes)
-			const filename = `zalacznik_${Date.now()}_${file.name}`
+			const filename = `attachment_${Date.now()}_${file.name}`
 
 			const gcsPath = await uploadFileToGCS(buffer, filename)
 
