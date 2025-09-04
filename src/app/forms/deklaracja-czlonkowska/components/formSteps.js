@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+
 export const Step1 = ({ register, errors }) => (
 	<div className='space-y-6'>
 		<h2 className='text-xl font-semibold text-gray-900'>Dane podstawowe firmy</h2>
@@ -247,134 +249,133 @@ export const Step3 = ({ register, errors }) => (
 	</div>
 )
 
-export const Step4 = ({ register, errors, watch, setValue }) => (
-	<div className='space-y-6'>
-		<h2 className='text-xl font-semibold text-gray-900'>Wachlarz świadczonych usług</h2>
+export const Step4 = ({ register, errors, watch, setValue }) => {
+	const organizacjaPrzewozowValue = watch('organizacjaPrzewozow')
+
+	useEffect(() => {
+		const isTrue = organizacjaPrzewozowValue === 'true'
+		setValue('agencjeCelne', isTrue)
+	}, [organizacjaPrzewozowValue, setValue])
+
+	return (
 		<div className='space-y-6'>
-			<div>
-				<h3 className='text-lg font-medium text-gray-900 mb-4'>
-					Usługi transportowe <span className='text-red-500'>*</span>
-				</h3>
-				<div className='grid grid-cols-2 gap-4'>
-					{[
-						'transportMorski',
-						'transportKolejowy',
-						'transportLotniczy',
-						'logistyka',
-						'transportDrogowy',
-						'taborWlasny',
-						'taborObcy',
-						'transportInne',
-					].map(field => (
-						<label key={field} className='flex items-center space-x-3'>
-							<input type='checkbox' {...register(field)} className='h-4 w-4 text-blue-600 rounded' />
-							<span className='text-sm text-gray-700'>
-								{
+			<h2 className='text-xl font-semibold text-gray-900'>Wachlarz świadczonych usług</h2>
+			<div className='space-y-6'>
+				<div>
+					<h3 className='text-lg font-medium text-gray-900 mb-4'>
+						Usługi transportowe <span className='text-red-500'>*</span>
+					</h3>
+					<div className='grid grid-cols-2 gap-4'>
+						{[
+							'transportMorski',
+							'transportKolejowy',
+							'transportLotniczy',
+							'logistyka',
+							'transportDrogowy',
+							'taborWlasny',
+							'taborObcy',
+							'transportInne',
+						].map(field => (
+							<label key={field} className='flex items-center space-x-3'>
+								<input type='checkbox' {...register(field)} className='h-4 w-4 text-blue-600 rounded' />
+								<span className='text-sm text-gray-700'>
 									{
-										transportMorski: 'Transport morski',
-										transportKolejowy: 'Transport kolejowy',
-										transportLotniczy: 'Transport lotniczy',
-										logistyka: 'Logistyka',
-										transportDrogowy: 'Transport drogowy',
-										taborWlasny: 'Taborem własnym',
-										taborObcy: 'Taborem obcym',
-										transportInne: 'Inne',
-									}[field]
-								}
-							</span>
+										{
+											transportMorski: 'Transport morski',
+											transportKolejowy: 'Transport kolejowy',
+											transportLotniczy: 'Transport lotniczy',
+											logistyka: 'Logistyka',
+											transportDrogowy: 'Transport drogowy',
+											taborWlasny: 'Taborem własnym',
+											taborObcy: 'Taborem obcym',
+											transportInne: 'Inne',
+										}[field]
+									}
+								</span>
+							</label>
+						))}
+					</div>
+				</div>
+				<div>
+					<h3 className='text-lg font-medium text-gray-900 mb-4'>
+						Usługi magazynowo-dystrybucyjne <span className='text-red-500'>*</span>
+					</h3>
+					<div className='grid grid-cols-2 gap-4'>
+						<label className='flex items-center space-x-3'>
+							<input type='checkbox' {...register('magazynWlasny')} className='h-4 w-4 text-blue-600 rounded' />
+							<span className='text-sm text-gray-700'>Magazyn własny</span>
 						</label>
-					))}
+						<label className='flex items-center space-x-3'>
+							<input type='checkbox' {...register('magazynObcy')} className='h-4 w-4 text-blue-600 rounded' />
+							<span className='text-sm text-gray-700'>Magazyn obcy</span>
+						</label>
+					</div>
 				</div>
-			</div>
-			<div>
-				<h3 className='text-lg font-medium text-gray-900 mb-4'>
-					Usługi magazynowo-dystrybucyjne <span className='text-red-500'>*</span>
-				</h3>
-				<div className='grid grid-cols-2 gap-4'>
-					<label className='flex items-center space-x-3'>
-						<input type='checkbox' {...register('magazynWlasny')} className='h-4 w-4 text-blue-600 rounded' />
-						<span className='text-sm text-gray-700'>Magazyn własny</span>
-					</label>
-					<label className='flex items-center space-x-3'>
-						<input type='checkbox' {...register('magazynObcy')} className='h-4 w-4 text-blue-600 rounded' />
-						<span className='text-sm text-gray-700'>Magazyn obcy</span>
-					</label>
+				<div>
+					<h3 className='text-lg font-medium text-gray-900'>
+						Organizacja przewozów drobnicy zbiorowe <span className='text-red-500'>*</span>
+					</h3>
+					<p className='text-sm text-gray-600 mb-4'>Agencje celne</p>
+					<div className='flex items-center space-x-6'>
+						<label className='flex items-center space-x-3 cursor-pointer'>
+							<input
+								type='radio'
+								value='true'
+								{...register('organizacjaPrzewozow', { required: true })}
+								className='h-4 w-4 text-blue-600'
+							/>
+							<span className='text-sm text-gray-700'>Tak</span>
+						</label>
+						<label className='flex items-center space-x-3 cursor-pointer'>
+							<input
+								type='radio'
+								value='false'
+								{...register('organizacjaPrzewozow', { required: true })}
+								className='h-4 w-4 text-blue-600'
+							/>
+							<span className='text-sm text-gray-700'>Nie</span>
+						</label>
+					</div>
 				</div>
-			</div>
-			<div>
-				<h3 className='text-lg font-medium text-gray-900'>
-					Organizacja przewozów drobnicy zbiorowe <span className='text-red-500'>*</span>
-				</h3>
-				<p className='text-sm text-gray-600 mb-4'>Agencje celne</p>
-				<div className='flex items-center space-x-6'>
-					<label className='flex items-center space-x-3 cursor-pointer'>
+				<div className='grid grid-cols-1 gap-4'>
+					<div>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>
+							a) krajowa (ilość oddziałów) <span className='text-red-500'>*</span>
+						</label>
 						<input
-							type='radio'
-							value='true'
-							{...register('organizacjaPrzewozow', { required: true })}
-							onChange={() => {
-								setValue('organizacjaPrzewozow', true)
-								setValue('agencjeCelne', true)
-							}}
-							checked={watch('organizacjaPrzewozow') === true}
-							className='h-4 w-4 text-blue-600'
+							type='text'
+							{...register('krajowaSiec', { required: 'To pole jest wymagane.' })}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						/>
-						<span className='text-sm text-gray-700'>Tak</span>
-					</label>
-					<label className='flex items-center space-x-3 cursor-pointer'>
+						{errors.krajowaSiec && <p className='text-red-500 text-xs mt-1'>{errors.krajowaSiec.message}</p>}
+					</div>
+					<div>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>
+							b) zagraniczna (ilość firm własnych / ilość korespondentów) <span className='text-red-500'>*</span>
+						</label>
 						<input
-							type='radio'
-							value='false'
-							{...register('organizacjaPrzewozow', { required: true })}
-							onChange={() => {
-								setValue('organizacjaPrzewozow', false)
-								setValue('agencjeCelne', false)
-							}}
-							checked={watch('organizacjaPrzewozow') === false}
-							className='h-4 w-4 text-blue-600'
+							type='text'
+							{...register('zagranicznaSSiec', { required: 'To pole jest wymagane.' })}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 						/>
-						<span className='text-sm text-gray-700'>Nie</span>
-					</label>
-				</div>
-			</div>
-			<div className='grid grid-cols-1 gap-4'>
-				<div>
-					<label className='block text-sm font-medium text-gray-700 mb-1'>
-						a) krajowa (ilość oddziałów) <span className='text-red-500'>*</span>
-					</label>
-					<input
-						type='text'
-						{...register('krajowaSiec', { required: 'To pole jest wymagane.' })}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
-					/>
-					{errors.krajowaSiec && <p className='text-red-500 text-xs mt-1'>{errors.krajowaSiec.message}</p>}
-				</div>
-				<div>
-					<label className='block text-sm font-medium text-gray-700 mb-1'>
-						b) zagraniczna (ilość firm własnych / ilość korespondentów) <span className='text-red-500'>*</span>
-					</label>
-					<input
-						type='text'
-						{...register('zagranicznaSSiec', { required: 'To pole jest wymagane.' })}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
-					/>
-					{errors.zagranicznaSSiec && <p className='text-red-500 text-xs mt-1'>{errors.zagranicznaSSiec.message}</p>}
-				</div>
-				<div>
-					<label className='block text-sm font-medium text-gray-700 mb-1'>
-						c) inne formy współpracy <span className='text-red-500'>*</span>
-					</label>
-					<textarea
-						{...register('inneFormy', { required: 'To pole jest wymagane.' })}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
-						rows='2'
-					/>
-					{errors.inneFormy && <p className='text-red-500 text-xs mt-1'>{errors.inneFormy.message}</p>}
+						{errors.zagranicznaSSiec && <p className='text-red-500 text-xs mt-1'>{errors.zagranicznaSSiec.message}</p>}
+					</div>
+					<div>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>
+							c) inne formy współpracy <span className='text-red-500'>*</span>
+						</label>
+						<textarea
+							{...register('inneFormy', { required: 'To pole jest wymagane.' })}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+							rows='2'
+						/>
+						{errors.inneFormy && <p className='text-red-500 text-xs mt-1'>{errors.inneFormy.message}</p>}
+					</div>
 				</div>
 			</div>
 		</div>
-	</div>
-)
+	)
+}
 
 export const Step5 = ({ register, errors }) => (
 	<div className='space-y-6'>
