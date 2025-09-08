@@ -4,6 +4,7 @@ import { Fragment, useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 // Komponent do renderowania etykiety statusu z odpowiednim kolorem
 // const StatusBadge = ({ status }) => {
@@ -27,6 +28,47 @@ import DeleteConfirmationModal from '@/components/DeleteConfirmationModal'
 // 	)
 // }
 
+const AttachmentInput = ({ file, onFileChange }) => (
+	<div className='mt-4'>
+		<label htmlFor='attachment-upload' className='block text-sm font-medium text-gray-700 text-left mb-2'>
+			Wymagany załącznik <span className='text-red-500'>*</span>
+		</label>
+		<div className='flex items-center justify-center w-full'>
+			<label
+				htmlFor='attachment-upload'
+				className='flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100'>
+				<div className='flex flex-col items-center justify-center pt-5 pb-6'>
+					<svg
+						className='w-8 h-8 mb-4 text-gray-500'
+						aria-hidden='true'
+						xmlns='http://www.w3.org/2000/svg'
+						fill='none'
+						viewBox='0 0 20 16'>
+						<path
+							stroke='currentColor'
+							strokeLinecap='round'
+							strokeLinejoin='round'
+							strokeWidth='2'
+							d='M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2'
+						/>
+					</svg>
+					{file ? (
+						<p className='text-sm text-green-600 font-semibold'>{file.name}</p>
+					) : (
+						<>
+							<p className='mb-2 text-sm text-gray-500'>
+								<span className='font-semibold'>Kliknij, aby wybrać</span> lub przeciągnij
+							</p>
+							<p className='text-xs text-gray-500'>PDF, DOCX, PNG, JPG etc.</p>
+						</>
+					)}
+				</div>
+				<input id='attachment-upload' type='file' className='hidden' onChange={onFileChange} />
+			</label>
+		</div>
+	</div>
+)
+
 export default function AdminDashboard() {
 	const [submissions, setSubmissions] = useState([])
 	const [expanded, setExpanded] = useState({}) // id -> bool
@@ -42,6 +84,13 @@ export default function AdminDashboard() {
 
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const [submissionToDelete, setSubmissionToDelete] = useState(null)
+
+	const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false)
+	const [submissionToVerify, setSubmissionToVerify] = useState(null)
+
+	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [successMessage, setSuccessMessage] = useState('')
+	const [verificationAttachment, setVerificationAttachment] = useState(null)
 
 	useEffect(() => {
 		const fetchSubmissions = async () => {
@@ -63,10 +112,20 @@ export default function AdminDashboard() {
 		fetchSubmissions()
 	}, [])
 
-	const handleVerificationChange = async (submissionId, currentStatus) => {
-		const newStatus = !currentStatus
+	const handleVerificationChange = async (submission, newStatus) => {
+		// Jeśli to deklaracja członkowska i jest zaznaczana, pokaż modal
+		if (submission.formType === 'DEKLARACJA_CZLONKOWSKA' && newStatus === true) {
+			setSubmissionToVerify({ ...submission, isVerified: newStatus })
+			setIsVerificationModalOpen(true)
+		} else {
+			// W przeciwnym wypadku, po prostu zaktualizuj status w bazie
+			updateVerificationStatus(submission.id, newStatus)
+		}
+	}
 
-		// Optymistyczna aktualizacja UI - natychmiast pokazujemy zmianę
+	const updateVerificationStatus = async (submissionId, newStatus) => {
+		// Optymistyczna aktualizacja UI
+		const originalSubmissions = submissions
 		setSubmissions(current => current.map(sub => (sub.id === submissionId ? { ...sub, isVerified: newStatus } : sub)))
 
 		try {
@@ -76,17 +135,52 @@ export default function AdminDashboard() {
 				body: JSON.stringify({ isVerified: newStatus }),
 			})
 
-			if (!response.ok) {
-				throw new Error('Aktualizacja statusu nie powiodła się.')
-			}
+			if (!response.ok) throw new Error('Aktualizacja statusu nie powiodła się.')
 		} catch (error) {
 			console.error(error)
-			// Wycofaj zmianę w UI w przypadku błędu
-			setSubmissions(current =>
-				current.map(sub => (sub.id === submissionId ? { ...sub, isVerified: currentStatus } : sub))
-			)
+			setSubmissions(originalSubmissions) // Wycofaj zmianę w UI
 			alert('Nie udało się zaktualizować statusu weryfikacji.')
 		}
+	}
+
+	const confirmAndSendVerificationEmail = async () => {
+		if (!submissionToVerify || !verificationAttachment) {
+			alert('Proszę załączyć plik.')
+			return
+		}
+		setIsSubmitting(true)
+
+		const formData = new FormData()
+		formData.append('attachment', verificationAttachment)
+
+		try {
+			// 1. Zaktualizuj status w bazie
+			await updateVerificationStatus(submissionToVerify.id, submissionToVerify.isVerified)
+
+			// 2. Wyślij e-mail
+			const response = await fetch(`/api/admin/submissions/${submissionToVerify.id}/send-verification-email`, {
+				method: 'POST',
+				body: formData,
+			})
+			if (!response.ok) throw new Error('Nie udało się wysłać e-maila.')
+
+			// 3. Ustaw komunikat o sukcesie
+			setSuccessMessage('Powiadomienie e-mail z załącznikiem zostało wysłane pomyślnie!')
+		} catch (error) {
+			console.error(error)
+			alert('Wystąpił błąd podczas wysyłania e-maila.')
+			closeVerificationModal() // Zamknij modal w razie błędu
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
+
+	const closeVerificationModal = () => {
+		setIsVerificationModalOpen(false)
+		setSubmissionToVerify(null)
+		setSuccessMessage('')
+		setVerificationAttachment(null)
+		setIsSubmitting(false)
 	}
 
 	const openDeleteModal = submission => {
@@ -262,7 +356,7 @@ export default function AdminDashboard() {
 													<input
 														type='checkbox'
 														checked={submission.isVerified}
-														onChange={() => handleVerificationChange(submission.id, submission.isVerified)}
+														onChange={e => handleVerificationChange(submission, e.target.checked)}
 														className='h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer'
 													/>
 												</td>
@@ -445,6 +539,20 @@ export default function AdminDashboard() {
 				itemName={attachmentModal.fileName}
 				context='attachment'
 			/>
+			<ConfirmationModal
+				isOpen={isVerificationModalOpen}
+				onClose={closeVerificationModal}
+				onConfirm={confirmAndSendVerificationEmail}
+				title={successMessage ? 'Operacja zakończona' : 'Potwierdź wysłanie e-maila'}
+				message={`Czy na pewno chcesz oznaczyć to zgłoszenie jako zweryfikowane i wysłać powiadomienie na adres: ${submissionToVerify?.email}?`}
+				confirmButtonText='Oznacz i wyślij'
+				isLoading={isSubmitting}
+				successMessage={successMessage}>
+				<AttachmentInput
+					file={verificationAttachment}
+					onFileChange={e => setVerificationAttachment(e.target.files[0])}
+				/>
+			</ConfirmationModal>
 		</div>
 	)
 }
