@@ -3,30 +3,63 @@
 import { Fragment, useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
+import { Menu, Transition } from '@headlessui/react'
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal'
 import ConfirmationModal from '@/components/ConfirmationModal'
 
-// Komponent do renderowania etykiety statusu z odpowiednim kolorem
-// const StatusBadge = ({ status }) => {
-// 	const statusStyles = {
-// 		PENDING: 'bg-yellow-100 text-yellow-800',
-// 		APPROVED: 'bg-green-100 text-green-800',
-// 		REJECTED: 'bg-red-100 text-red-800',
-// 	}
+const StatusDropdown = ({ submission, onStatusChange }) => {
+	const statuses = {
+		PENDING: { text: 'W trakcie', style: 'bg-yellow-100 text-yellow-800' },
+		APPROVED: { text: 'Zweryfikowany', style: 'bg-green-100 text-green-800' },
+		REJECTED: { text: 'Odrzucony', style: 'bg-red-100 text-red-800' },
+	}
 
-// 	const statusText = {
-// 		PENDING: 'Oczekujący',
-// 		APPROVED: 'Zatwierdzony',
-// 		REJECTED: 'Odrzucony',
-// 	}
+	const currentStatus = statuses[submission.status] || { text: 'Nieznany', style: 'bg-gray-100 text-gray-800' }
 
-// 	return (
-// 		<span
-// 			className={`px-3 py-1 text-xs font-medium rounded-full ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`}>
-// 			{statusText[status] || status}
-// 		</span>
-// 	)
-// }
+	return (
+		<Menu as='div' className='relative inline-block text-left'>
+			<div>
+				<Menu.Button
+					className={`inline-flex items-center justify-center w-full rounded-full px-3 py-1 text-xs font-medium transition-colors hover:opacity-80 ${currentStatus.style}`}>
+					{currentStatus.text}
+					<svg className='-mr-1 ml-1 h-4 w-4' viewBox='0 0 20 20' fill='currentColor'>
+						<path
+							fillRule='evenodd'
+							d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z'
+							clipRule='evenodd'
+						/>
+					</svg>
+				</Menu.Button>
+			</div>
+			<Transition
+				as={Fragment}
+				enter='transition ease-out duration-100'
+				enterFrom='transform opacity-0 scale-95'
+				enterTo='transform opacity-100 scale-100'
+				leave='transition ease-in duration-75'
+				leaveFrom='transform opacity-100 scale-100'
+				leaveTo='transform opacity-0 scale-95'>
+				<Menu.Items className='absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10'>
+					<div className='px-1 py-1'>
+						{Object.entries(statuses).map(([statusKey, { text }]) => (
+							<Menu.Item key={statusKey}>
+								{({ active }) => (
+									<button
+										onClick={() => onStatusChange(submission, statusKey)}
+										className={`${
+											active ? 'bg-blue-500 text-white' : 'text-gray-900'
+										} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>
+										{text}
+									</button>
+								)}
+							</Menu.Item>
+						))}
+					</div>
+				</Menu.Items>
+			</Transition>
+		</Menu>
+	)
+}
 
 const AttachmentInput = ({ file, onFileChange }) => (
 	<div className='mt-4'>
@@ -112,34 +145,32 @@ export default function AdminDashboard() {
 		fetchSubmissions()
 	}, [])
 
-	const handleVerificationChange = async (submission, newStatus) => {
-		// Jeśli to deklaracja członkowska i jest zaznaczana, pokaż modal
-		if (submission.formType === 'DEKLARACJA_CZLONKOWSKA' && newStatus === true) {
-			setSubmissionToVerify({ ...submission, isVerified: newStatus })
+	const handleStatusChange = async (submission, newStatus) => {
+		if (submission.status === newStatus) return
+
+		if (submission.formType === 'DEKLARACJA_CZLONKOWSKA' && newStatus === 'APPROVED') {
+			setSubmissionToVerify({ ...submission, status: newStatus })
 			setIsVerificationModalOpen(true)
 		} else {
-			// W przeciwnym wypadku, po prostu zaktualizuj status w bazie
-			updateVerificationStatus(submission.id, newStatus)
+			updateStatus(submission.id, newStatus)
 		}
 	}
 
-	const updateVerificationStatus = async (submissionId, newStatus) => {
-		// Optymistyczna aktualizacja UI
+	const updateStatus = async (submissionId, newStatus) => {
 		const originalSubmissions = submissions
-		setSubmissions(current => current.map(sub => (sub.id === submissionId ? { ...sub, isVerified: newStatus } : sub)))
+		setSubmissions(current => current.map(sub => (sub.id === submissionId ? { ...sub, status: newStatus } : sub)))
 
 		try {
-			const response = await fetch(`/api/admin/submissions/${submissionId}/verify`, {
+			const response = await fetch(`/api/admin/submissions/${submissionId}/status`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ isVerified: newStatus }),
+				body: JSON.stringify({ status: newStatus }),
 			})
-
 			if (!response.ok) throw new Error('Aktualizacja statusu nie powiodła się.')
 		} catch (error) {
 			console.error(error)
-			setSubmissions(originalSubmissions) // Wycofaj zmianę w UI
-			alert('Nie udało się zaktualizować statusu weryfikacji.')
+			setSubmissions(originalSubmissions)
+			alert('Nie udało się zaktualizować statusu.')
 		}
 	}
 
@@ -155,7 +186,7 @@ export default function AdminDashboard() {
 
 		try {
 			// 1. Zaktualizuj status w bazie
-			await updateVerificationStatus(submissionToVerify.id, submissionToVerify.isVerified)
+			await updateStatus(submissionToVerify.id, submissionToVerify.status)
 
 			// 2. Wyślij e-mail
 			const response = await fetch(`/api/admin/submissions/${submissionToVerify.id}/send-verification-email`, {
@@ -312,7 +343,7 @@ export default function AdminDashboard() {
 								<tr>
 									<th className='w-8 px-2 py-4' aria-label='Rozwiń' />
 									<th scope='col' className='px-6 py-4 font-semibold'>
-										Zweryfikowany
+										Status
 									</th>
 									<th scope='col' className='px-6 py-4 font-semibold'>
 										Typ formularza
@@ -352,13 +383,8 @@ export default function AdminDashboard() {
 														</svg>
 													</button>
 												</td>
-												<td className='px-6 py-4 text-center'>
-													<input
-														type='checkbox'
-														checked={submission.isVerified}
-														onChange={e => handleVerificationChange(submission, e.target.checked)}
-														className='h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer'
-													/>
+												<td className='px-6 py-4'>
+													<StatusDropdown submission={submission} onStatusChange={handleStatusChange} />
 												</td>
 												<td className='px-6 py-4 whitespace-nowrap'>
 													{submission.formType === 'DEKLARACJA_CZLONKOWSKA'

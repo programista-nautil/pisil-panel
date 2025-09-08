@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
+import { Status } from '@prisma/client'
 
-// Używamy metody PATCH, ponieważ jest to częściowa aktualizacja zasobu
 export async function PATCH(request, { params }) {
 	const session = await auth()
 	if (!session) {
@@ -10,22 +10,21 @@ export async function PATCH(request, { params }) {
 	}
 
 	const { id } = params
-	const { isVerified } = await request.json()
+	const { status } = await request.json()
 
-	// Walidacja, czy otrzymaliśmy poprawną wartość
-	if (typeof isVerified !== 'boolean') {
-		return NextResponse.json({ message: 'Nieprawidłowa wartość dla pola isVerified' }, { status: 400 })
+	if (!Object.values(Status).includes(status)) {
+		return NextResponse.json({ message: 'Nieprawidłowa wartość statusu' }, { status: 400 })
 	}
 
 	try {
 		const updatedSubmission = await prisma.submission.update({
 			where: { id },
-			data: { isVerified },
+			data: { status },
 		})
 
 		return NextResponse.json(updatedSubmission, { status: 200 })
 	} catch (error) {
-		console.error('Błąd podczas aktualizacji weryfikacji:', error)
+		console.error('Błąd podczas aktualizacji statusu:', error)
 		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })
 	}
 }
