@@ -87,7 +87,7 @@ export const MultiAttachmentInput = ({ files, onFilesChange, onFileRemove }) => 
 	)
 }
 
-export const AttachmentInput = ({ file, onFileChange }) => {
+export const AttachmentInput = ({ file, onFileChange, label, accept }) => {
 	const [isDragging, setIsDragging] = useState(false)
 
 	const handleDragOver = e => {
@@ -110,7 +110,7 @@ export const AttachmentInput = ({ file, onFileChange }) => {
 	return (
 		<div className='mt-4'>
 			<label htmlFor='attachment-upload' className='block text-sm font-medium text-gray-700 text-left mb-2'>
-				Wymagany załącznik <span className='text-red-500'>*</span>
+				{label}
 			</label>
 			<div className='flex items-center justify-center w-full'>
 				<label
@@ -143,11 +143,19 @@ export const AttachmentInput = ({ file, onFileChange }) => {
 								<p className='mb-2 text-sm text-gray-500'>
 									<span className='font-semibold'>Kliknij, aby wybrać</span> lub przeciągnij
 								</p>
-								<p className='text-xs text-gray-500'>PDF, DOCX, PNG, JPG etc.</p>
+								<p className='text-xs text-gray-500'>
+									{accept ? accept.replaceAll('.', '').toUpperCase() : 'PDF, DOCX, PNG, JPG etc.'}
+								</p>
 							</>
 						)}
 					</div>
-					<input id='attachment-upload' type='file' className='hidden' onChange={onFileChange} />
+					<input
+						id='attachment-upload'
+						type='file'
+						className='hidden'
+						onChange={onFileChange}
+						{...(accept ? { accept } : {})}
+					/>
 				</label>
 			</div>
 		</div>

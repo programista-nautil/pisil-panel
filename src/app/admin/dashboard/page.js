@@ -6,6 +6,7 @@ import Link from 'next/link'
 import StatusDropdown from './components/StatusDropdown'
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal'
 import { useNotificationModals } from './hooks/useNotificationModals'
+import AddSubmissionModal from './components/AddSubmissionModal'
 
 export default function AdminDashboard() {
 	const [submissions, setSubmissions] = useState([])
@@ -26,6 +27,8 @@ export default function AdminDashboard() {
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const [submissionToDelete, setSubmissionToDelete] = useState(null)
 
+	const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+
 	useEffect(() => {
 		const fetchSubmissions = async () => {
 			setIsLoading(true)
@@ -45,6 +48,12 @@ export default function AdminDashboard() {
 
 		fetchSubmissions()
 	}, [])
+
+	const handleAddSubmission = data => {
+		console.log('Dane nowego zgłoszenia:', data)
+		alert('Logika dodawania zgłoszenia zostanie zaimplementowana wkrótce.')
+		setIsAddModalOpen(false)
+	}
 
 	const openDeleteModal = submission => {
 		setSubmissionToDelete(submission)
@@ -160,12 +169,21 @@ export default function AdminDashboard() {
 				</header>
 
 				{/* Karty ze statystykami */}
-				<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
+				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
 					<div className='bg-white p-6 rounded-lg shadow'>
 						<h3 className='text-sm font-medium text-gray-500'>Wszystkie zgłoszenia</h3>
 						<p className='mt-2 text-3xl font-bold text-gray-900'>{submissions.length}</p>
 					</div>
-					{/* Tutaj można dodać więcej kart, np. "Oczekujące", "Zatwierdzone" */}
+					<div className='flex items-center justify-center md:col-start-3'>
+						<button
+							onClick={() => setIsAddModalOpen(true)}
+							className='w-full h-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors'>
+							<svg className='h-5 w-5' viewBox='0 0 20 20' fill='currentColor'>
+								<path d='M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z' />
+							</svg>
+							<span>Dodaj zgłoszenie</span>
+						</button>
+					</div>
 				</div>
 
 				<main className='bg-white rounded-lg shadow overflow-hidden'>
@@ -384,6 +402,11 @@ export default function AdminDashboard() {
 					</div>
 				</main>
 			</div>
+			<AddSubmissionModal
+				isOpen={isAddModalOpen}
+				onClose={() => setIsAddModalOpen(false)}
+				onFormSubmit={handleAddSubmission}
+			/>
 			<DeleteConfirmationModal
 				isOpen={isModalOpen}
 				onClose={closeDeleteModal}
