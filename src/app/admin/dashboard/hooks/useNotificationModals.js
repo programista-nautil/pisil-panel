@@ -187,7 +187,11 @@ export function useNotificationModals(submissions, setSubmissions) {
 				<AttachmentInput
 					file={verificationAttachment}
 					onFileChange={e => setVerificationAttachment(e.target.files[0])}
-					label={'Wymagany załącznik <span className="text-red-500">*</span>'}
+					label={
+						<>
+							Wymagany załącznik <span className='text-red-500'>*</span>
+						</>
+					}
 				/>
 			</ConfirmationModal>
 
