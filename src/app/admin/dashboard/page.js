@@ -3,114 +3,10 @@
 import { Fragment, useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
-import { Menu, MenuButton, MenuItems, MenuItem, Transition } from '@headlessui/react'
+import StatusDropdown from './components/StatusDropdown'
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal'
 import ConfirmationModal from '@/components/ConfirmationModal'
-
-const StatusDropdown = ({ submission, onStatusChange }) => {
-	const statuses = {
-		PENDING: { text: 'W trakcie', style: 'bg-yellow-100 text-yellow-800' },
-		APPROVED: { text: 'Zweryfikowany', style: 'bg-green-100 text-green-800' },
-		REJECTED: { text: 'Odrzucony', style: 'bg-red-100 text-red-800' },
-	}
-
-	// Wyznacz najdłuższą etykietę, aby wszystkie przyciski miały tę samą szerokość
-	const longestLabel = Object.values(statuses).reduce((acc, s) => (s.text.length > acc.length ? s.text : acc), '')
-
-	const currentStatus = statuses[submission.status] || { text: 'Nieznany', style: 'bg-gray-100 text-gray-800' }
-
-	return (
-		<Menu as='div' className='relative inline-block text-left'>
-			<div>
-				<MenuButton
-					className={`inline-flex items-center justify-center w-full rounded-full px-3 py-1 text-xs font-medium transition-colors hover:opacity-80 ${currentStatus.style}`}>
-					{/* Opakowanie z siatką nakładającą elementy, aby placeholder wyznaczył szerokość */}
-					<span className='inline-grid'>
-						<span className='col-start-1 row-start-1'>{currentStatus.text}</span>
-						<span aria-hidden='true' className='col-start-1 row-start-1 invisible whitespace-nowrap'>
-							{longestLabel}
-						</span>
-					</span>
-					<svg className='-mr-1 ml-1 h-4 w-4' viewBox='0 0 20 20' fill='currentColor'>
-						<path
-							fillRule='evenodd'
-							d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z'
-							clipRule='evenodd'
-						/>
-					</svg>
-				</MenuButton>
-			</div>
-
-			<Transition
-				as={Fragment}
-				enter='transition ease-out duration-100'
-				enterFrom='transform opacity-0 scale-95'
-				enterTo='transform opacity-100 scale-100'
-				leave='transition ease-in duration-75'
-				leaveFrom='transform opacity-100 scale-100'
-				leaveTo='transform opacity-0 scale-95'>
-				<MenuItems className='absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10'>
-					<div className='px-1 py-1'>
-						{Object.entries(statuses).map(([statusKey, { text }]) => (
-							<MenuItem key={statusKey}>
-								{({ active }) => (
-									<button
-										onClick={() => onStatusChange(submission, statusKey)}
-										className={`${
-											active ? 'bg-blue-500 text-white' : 'text-gray-900'
-										} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>
-										{text}
-									</button>
-								)}
-							</MenuItem>
-						))}
-					</div>
-				</MenuItems>
-			</Transition>
-		</Menu>
-	)
-}
-
-const AttachmentInput = ({ file, onFileChange }) => (
-	<div className='mt-4'>
-		<label htmlFor='attachment-upload' className='block text-sm font-medium text-gray-700 text-left mb-2'>
-			Wymagany załącznik <span className='text-red-500'>*</span>
-		</label>
-		<div className='flex items-center justify-center w-full'>
-			<label
-				htmlFor='attachment-upload'
-				className='flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100'>
-				<div className='flex flex-col items-center justify-center pt-5 pb-6'>
-					<svg
-						className='w-8 h-8 mb-4 text-gray-500'
-						aria-hidden='true'
-						xmlns='http://www.w3.org/2000/svg'
-						fill='none'
-						viewBox='0 0 20 16'>
-						<path
-							stroke='currentColor'
-							strokeLinecap='round'
-							strokeLinejoin='round'
-							strokeWidth='2'
-							d='M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2'
-						/>
-					</svg>
-					{file ? (
-						<p className='text-sm text-green-600 font-semibold'>{file.name}</p>
-					) : (
-						<>
-							<p className='mb-2 text-sm text-gray-500'>
-								<span className='font-semibold'>Kliknij, aby wybrać</span> lub przeciągnij
-							</p>
-							<p className='text-xs text-gray-500'>PDF, DOCX, PNG, JPG etc.</p>
-						</>
-					)}
-				</div>
-				<input id='attachment-upload' type='file' className='hidden' onChange={onFileChange} />
-			</label>
-		</div>
-	</div>
-)
+import { MultiAttachmentInput, AttachmentInput } from './components/AttachmentInputs'
 
 export default function AdminDashboard() {
 	const [submissions, setSubmissions] = useState([])
@@ -134,6 +30,13 @@ export default function AdminDashboard() {
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [successMessage, setSuccessMessage] = useState('')
 	const [verificationAttachment, setVerificationAttachment] = useState(null)
+
+	const [isAcceptanceModalOpen, setIsAcceptanceModalOpen] = useState(false)
+	const [submissionToAccept, setSubmissionToAccept] = useState(null)
+	const [acceptanceAttachments, setAcceptanceAttachments] = useState([])
+
+	const [isRejectionModalOpen, setIsRejectionModalOpen] = useState(false)
+	const [submissionToReject, setSubmissionToReject] = useState(null)
 
 	useEffect(() => {
 		const fetchSubmissions = async () => {
@@ -161,6 +64,12 @@ export default function AdminDashboard() {
 		if (submission.formType === 'DEKLARACJA_CZLONKOWSKA' && newStatus === 'APPROVED') {
 			setSubmissionToVerify({ ...submission, status: newStatus })
 			setIsVerificationModalOpen(true)
+		} else if (newStatus === 'ACCEPTED') {
+			setSubmissionToAccept({ ...submission, status: newStatus })
+			setIsAcceptanceModalOpen(true)
+		} else if (newStatus === 'REJECTED') {
+			setSubmissionToReject({ ...submission, status: newStatus })
+			setIsRejectionModalOpen(true)
 		} else {
 			updateStatus(submission.id, newStatus)
 		}
@@ -221,6 +130,85 @@ export default function AdminDashboard() {
 		setSubmissionToVerify(null)
 		setSuccessMessage('')
 		setVerificationAttachment(null)
+		setIsSubmitting(false)
+	}
+
+	const onAcceptanceFilesChange = e => {
+		setAcceptanceAttachments(prevFiles => [...prevFiles, ...Array.from(e.target.files)])
+	}
+
+	const onAcceptanceFileRemove = index => {
+		setAcceptanceAttachments(prevFiles => prevFiles.filter((_, i) => i !== index))
+	}
+
+	const confirmAndSendAcceptanceEmail = async () => {
+		if (!submissionToAccept || acceptanceAttachments.length === 0) {
+			alert('Proszę dodać przynajmniej jeden załącznik.')
+			return
+		}
+		setIsSubmitting(true)
+
+		const formData = new FormData()
+		acceptanceAttachments.forEach(file => formData.append('attachments[]', file))
+
+		try {
+			const response = await fetch(`/api/admin/submissions/${submissionToAccept.id}/accept`, {
+				method: 'POST',
+				body: formData,
+			})
+			if (!response.ok) throw new Error('Nie udało się wysłać e-maila akceptacyjnego.')
+
+			// Odświeżamy dane po stronie klienta
+			setSubmissions(current =>
+				current.map(sub => (sub.id === submissionToAccept.id ? { ...sub, status: 'ACCEPTED' } : sub))
+			)
+			setSuccessMessage('Email akceptacyjny z załącznikami został wysłany!')
+		} catch (error) {
+			console.error(error)
+			alert('Wystąpił błąd podczas wysyłania e-maila.')
+			closeAcceptanceModal()
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
+
+	const closeAcceptanceModal = () => {
+		setIsAcceptanceModalOpen(false)
+		setSubmissionToAccept(null)
+		setSuccessMessage('')
+		setAcceptanceAttachments([])
+		setIsSubmitting(false)
+	}
+
+	const confirmAndSendRejectionEmail = async () => {
+		if (!submissionToReject) return
+		setIsSubmitting(true)
+
+		try {
+			// Wywołujemy nowe API, które jednocześnie zmienia status i wysyła maila
+			const response = await fetch(`/api/admin/submissions/${submissionToReject.id}/reject`, {
+				method: 'POST',
+			})
+			if (!response.ok) throw new Error('Nie udało się wysłać e-maila o odrzuceniu.')
+
+			// Aktualizujemy UI
+			setSubmissions(current =>
+				current.map(sub => (sub.id === submissionToReject.id ? { ...sub, status: 'REJECTED' } : sub))
+			)
+			setSuccessMessage('Powiadomienie o odrzuceniu zostało wysłane pomyślnie!')
+		} catch (error) {
+			console.error(error)
+			alert('Wystąpił błąd podczas wysyłania e-maila.')
+			closeRejectionModal()
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
+
+	const closeRejectionModal = () => {
+		setIsRejectionModalOpen(false)
+		setSubmissionToReject(null)
+		setSuccessMessage('')
 		setIsSubmitting(false)
 	}
 
@@ -589,6 +577,33 @@ export default function AdminDashboard() {
 					onFileChange={e => setVerificationAttachment(e.target.files[0])}
 				/>
 			</ConfirmationModal>
+
+			<ConfirmationModal
+				isOpen={isAcceptanceModalOpen}
+				onClose={closeAcceptanceModal}
+				onConfirm={confirmAndSendAcceptanceEmail}
+				title={successMessage ? 'Operacja zakończona' : 'Potwierdź przyjęcie członka'}
+				message={`Spowoduje to zmianę statusu na "Przyjęty" i wysłanie powiadomienia e-mail z załącznikami na adres: ${submissionToAccept?.email}.`}
+				confirmButtonText='Przyjmij i wyślij'
+				isLoading={isSubmitting}
+				successMessage={successMessage}>
+				<MultiAttachmentInput
+					files={acceptanceAttachments}
+					onFilesChange={onAcceptanceFilesChange}
+					onFileRemove={onAcceptanceFileRemove}
+				/>
+			</ConfirmationModal>
+
+			<ConfirmationModal
+				isOpen={isRejectionModalOpen}
+				onClose={closeRejectionModal}
+				onConfirm={confirmAndSendRejectionEmail}
+				title={successMessage ? 'Operacja zakończona' : 'Potwierdź odrzucenie zgłoszenia'}
+				message={`Spowoduje to zmianę statusu na "Odrzucony" i wysłanie powiadomienia e-mail na adres: ${submissionToReject?.email}.`}
+				confirmButtonText='Odrzuć i wyślij'
+				isLoading={isSubmitting}
+				successMessage={successMessage}
+			/>
 		</div>
 	)
 }
