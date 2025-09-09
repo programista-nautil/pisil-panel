@@ -3,7 +3,7 @@
 import { Fragment, useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
-import { Menu, Transition } from '@headlessui/react'
+import { Menu, MenuButton, MenuItems, MenuItem, Transition } from '@headlessui/react'
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal'
 import ConfirmationModal from '@/components/ConfirmationModal'
 
@@ -14,14 +14,23 @@ const StatusDropdown = ({ submission, onStatusChange }) => {
 		REJECTED: { text: 'Odrzucony', style: 'bg-red-100 text-red-800' },
 	}
 
+	// Wyznacz najdłuższą etykietę, aby wszystkie przyciski miały tę samą szerokość
+	const longestLabel = Object.values(statuses).reduce((acc, s) => (s.text.length > acc.length ? s.text : acc), '')
+
 	const currentStatus = statuses[submission.status] || { text: 'Nieznany', style: 'bg-gray-100 text-gray-800' }
 
 	return (
 		<Menu as='div' className='relative inline-block text-left'>
 			<div>
-				<Menu.Button
+				<MenuButton
 					className={`inline-flex items-center justify-center w-full rounded-full px-3 py-1 text-xs font-medium transition-colors hover:opacity-80 ${currentStatus.style}`}>
-					{currentStatus.text}
+					{/* Opakowanie z siatką nakładającą elementy, aby placeholder wyznaczył szerokość */}
+					<span className='inline-grid'>
+						<span className='col-start-1 row-start-1'>{currentStatus.text}</span>
+						<span aria-hidden='true' className='col-start-1 row-start-1 invisible whitespace-nowrap'>
+							{longestLabel}
+						</span>
+					</span>
 					<svg className='-mr-1 ml-1 h-4 w-4' viewBox='0 0 20 20' fill='currentColor'>
 						<path
 							fillRule='evenodd'
@@ -29,8 +38,9 @@ const StatusDropdown = ({ submission, onStatusChange }) => {
 							clipRule='evenodd'
 						/>
 					</svg>
-				</Menu.Button>
+				</MenuButton>
 			</div>
+
 			<Transition
 				as={Fragment}
 				enter='transition ease-out duration-100'
@@ -39,10 +49,10 @@ const StatusDropdown = ({ submission, onStatusChange }) => {
 				leave='transition ease-in duration-75'
 				leaveFrom='transform opacity-100 scale-100'
 				leaveTo='transform opacity-0 scale-95'>
-				<Menu.Items className='absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10'>
+				<MenuItems className='absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10'>
 					<div className='px-1 py-1'>
 						{Object.entries(statuses).map(([statusKey, { text }]) => (
-							<Menu.Item key={statusKey}>
+							<MenuItem key={statusKey}>
 								{({ active }) => (
 									<button
 										onClick={() => onStatusChange(submission, statusKey)}
@@ -52,10 +62,10 @@ const StatusDropdown = ({ submission, onStatusChange }) => {
 										{text}
 									</button>
 								)}
-							</Menu.Item>
+							</MenuItem>
 						))}
 					</div>
-				</Menu.Items>
+				</MenuItems>
 			</Transition>
 		</Menu>
 	)
@@ -342,7 +352,7 @@ export default function AdminDashboard() {
 							<thead className='text-xs text-gray-700 uppercase bg-gray-50'>
 								<tr>
 									<th className='w-8 px-2 py-4' aria-label='Rozwiń' />
-									<th scope='col' className='px-6 py-4 font-semibold'>
+									<th scope='col' className='px-6 py-4 font-semibold bg-gray-50 rounded-tl-lg'>
 										Status
 									</th>
 									<th scope='col' className='px-6 py-4 font-semibold'>
