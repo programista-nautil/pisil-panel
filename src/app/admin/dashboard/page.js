@@ -198,10 +198,10 @@ export default function AdminDashboard() {
 						<h3 className='text-sm font-medium text-gray-500'>Wszystkie zgłoszenia</h3>
 						<p className='mt-2 text-3xl font-bold text-gray-900'>{submissions.length}</p>
 					</div>
-					<div className='flex items-center justify-center md:col-start-3'>
+					<div className='flex items-center justify-center md:col-start-4'>
 						<button
 							onClick={() => setIsAddModalOpen(true)}
-							className='w-full h-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors'>
+							className='w-full h-half inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors'>
 							<svg className='h-5 w-5' viewBox='0 0 20 20' fill='currentColor'>
 								<path d='M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z' />
 							</svg>
