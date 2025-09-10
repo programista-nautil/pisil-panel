@@ -7,6 +7,7 @@ import StatusDropdown from './components/StatusDropdown'
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal'
 import { useNotificationModals } from './hooks/useNotificationModals'
 import AddSubmissionModal from './components/AddSubmissionModal'
+import { PencilSquareIcon } from '@heroicons/react/24/solid'
 
 export default function AdminDashboard() {
 	const [submissions, setSubmissions] = useState([])
@@ -49,10 +50,33 @@ export default function AdminDashboard() {
 		fetchSubmissions()
 	}, [])
 
-	const handleAddSubmission = data => {
-		console.log('Dane nowego zgłoszenia:', data)
-		alert('Logika dodawania zgłoszenia zostanie zaimplementowana wkrótce.')
-		setIsAddModalOpen(false)
+	const handleAddSubmission = async (data, mainPdf, additionalFiles) => {
+		const formData = new FormData()
+		formData.append('formType', data.formType)
+		formData.append('companyName', data.companyName)
+		formData.append('email', data.email)
+		formData.append('mainPdf', mainPdf)
+		additionalFiles.forEach(file => {
+			formData.append('additionalFiles[]', file)
+		})
+
+		try {
+			const response = await fetch('/api/admin/submissions', {
+				method: 'POST',
+				body: formData,
+			})
+
+			if (!response.ok) {
+				throw new Error('Nie udało się dodać zgłoszenia.')
+			}
+
+			const newSubmission = await response.json()
+			setSubmissions(prev => [newSubmission, ...prev])
+			setIsAddModalOpen(false)
+		} catch (error) {
+			console.error(error)
+			alert('Wystąpił błąd podczas dodawania zgłoszenia.')
+		}
 	}
 
 	const openDeleteModal = submission => {
@@ -244,7 +268,14 @@ export default function AdminDashboard() {
 														: submission.formType || '—'}
 												</td>
 												<td className='px-6 py-4 font-medium text-gray-900 whitespace-nowrap'>
-													{submission.companyName || 'Brak nazwy'}
+													<div className='flex items-center gap-2'>
+														<span>{submission.companyName || 'Brak nazwy'}</span>
+														{submission.createdByAdmin && (
+															<span title='Dodane ręcznie przez administratora'>
+																<PencilSquareIcon className='h-5 w-5 text-gray-400' />
+															</span>
+														)}
+													</div>
 												</td>
 												<td className='px-6 py-4'>{submission.email || 'Brak emaila'}</td>
 												<td className='px-6 py-4'>
