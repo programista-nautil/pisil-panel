@@ -10,7 +10,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'programista@nautil.pl'
 export async function POST(request) {
 	try {
 		const formData = await request.json()
-		const { formType, ...submissionData } = formData
+		const { formType, fieldLabels, ...submissionData } = formData
 
 		// Określ nazwę firmy/zgłaszającego
 		const submitterName =
@@ -18,7 +18,7 @@ export async function POST(request) {
 
 		// 1. Wygeneruj PDF z wynikami ankiety
 		const pdfTitle = formType.replace(/_/g, ' ')
-		const pdfBuffer = generateSurveyResultsPDF(pdfTitle, submissionData)
+		const pdfBuffer = await generateSurveyResultsPDF(pdfTitle, submissionData, fieldLabels)
 
 		// 2. Prześlij wygenerowany PDF do GCS
 		const filename = `ankieta_${sanitizeFilename(submitterName)}_${Date.now()}.pdf`

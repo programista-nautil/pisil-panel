@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-export default function SurveySubmitButton({ formData, formType, onUploadSuccess, disabled }) {
+export default function SurveySubmitButton({ formData, formType, fieldLabels, onUploadSuccess, disabled }) {
 	const [isSubmitting, setIsSubmitting] = useState(false)
 
 	const handleSubmit = async () => {
@@ -11,7 +11,7 @@ export default function SurveySubmitButton({ formData, formType, onUploadSuccess
 			const response = await fetch('/api/submit-survey', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ ...formData, formType }),
+				body: JSON.stringify({ ...formData, formType, fieldLabels }),
 			})
 
 			if (!response.ok) {

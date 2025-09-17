@@ -8,7 +8,8 @@ import AdditionalDocumentsUpload from './AdditionalDocumentsUpload'
 import StepsIndicator from './StepsIndicator'
 
 export default function MultiStepForm({ formConfig }) {
-	const { formType, defaultValues, isSurvey, steps, PDFGeneratorComponent, sessionCookieName, testData } = formConfig
+	const { formType, defaultValues, isSurvey, steps, PDFGeneratorComponent, sessionCookieName, testData, fieldLabels } =
+		formConfig
 
 	const totalSteps = steps.length
 
@@ -188,6 +189,7 @@ export default function MultiStepForm({ formConfig }) {
 					<PDFGeneratorComponent
 						formData={getValues()}
 						formType={formType}
+						fieldLabels={fieldLabels}
 						onGenerated={() => setPdfGenerated(true)}
 						disabled={!isValid}
 					/>

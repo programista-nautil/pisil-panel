@@ -16,5 +16,15 @@ export const mlodySpedytorRokuConfig = {
 		employerInfo: '',
 		presentationTopic: '',
 	},
+	fieldLabels: {
+		fullName: 'Imię i nazwisko',
+		birthDate: 'Data urodzenia',
+		phone: 'Nr telefonu',
+		email: 'Adres e-mail',
+		education: 'Wykształcenie, nazwa uczelni, szkoły',
+		workExperience: 'Przebieg pracy zawodowej',
+		employerInfo: 'Nazwa i referencje firmy zatrudniającej kandydata',
+		presentationTopic: 'Temat, który zaprezentuje kandydat',
+	},
 	isSurvey: true,
 }
