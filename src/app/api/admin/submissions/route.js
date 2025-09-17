@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
 import { sanitizeFilename } from '@/lib/utils'
+import path from 'path'
 
 export async function GET() {
 	const session = await auth()
@@ -44,7 +45,16 @@ export async function POST(request) {
 		// Przetwarzanie głównego pliku
 		const mainPdfBytes = await mainPdf.arrayBuffer()
 		const mainPdfBuffer = Buffer.from(mainPdfBytes)
-		const mainPdfFilename = `reczny_${sanitizeFilename(mainPdf.name)}_${Date.now()}`
+		const originalFilename = sanitizeFilename(mainPdf.name)
+		const fileExtension = path.extname(originalFilename)
+		const fileNameWithoutExt = path.basename(originalFilename, fileExtension)
+
+		const now = new Date()
+		const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(
+			2,
+			'0'
+		)}-${now.getFullYear()}`
+		const mainPdfFilename = `reczny_${fileNameWithoutExt}_${formattedDate}${fileExtension}`
 		const mainGcsPath = await uploadFileToGCS(mainPdfBuffer, mainPdfFilename)
 
 		// Używamy transakcji, aby zapewnić spójność danych
@@ -66,7 +76,12 @@ export async function POST(request) {
 				for (const file of additionalFiles) {
 					const bytes = await file.arrayBuffer()
 					const buffer = Buffer.from(bytes)
-					const filename = `attachment_${Date.now()}_${sanitizeFilename(file.name)}`
+					const now = new Date()
+					const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(
+						2,
+						'0'
+					)}-${now.getFullYear()}`
+					const filename = `attachment_${formattedDate}_${sanitizeFilename(file.name)}`
 					const gcsPath = await uploadFileToGCS(buffer, filename)
 
 					await tx.attachment.create({

@@ -21,7 +21,12 @@ export async function POST(request) {
 		const pdfBuffer = await generateSurveyResultsPDF(pdfTitle, submissionData, fieldLabels)
 
 		// 2. Prześlij wygenerowany PDF do GCS
-		const filename = `ankieta_${sanitizeFilename(submitterName)}_${Date.now()}.pdf`
+		const now = new Date()
+		const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(
+			2,
+			'0'
+		)}-${now.getFullYear()}`
+		const filename = `ankieta_${sanitizeFilename(submitterName)}_${formattedDate}.pdf`
 		const gcsPath = await uploadFileToGCS(Buffer.from(pdfBuffer), filename)
 
 		// 3. Zapisz zgłoszenie w bazie danych

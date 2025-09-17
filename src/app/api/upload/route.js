@@ -52,7 +52,12 @@ export async function POST(request) {
 			: formType === 'PATRONAT'
 			? `patronat_${safe(userData.eventName) || safe(userData.organizerName) || safe(displayCompanyOrOrg)}`
 			: `formularz_${safe(displayCompanyOrOrg)}`
-		const filename = `${baseName}_${Date.now()}.pdf`
+		const now = new Date()
+		const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(
+			2,
+			'0'
+		)}-${now.getFullYear()}`
+		const filename = `${baseName}_${formattedDate}.pdf`
 
 		const gcsFilePath = await uploadFileToGCS(buffer, filename)
 
