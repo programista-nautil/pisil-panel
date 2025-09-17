@@ -87,6 +87,7 @@ export default function MultiStepForm({ formConfig }) {
 		Cookies.remove(sessionCookieName)
 		reset(defaultValues)
 		setTimeout(() => setIsResetting(false), 100)
+		setCurrentStep(1)
 	}
 
 	const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps))
