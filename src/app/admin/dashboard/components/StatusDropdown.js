@@ -8,8 +8,30 @@ export default function StatusDropdown({ submission, onStatusChange }) {
 		REJECTED: { text: 'Odrzucony', style: 'bg-red-100 text-red-800' },
 		ACCEPTED: { text: 'Przyjęty', style: 'bg-green-100 text-green-800' },
 	}
+
+	const isSurvey = submission.formType === 'MLODY_SPEDYTOR_ROKU' || submission.formType === 'ANKIETA_SPEDYTOR_ROKU'
+
 	// Wyznacz najdłuższą etykietę, aby wszystkie przyciski miały tę samą szerokość
 	const longestLabel = Object.values(statuses).reduce((acc, s) => (s.text.length > acc.length ? s.text : acc), '')
+
+	if (isSurvey) {
+		return (
+			<div className='relative inline-block text-center'>
+				<span
+					className={`inline-flex items-center justify-center w-full rounded-full px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700`}>
+					<span className='inline-grid'>
+						<span className='col-start-1 row-start-1'>Ankieta</span>
+						<span aria-hidden='true' className='col-start-1 row-start-1 invisible whitespace-nowrap'>
+							{longestLabel}
+							<svg className='-mr-1 ml-1 h-4 w-4 inline' viewBox='0 0 20 20' fill='currentColor'>
+								<path />
+							</svg>
+						</span>
+					</span>
+				</span>
+			</div>
+		)
+	}
 
 	const currentStatus = statuses[submission.status] || { text: 'Nieznany', style: 'bg-gray-100 text-gray-800' }
 

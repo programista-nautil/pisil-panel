@@ -273,14 +273,7 @@ export default function AdminDashboard() {
 													</button>
 												</td>
 												<td className='px-6 py-4'>
-													{submission.formType === 'MLODY_SPEDYTOR_ROKU' ||
-													submission.formType === 'ANKIETA_SPEDYTOR_ROKU' ? (
-														<span className='inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700'>
-															Ankieta
-														</span>
-													) : (
-														<StatusDropdown submission={submission} onStatusChange={handleStatusChange} />
-													)}
+													<StatusDropdown submission={submission} onStatusChange={handleStatusChange} />
 												</td>
 												<td className='px-6 py-4 whitespace-nowrap'>{getFormTypeName(submission.formType)}</td>
 												<td className='px-6 py-4 font-medium text-gray-900 whitespace-nowrap'>
