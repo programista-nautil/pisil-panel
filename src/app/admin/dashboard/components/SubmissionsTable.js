@@ -20,13 +20,15 @@ export default function SubmissionsTable({
 		return <p className='p-6 text-center text-gray-500'>Brak zgłoszeń do wyświetlenia w tej kategorii.</p>
 	}
 
+	const hasExpandableRows = submissions.some(s => s.formType === 'DEKLARACJA_CZLONKOWSKA' || s.formType === 'PATRONAT')
+
 	return (
 		<div className='overflow-x-auto'>
 			<table className='w-full text-sm text-left text-gray-500'>
 				<thead className='text-xs text-gray-700 uppercase bg-gray-50'>
 					<tr>
-						<th className='w-8 px-2 py-4' aria-label='Rozwiń' />
-						<th scope='col' className='px-6 py-4 font-semibold'>
+						{hasExpandableRows && <th className='w-8 px-2 py-4' aria-label='Rozwiń' />}
+						<th scope='col' className='px-14 py-4 font-semibold'>
 							Status
 						</th>
 						<th scope='col' className='px-6 py-4 font-semibold'>
@@ -49,21 +51,27 @@ export default function SubmissionsTable({
 				<tbody>
 					{submissions.map(submission => {
 						const isOpen = expanded[submission.id]
+						const isExpandable = submission.formType === 'DEKLARACJA_CZLONKOWSKA' || submission.formType === 'PATRONAT'
+
 						return (
 							<Fragment key={submission.id}>
 								{/* Główny wiersz */}
 								<tr className='bg-white border-t hover:bg-gray-50'>
-									<td className='px-2 py-4 text-center align-top'>
-										<button onClick={() => toggleExpanded(submission.id)} className='p-1 rounded hover:bg-gray-200'>
-											<svg
-												className={`h-5 w-5 transform transition-transform ${isOpen ? 'rotate-90' : ''}`}
-												fill='none'
-												stroke='currentColor'
-												viewBox='0 0 24 24'>
-												<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
-											</svg>
-										</button>
-									</td>
+									{hasExpandableRows && (
+										<td className='px-2 py-4 text-center align-top'>
+											{isExpandable && (
+												<button onClick={() => toggleExpanded(submission.id)} className='p-1 rounded hover:bg-gray-200'>
+													<svg
+														className={`h-5 w-5 transform transition-transform ${isOpen ? 'rotate-90' : ''}`}
+														fill='none'
+														stroke='currentColor'
+														viewBox='0 0 24 24'>
+														<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
+													</svg>
+												</button>
+											)}
+										</td>
+									)}
 									<td className='px-6 py-4'>
 										<StatusDropdown submission={submission} onStatusChange={handleStatusChange} />
 									</td>
@@ -115,9 +123,9 @@ export default function SubmissionsTable({
 									</td>
 								</tr>
 								{/* Wiersz z załącznikami (rozwijany) */}
-								{isOpen && (
+								{isOpen && isExpandable && (
 									<tr className='bg-gray-50 border-t'>
-										<td colSpan='7' className='px-10 py-5'>
+										<td colSpan={hasExpandableRows ? 7 : 6} className='px-10 py-5'>
 											<div className='bg-white/60 backdrop-blur-sm border border-gray-200 rounded-lg p-5 shadow-inner'>
 												<div className='flex items-center justify-between mb-4'>
 													<h4 className='text-sm font-semibold text-gray-800 tracking-wide flex items-center gap-2'>
