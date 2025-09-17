@@ -1,4 +1,4 @@
-import AnkietaSubmit from './components/AnkietaSubmit'
+import SurveySubmitButton from '@/components/SurveySubmitButton'
 import {
 	GeneralInfoStep,
 	EmployeesStep,
@@ -64,7 +64,7 @@ export const ankietaSpedytorRokuConfig = {
 
 		MiscellaneousStep,
 	],
-	PDFGeneratorComponent: AnkietaSubmit,
+	PDFGeneratorComponent: SurveySubmitButton,
 	defaultValues: {
 		email: '',
 		companyNameAndAddress: '',
@@ -79,4 +79,5 @@ export const ankietaSpedytorRokuConfig = {
 		customerSatisfactionMethods: '',
 		communityActivities: '',
 	},
+	isSurvey: true,
 }

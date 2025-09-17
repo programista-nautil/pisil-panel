@@ -113,26 +113,28 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 							/>
 							{errors.email && <p className='text-red-500 text-xs mt-1'>{errors.email.message}</p>}
 						</div>
+						{(formType === 'DEKLARACJA_CZLONKOWSKA' || formType === 'PATRONAT') && (
+							<>
+								{/* Główny plik PDF */}
+								<AttachmentInput
+									file={mainPdf}
+									onFileChange={handleFileChange}
+									label={
+										<>
+											Główny plik PDF <span className='text-red-500'>*</span>
+										</>
+									}
+									accept='.pdf'
+								/>
 
-						{/* Główny plik PDF */}
-						<AttachmentInput
-							file={mainPdf}
-							onFileChange={handleFileChange}
-							label={
-								<>
-									Główny plik PDF <span className='text-red-500'>*</span>
-								</>
-							}
-							accept='.pdf'
-						/>
+								{/* Dodatkowe załączniki */}
 
-						{/* Dodatkowe załączniki */}
-						{formType === 'DEKLARACJA_CZLONKOWSKA' && (
-							<MultiAttachmentInput
-								files={additionalFiles}
-								onFilesChange={e => setAdditionalFiles(prev => [...prev, ...Array.from(e.target.files)])}
-								onFileRemove={index => setAdditionalFiles(prev => prev.filter((_, i) => i !== index))}
-							/>
+								<MultiAttachmentInput
+									files={additionalFiles}
+									onFilesChange={e => setAdditionalFiles(prev => [...prev, ...Array.from(e.target.files)])}
+									onFileRemove={index => setAdditionalFiles(prev => prev.filter((_, i) => i !== index))}
+								/>
+							</>
 						)}
 					</div>
 

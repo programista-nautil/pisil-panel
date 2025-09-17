@@ -8,7 +8,8 @@ import AdditionalDocumentsUpload from './AdditionalDocumentsUpload'
 import StepsIndicator from './StepsIndicator'
 
 export default function MultiStepForm({ formConfig }) {
-	const { formType, defaultValues, steps, PDFGeneratorComponent, sessionCookieName, testData } = formConfig
+	const { formType, defaultValues, isSurvey, steps, PDFGeneratorComponent, sessionCookieName, testData } = formConfig
+
 	const totalSteps = steps.length
 
 	const {
@@ -36,6 +37,8 @@ export default function MultiStepForm({ formConfig }) {
 	const [isInitialized, setIsInitialized] = useState(false)
 	const [additionalUploaded, setAdditionalUploaded] = useState(false)
 	const [isResetting, setIsResetting] = useState(false)
+
+	const showUploadSteps = currentStep === totalSteps && pdfGenerated && !isSurvey
 
 	useEffect(() => {
 		const savedSession = Cookies.get(sessionCookieName)
@@ -156,7 +159,7 @@ export default function MultiStepForm({ formConfig }) {
 			</div>
 
 			{/* Stepper akcji nad przyciskami nawigacyjnymi */}
-			{showActionStepper && (
+			{showActionStepper && showUploadSteps && (
 				<div className='mt-6'>
 					<StepsIndicator steps={actionSteps} current={currentActionStep} />
 				</div>
@@ -182,11 +185,16 @@ export default function MultiStepForm({ formConfig }) {
 						Dalej
 					</button>
 				) : (
-					<PDFGeneratorComponent formData={getValues()} onGenerated={() => setPdfGenerated(true)} disabled={!isValid} />
+					<PDFGeneratorComponent
+						formData={getValues()}
+						formType={formType}
+						onGenerated={() => setPdfGenerated(true)}
+						disabled={!isValid}
+					/>
 				)}
 			</div>
 
-			{currentStep === totalSteps && pdfGenerated && (
+			{showUploadSteps && (
 				<>
 					<div className='mt-8 pt-6 border-t border-gray-200'>
 						<FileUpload
