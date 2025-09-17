@@ -9,6 +9,21 @@ import { useNotificationModals } from './hooks/useNotificationModals'
 import AddSubmissionModal from './components/AddSubmissionModal'
 import { PencilSquareIcon } from '@heroicons/react/24/solid'
 
+const getFormTypeName = formType => {
+	switch (formType) {
+		case 'DEKLARACJA_CZLONKOWSKA':
+			return 'Deklaracja członkowska'
+		case 'PATRONAT':
+			return 'Patronat'
+		case 'MLODY_SPEDYTOR_ROKU':
+			return 'Młody Spedytor Roku'
+		case 'ANKIETA_SPEDYTOR_ROKU':
+			return 'Spedytor Roku'
+		default:
+			return formType || '—'
+	}
+}
+
 export default function AdminDashboard() {
 	const [submissions, setSubmissions] = useState([])
 	const [expanded, setExpanded] = useState({}) // id -> bool
@@ -258,15 +273,16 @@ export default function AdminDashboard() {
 													</button>
 												</td>
 												<td className='px-6 py-4'>
-													<StatusDropdown submission={submission} onStatusChange={handleStatusChange} />
+													{submission.formType === 'MLODY_SPEDYTOR_ROKU' ||
+													submission.formType === 'ANKIETA_SPEDYTOR_ROKU' ? (
+														<span className='inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700'>
+															Ankieta
+														</span>
+													) : (
+														<StatusDropdown submission={submission} onStatusChange={handleStatusChange} />
+													)}
 												</td>
-												<td className='px-6 py-4 whitespace-nowrap'>
-													{submission.formType === 'DEKLARACJA_CZLONKOWSKA'
-														? 'Deklaracja członkowska'
-														: submission.formType === 'PATRONAT'
-														? 'Patronat'
-														: submission.formType || '—'}
-												</td>
+												<td className='px-6 py-4 whitespace-nowrap'>{getFormTypeName(submission.formType)}</td>
 												<td className='px-6 py-4 font-medium text-gray-900 whitespace-nowrap'>
 													<div className='flex items-center gap-2'>
 														<span>{submission.companyName || 'Brak nazwy'}</span>

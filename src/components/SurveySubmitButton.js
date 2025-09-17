@@ -25,6 +25,9 @@ export default function SurveySubmitButton({ formData, formType, fieldLabels, on
 		} catch (error) {
 			console.error('Błąd wysyłania ankiety:', error)
 			alert(error.message)
+			if (onUploadSuccess) {
+				onUploadSuccess()
+			}
 		} finally {
 			setIsSubmitting(false)
 		}

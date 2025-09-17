@@ -82,6 +82,13 @@ export default function MultiStepForm({ formConfig }) {
 		setTimeout(() => setIsResetting(false), 100)
 	}
 
+	const handleSurveyUploadSuccess = () => {
+		setIsResetting(true)
+		Cookies.remove(sessionCookieName)
+		reset(defaultValues)
+		setTimeout(() => setIsResetting(false), 100)
+	}
+
 	const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps))
 	const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1))
 
@@ -192,6 +199,7 @@ export default function MultiStepForm({ formConfig }) {
 						fieldLabels={fieldLabels}
 						onGenerated={() => setPdfGenerated(true)}
 						disabled={!isValid}
+						onUploadSuccess={handleSurveyUploadSuccess}
 					/>
 				)}
 			</div>
