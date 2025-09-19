@@ -1,14 +1,12 @@
 'use client'
 
-import { Fragment, useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSession, signOut } from 'next-auth/react'
-import Link from 'next/link'
 import SubmissionsTable from './components/SubmissionsTable'
-import StatusDropdown from './components/StatusDropdown'
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal'
 import { useNotificationModals } from './hooks/useNotificationModals'
 import AddSubmissionModal from './components/AddSubmissionModal'
-import { PencilSquareIcon } from '@heroicons/react/24/solid'
+import { DocumentDuplicateIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline'
 
 export default function AdminDashboard() {
 	const [submissions, setSubmissions] = useState([])
@@ -52,11 +50,31 @@ export default function AdminDashboard() {
 		fetchSubmissions()
 	}, [])
 
-	const { declarations, surveys } = useMemo(() => {
+	const { declarations, activeSurveys, archivedSurveys } = useMemo(() => {
 		const declarations = submissions.filter(s => ['DEKLARACJA_CZLONKOWSKA', 'PATRONAT'].includes(s.formType))
 		const surveys = submissions.filter(s => ['ANKIETA_SPEDYTOR_ROKU', 'MLODY_SPEDYTOR_ROKU'].includes(s.formType))
-		return { declarations, surveys }
+		const activeSurveys = surveys.filter(s => !s.isArchived)
+		const archivedSurveys = surveys.filter(s => s.isArchived)
+		return { declarations, activeSurveys, archivedSurveys }
 	}, [submissions])
+
+	const handleArchiveToggle = async (submission, isArchived) => {
+		const originalSubmissions = submissions
+		setSubmissions(current => current.map(sub => (sub.id === submission.id ? { ...sub, isArchived } : sub)))
+
+		try {
+			const response = await fetch(`/api/admin/submissions/${submission.id}/archive`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ isArchived }),
+			})
+			if (!response.ok) throw new Error('Zmiana statusu archiwum nie powiodła się.')
+		} catch (error) {
+			console.error(error)
+			setSubmissions(originalSubmissions)
+			alert('Wystąpił błąd podczas archiwizacji.')
+		}
+	}
 
 	const handleAddSubmission = async (data, mainPdf, additionalFiles) => {
 		const formData = new FormData()
@@ -236,7 +254,7 @@ export default function AdminDashboard() {
 									? 'border-blue-500 text-blue-600'
 									: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
 							} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>
-							Ankiety ({surveys.length})
+							Ankiety ({activeSurveys.length})
 						</button>
 					</nav>
 				</div>
@@ -259,16 +277,46 @@ export default function AdminDashboard() {
 								/>
 							)}
 							{activeTab === 'surveys' && (
-								<SubmissionsTable
-									submissions={surveys}
-									expanded={expanded}
-									toggleExpanded={toggleExpanded}
-									handleStatusChange={handleStatusChange}
-									handleDownloadAttachment={handleDownloadAttachment}
-									openAttachmentDeleteModal={openAttachmentDeleteModal}
-									deletingAttachmentId={deletingAttachmentId}
-									openDeleteModal={openDeleteModal}
-								/>
+								<div className='space-y-8'>
+									<section>
+										<div className='flex items-center gap-3 mb-4 p-4 bg-gray-50 border rounded-lg'>
+											<DocumentDuplicateIcon className='h-6 w-6 text-gray-500' />
+											<h2 className='text-lg font-semibold text-gray-800'>Aktywne ankiety</h2>
+										</div>
+										<div className='bg-white rounded-lg shadow'>
+											<SubmissionsTable
+												submissions={activeSurveys}
+												onArchiveToggle={handleArchiveToggle}
+												expanded={expanded}
+												toggleExpanded={toggleExpanded}
+												handleStatusChange={handleStatusChange}
+												handleDownloadAttachment={handleDownloadAttachment}
+												openAttachmentDeleteModal={openAttachmentDeleteModal}
+												deletingAttachmentId={deletingAttachmentId}
+												openDeleteModal={openDeleteModal}
+											/>
+										</div>
+									</section>
+									<section>
+										<div className='flex items-center gap-3 mb-4 p-4 bg-gray-50 border rounded-lg'>
+											<ArchiveBoxIcon className='h-6 w-6 text-gray-500' />
+											<h2 className='text-lg font-semibold text-gray-800'>Archiwum ankiet</h2>
+										</div>
+										<div className='bg-white rounded-lg shadow'>
+											<SubmissionsTable
+												submissions={archivedSurveys}
+												onArchiveToggle={handleArchiveToggle}
+												expanded={expanded}
+												toggleExpanded={toggleExpanded}
+												handleStatusChange={handleStatusChange}
+												handleDownloadAttachment={handleDownloadAttachment}
+												openAttachmentDeleteModal={openAttachmentDeleteModal}
+												deletingAttachmentId={deletingAttachmentId}
+												openDeleteModal={openDeleteModal}
+											/>
+										</div>
+									</section>
+								</div>
 							)}
 						</div>
 					)}

@@ -91,6 +91,7 @@ model Submission {
   formType  FormType
 
   createdByAdmin Boolean @default(false)
+  isArchived     Boolean @default(false)
   
   companyName String   @default("Nieznana firma") 
   email       String   @default("brak@email.com")

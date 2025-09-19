@@ -4,6 +4,7 @@ import { Fragment } from 'react'
 import Link from 'next/link'
 import StatusDropdown from './StatusDropdown'
 import { PencilSquareIcon } from '@heroicons/react/24/solid'
+import { ArchiveBoxArrowDownIcon, ArrowUpOnSquareIcon } from '@heroicons/react/24/outline'
 import { getFormTypeName } from '../../../../utils/getFormTypeName'
 
 export default function SubmissionsTable({
@@ -15,6 +16,7 @@ export default function SubmissionsTable({
 	openAttachmentDeleteModal,
 	deletingAttachmentId,
 	openDeleteModal,
+	onArchiveToggle,
 }) {
 	if (!submissions || submissions.length === 0) {
 		return <p className='p-6 text-center text-gray-500'>Brak zgłoszeń do wyświetlenia w tej kategorii.</p>
@@ -95,6 +97,18 @@ export default function SubmissionsTable({
 									</td>
 									<td className='px-6 py-4 text-right'>
 										<div className='flex items-center justify-end gap-2'>
+											{onArchiveToggle && (
+												<button
+													onClick={() => onArchiveToggle(submission, !submission.isArchived)}
+													className='p-2 text-gray-500 hover:bg-gray-100 rounded-md'
+													title={submission.isArchived ? 'Przywróć z archiwum' : 'Archiwizuj'}>
+													{submission.isArchived ? (
+														<ArrowUpOnSquareIcon className='h-5 w-5' />
+													) : (
+														<ArchiveBoxArrowDownIcon className='h-5 w-5' />
+													)}
+												</button>
+											)}
 											<Link
 												href={`/api/admin/submissions/${submission.id}/download`}
 												className='p-2 text-blue-600 hover:bg-blue-100 rounded-md'
