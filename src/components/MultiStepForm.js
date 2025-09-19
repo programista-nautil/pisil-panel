@@ -147,7 +147,7 @@ export default function MultiStepForm({ formConfig }) {
 				</div>
 			</div>
 
-			{process.env.NODE_ENV === 'development' && testData && (
+			{testData && (
 				<div className='mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg'>
 					<div className='flex items-center justify-between'>
 						<div>
