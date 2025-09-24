@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
 import nodemailer from 'nodemailer'
 import { PDFDocument, PDFSignature } from 'pdf-lib'
 import prisma from '@/lib/prisma'
@@ -69,6 +67,8 @@ export async function POST(request) {
 				filePath: gcsFilePath, // Zapisujemy ścieżkę z GCS
 				fileName: filename,
 				formType: userData.formType,
+				ceoName: userData.ceoName,
+				address: userData.address,
 			},
 		})
 

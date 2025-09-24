@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import nodemailer from 'nodemailer'
-import { Status } from '@prisma/client'
+import { FormType, Status } from '@prisma/client'
 import fs from 'fs/promises'
 import path from 'path'
+import PizZip from 'pizzip'
+import Docxtemplater from 'docxtemplater'
 
 const STATIC_ATTACHMENTS = [
 	'34.pdf',
@@ -17,6 +19,26 @@ const STATIC_ATTACHMENTS = [
 	'SA regulamin-pol.pdf',
 	'ubezp..pdf',
 ]
+
+const splitAddress = address => {
+	if (!address) return { line1: '', line2: '' }
+
+	const zipCodeRegex = /\d{2}-\d{3}/
+	const match = address.match(zipCodeRegex)
+	if (match) {
+		const index = match.index
+		return {
+			line1: address.substring(0, index).trim().replace(/,$/, ''),
+			line2: address.substring(index).trim(),
+		}
+	}
+	// Fallback dla adresów bez kodu pocztowego w standardowym formacie
+	const parts = address.split(',')
+	if (parts.length > 1) {
+		return { line1: parts[0].trim(), line2: parts.slice(1).join(',').trim() }
+	}
+	return { line1: address, line2: '' }
+}
 
 export async function POST(request, { params }) {
 	const session = await auth()
@@ -32,13 +54,6 @@ export async function POST(request, { params }) {
 			return NextResponse.json({ message: 'Nie znaleziono zgłoszenia' }, { status: 404 })
 		}
 
-		// Krok 1: Zaktualizuj status w bazie danych
-		await prisma.submission.update({
-			where: { id },
-			data: { status: Status.ACCEPTED },
-		})
-
-		// Krok 2: Przygotuj załączniki dla Nodemailer
 		const nodemailerAttachments = await Promise.all(
 			STATIC_ATTACHMENTS.map(async filename => {
 				const filePath = path.join(process.cwd(), 'private', 'acceptance-documents', filename)
@@ -51,7 +66,51 @@ export async function POST(request, { params }) {
 			})
 		)
 
-		// Krok 3: Wyślij e-mail
+		if (submission.formType === FormType.DEKLARACJA_CZLONKOWSKA) {
+			const counter = await prisma.documentCounter.upsert({
+				where: { id: 'acceptance_letter' },
+				update: { lastNumber: { increment: 1 } },
+				create: { id: 'acceptance_letter', lastNumber: 1 },
+			})
+			const docNumber = counter.lastNumber
+
+			// 2. Wczytaj szablon .docx
+			const templatePath = path.join(process.cwd(), 'private', 'document-templates', 'pismo zaśw. przyjęcie.docx')
+			const templateContent = await fs.readFile(templatePath)
+
+			const zip = new PizZip(templateContent)
+			const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true })
+
+			// 3. Przygotuj dane do wstawienia
+			const addressParts = splitAddress(submission.address)
+			const renderData = {
+				data: new Date().toLocaleDateString('pl-PL'),
+				nazwa_firmy: submission.companyName,
+				imie_nazwisko_kierownika: submission.ceoName || 'Brak danych',
+				adres_linia1: addressParts.line1,
+				adres_linia2: addressParts.line2,
+				mail: submission.email,
+			}
+
+			doc.render(renderData)
+
+			// 4. Wygeneruj finalny plik .docx jako bufor
+			const generatedDocBuffer = doc.getZip().generate({ type: 'nodebuffer' })
+			const finalDocName = `pismo zaśw. przyjęcie_${docNumber}.docx`
+
+			// 5. Dodaj wygenerowany dokument do listy załączników
+			nodemailerAttachments.push({
+				filename: finalDocName,
+				content: generatedDocBuffer,
+				contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+			})
+		}
+
+		await prisma.submission.update({
+			where: { id },
+			data: { status: Status.ACCEPTED },
+		})
+
 		const transporter = nodemailer.createTransport({
 			host: 'smtp.gmail.com',
 			port: 587,

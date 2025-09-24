@@ -99,6 +99,14 @@ model Submission {
   fileName  String   // Oryginalna nazwa pliku
 
   attachments Attachment[]
+
+  ceoName String?
+  address String?
+}
+
+model DocumentCounter {
+  id         String @id @default("acceptance_letter")
+  lastNumber Int    @default(0)
 }
 
 model Attachment {
