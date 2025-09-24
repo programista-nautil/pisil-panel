@@ -11,12 +11,6 @@ export async function POST(request, { params }) {
 	}
 
 	const { id } = params
-	const data = await request.formData()
-	const attachmentFile = data.get('attachment')
-
-	if (!attachmentFile) {
-		return NextResponse.json({ message: 'Brak wymaganego załącznika' }, { status: 400 })
-	}
 
 	try {
 		const submission = await prisma.submission.findUnique({
@@ -30,9 +24,6 @@ export async function POST(request, { params }) {
 		if (submission.formType !== FormType.DEKLARACJA_CZLONKOWSKA) {
 			return NextResponse.json({ message: 'Nieprawidłowy typ formularza' }, { status: 400 })
 		}
-
-		const bytes = await attachmentFile.arrayBuffer()
-		const buffer = Buffer.from(bytes)
 
 		const transporter = nodemailer.createTransport({
 			host: 'smtp.gmail.com',
@@ -58,12 +49,6 @@ export async function POST(request, { params }) {
         </p>
         <p>Z pozdrowieniami,<br>Zespół PISiL</p>
       `,
-			attachments: [
-				{
-					filename: attachmentFile.name,
-					content: buffer,
-				},
-			],
 		}
 
 		await transporter.sendMail(mailOptions)

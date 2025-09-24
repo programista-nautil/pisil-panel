@@ -10,7 +10,6 @@ export function useNotificationModals(submissions, setSubmissions) {
 
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [successMessage, setSuccessMessage] = useState('')
-	const [verificationAttachment, setVerificationAttachment] = useState(null)
 
 	const [isAcceptanceModalOpen, setIsAcceptanceModalOpen] = useState(false)
 	const [submissionToAccept, setSubmissionToAccept] = useState(null)
@@ -55,14 +54,8 @@ export function useNotificationModals(submissions, setSubmissions) {
 	}
 
 	const confirmAndSendVerificationEmail = async () => {
-		if (!submissionToVerify || !verificationAttachment) {
-			alert('Proszę załączyć plik.')
-			return
-		}
+		if (!submissionToVerify) return
 		setIsSubmitting(true)
-
-		const formData = new FormData()
-		formData.append('attachment', verificationAttachment)
 
 		try {
 			// 1. Zaktualizuj status w bazie
@@ -71,12 +64,11 @@ export function useNotificationModals(submissions, setSubmissions) {
 			// 2. Wyślij e-mail
 			const response = await fetch(`/api/admin/submissions/${submissionToVerify.id}/send-verification-email`, {
 				method: 'POST',
-				body: formData,
 			})
 			if (!response.ok) throw new Error('Nie udało się wysłać e-maila.')
 
 			// 3. Ustaw komunikat o sukcesie
-			setSuccessMessage('Powiadomienie e-mail z załącznikiem zostało wysłane pomyślnie!')
+			setSuccessMessage('Powiadomienie e-mail zostało wysłane pomyślnie!')
 		} catch (error) {
 			console.error(error)
 			alert('Wystąpił błąd podczas wysyłania e-maila.')
@@ -90,7 +82,6 @@ export function useNotificationModals(submissions, setSubmissions) {
 		setIsVerificationModalOpen(false)
 		setSubmissionToVerify(null)
 		setSuccessMessage('')
-		setVerificationAttachment(null)
 		setIsSubmitting(false)
 	}
 
@@ -183,17 +174,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 				message={`Czy na pewno chcesz oznaczyć to zgłoszenie jako zweryfikowane i wysłać powiadomienie na adres: ${submissionToVerify?.email}?`}
 				confirmButtonText='Oznacz i wyślij'
 				isLoading={isSubmitting}
-				successMessage={successMessage}>
-				<AttachmentInput
-					file={verificationAttachment}
-					onFileChange={e => setVerificationAttachment(e.target.files[0])}
-					label={
-						<>
-							Wymagany załącznik <span className='text-red-500'>*</span>
-						</>
-					}
-				/>
-			</ConfirmationModal>
+				successMessage={successMessage}></ConfirmationModal>
 
 			<ConfirmationModal
 				isOpen={isAcceptanceModalOpen}
