@@ -37,6 +37,8 @@ export async function POST(request) {
 		const formType = data.get('formType')
 		const companyName = data.get('companyName')
 		const email = data.get('email')
+		const ceoName = data.get('ceoName')
+		const address = data.get('address')
 
 		if (!mainPdf || !formType || !companyName || !email) {
 			return NextResponse.json({ message: 'Brakujące wymagane pola.' }, { status: 400 })
@@ -68,6 +70,8 @@ export async function POST(request) {
 					fileName: mainPdfFilename,
 					status: 'PENDING',
 					createdByAdmin: true,
+					ceoName: ceoName || null,
+					address: address || null,
 				},
 			})
 

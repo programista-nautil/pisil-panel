@@ -82,6 +82,12 @@ export default function AdminDashboard() {
 		formData.append('companyName', data.companyName)
 		formData.append('email', data.email)
 		formData.append('mainPdf', mainPdf)
+		if (data.ceoName) {
+			formData.append('ceoName', data.ceoName)
+		}
+		if (data.address) {
+			formData.append('address', data.address)
+		}
 		additionalFiles.forEach(file => {
 			formData.append('additionalFiles[]', file)
 		})

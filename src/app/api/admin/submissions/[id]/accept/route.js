@@ -40,6 +40,17 @@ const splitAddress = address => {
 	return { line1: address, line2: '' }
 }
 
+const getCeoWithTitle = ceoName => {
+	if (!ceoName) {
+		return 'Brak danych'
+	}
+	const firstName = ceoName.trim().split(' ')[0]
+	if (firstName.toLowerCase().endsWith('a')) {
+		return `Pani ${ceoName}`
+	}
+	return `Pan ${ceoName}`
+}
+
 export async function POST(request, { params }) {
 	const session = await auth()
 	if (!session) {
@@ -83,7 +94,7 @@ export async function POST(request, { params }) {
 			doc1.render({
 				data: currentDate.toLocaleDateString('pl-PL'),
 				nazwa_firmy: submission.companyName,
-				imie_nazwisko_kierownika: submission.ceoName || 'Brak danych',
+				imie_nazwisko_kierownika: getCeoWithTitle(submission.ceoName) || 'Brak danych',
 				adres_linia1: addressParts.line1,
 				adres_linia2: addressParts.line2,
 				mail: submission.email,
@@ -101,7 +112,7 @@ export async function POST(request, { params }) {
 			doc2.render({
 				data: currentDate.toLocaleDateString('pl-PL'),
 				nazwa_firmy: submission.companyName,
-				imie_nazwisko_kierownika: submission.ceoName || 'Brak danych',
+				imie_nazwisko_kierownika: getCeoWithTitle(submission.ceoName) || 'Brak danych',
 				adres_linia1: addressParts.line1,
 				adres_linia2: addressParts.line2,
 				mail: submission.email,
