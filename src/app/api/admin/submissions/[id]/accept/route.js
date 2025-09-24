@@ -3,6 +3,20 @@ import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import nodemailer from 'nodemailer'
 import { Status } from '@prisma/client'
+import fs from 'fs/promises'
+import path from 'path'
+
+const STATIC_ATTACHMENTS = [
+	'34.pdf',
+	'44.pdf',
+	'219 A.pdf',
+	'Biuletyn_2012_11-12.pdf',
+	'FIATA MR.pdf',
+	'FIATA zakaz FCR steel products.pdf',
+	'regulam ekspert.pdf',
+	'SA regulamin-pol.pdf',
+	'ubezp..pdf',
+]
 
 export async function POST(request, { params }) {
 	const session = await auth()
@@ -11,8 +25,6 @@ export async function POST(request, { params }) {
 	}
 
 	const { id } = params
-	const data = await request.formData()
-	const attachments = data.getAll('attachments[]') // Odczytujemy tablicę plików
 
 	try {
 		const submission = await prisma.submission.findUnique({ where: { id } })
@@ -28,12 +40,13 @@ export async function POST(request, { params }) {
 
 		// Krok 2: Przygotuj załączniki dla Nodemailer
 		const nodemailerAttachments = await Promise.all(
-			attachments.map(async file => {
-				const bytes = await file.arrayBuffer()
-				const buffer = Buffer.from(bytes)
+			STATIC_ATTACHMENTS.map(async filename => {
+				const filePath = path.join(process.cwd(), 'private', 'acceptance-documents', filename)
+				const buffer = await fs.readFile(filePath)
 				return {
-					filename: file.name,
+					filename,
 					content: buffer,
+					contentType: 'application/pdf',
 				}
 			})
 		)

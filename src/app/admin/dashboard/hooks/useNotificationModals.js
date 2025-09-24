@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import ConfirmationModal from '@/components/ConfirmationModal'
-import { AttachmentInput, MultiAttachmentInput } from '../components/AttachmentInputs'
+import { MultiAttachmentInput } from '../components/AttachmentInputs'
 
 export function useNotificationModals(submissions, setSubmissions) {
 	const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false)
@@ -13,7 +13,6 @@ export function useNotificationModals(submissions, setSubmissions) {
 
 	const [isAcceptanceModalOpen, setIsAcceptanceModalOpen] = useState(false)
 	const [submissionToAccept, setSubmissionToAccept] = useState(null)
-	const [acceptanceAttachments, setAcceptanceAttachments] = useState([])
 
 	const [isRejectionModalOpen, setIsRejectionModalOpen] = useState(false)
 	const [submissionToReject, setSubmissionToReject] = useState(null)
@@ -94,19 +93,12 @@ export function useNotificationModals(submissions, setSubmissions) {
 	}
 
 	const confirmAndSendAcceptanceEmail = async () => {
-		if (!submissionToAccept || acceptanceAttachments.length === 0) {
-			alert('Proszę dodać przynajmniej jeden załącznik.')
-			return
-		}
+		if (!submissionToAccept) return
 		setIsSubmitting(true)
-
-		const formData = new FormData()
-		acceptanceAttachments.forEach(file => formData.append('attachments[]', file))
 
 		try {
 			const response = await fetch(`/api/admin/submissions/${submissionToAccept.id}/accept`, {
 				method: 'POST',
-				body: formData,
 			})
 			if (!response.ok) throw new Error('Nie udało się wysłać e-maila akceptacyjnego.')
 
@@ -128,7 +120,6 @@ export function useNotificationModals(submissions, setSubmissions) {
 		setIsAcceptanceModalOpen(false)
 		setSubmissionToAccept(null)
 		setSuccessMessage('')
-		setAcceptanceAttachments([])
 		setIsSubmitting(false)
 	}
 
@@ -184,13 +175,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 				message={`Spowoduje to zmianę statusu na "Przyjęty" i wysłanie powiadomienia e-mail z załącznikami na adres: ${submissionToAccept?.email}.`}
 				confirmButtonText='Przyjmij i wyślij'
 				isLoading={isSubmitting}
-				successMessage={successMessage}>
-				<MultiAttachmentInput
-					files={acceptanceAttachments}
-					onFilesChange={onAcceptanceFilesChange}
-					onFileRemove={onAcceptanceFileRemove}
-				/>
-			</ConfirmationModal>
+				successMessage={successMessage}></ConfirmationModal>
 
 			<ConfirmationModal
 				isOpen={isRejectionModalOpen}
