@@ -7,6 +7,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import PizZip from 'pizzip'
 import Docxtemplater from 'docxtemplater'
+import JSZip from 'jszip'
 
 const STATIC_ATTACHMENTS = [
 	'34.pdf',
@@ -65,17 +66,7 @@ export async function POST(request, { params }) {
 			return NextResponse.json({ message: 'Nie znaleziono zgłoszenia' }, { status: 404 })
 		}
 
-		const nodemailerAttachments = await Promise.all(
-			STATIC_ATTACHMENTS.map(async filename => {
-				const filePath = path.join(process.cwd(), 'private', 'acceptance-documents', filename)
-				const buffer = await fs.readFile(filePath)
-				return {
-					filename,
-					content: buffer,
-					contentType: 'application/pdf',
-				}
-			})
-		)
+		const nodemailerAttachments = []
 
 		if (submission.formType === FormType.DEKLARACJA_CZLONKOWSKA) {
 			const counter = await prisma.documentCounter.upsert({
@@ -96,7 +87,7 @@ export async function POST(request, { params }) {
 				nazwa_firmy: submission.companyName,
 				imie_nazwisko_kierownika: getCeoWithTitle(submission.ceoName) || 'Brak danych',
 				adres_linia1: addressParts.line1,
-				adres_linia2: addressParts.line2,
+				adres_linia2: addressParts.line2 ? `\n${addressParts.line2}` : '',
 				mail: submission.email,
 			})
 
@@ -114,7 +105,7 @@ export async function POST(request, { params }) {
 				nazwa_firmy: submission.companyName,
 				imie_nazwisko_kierownika: getCeoWithTitle(submission.ceoName) || 'Brak danych',
 				adres_linia1: addressParts.line1,
-				adres_linia2: addressParts.line2,
+				adres_linia2: addressParts.line2 ? `\n${addressParts.line2}` : '',
 				mail: submission.email,
 			})
 			nodemailerAttachments.push({
@@ -131,13 +122,28 @@ export async function POST(request, { params }) {
 				rok: currentDate.getFullYear(),
 				nazwa_firmy: submission.companyName,
 				adres_linia1: addressParts.line1,
-				adres_linia2: addressParts.line2,
+				adres_linia2: addressParts.line2 ? `\n${addressParts.line2}` : '',
 				data: currentDate.toLocaleDateString('pl-PL'),
 			})
 			nodemailerAttachments.push({
 				filename: `zasw_${docNumber}.docx`,
 				content: doc3.getZip().generate({ type: 'nodebuffer' }),
 				contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+			})
+
+			const zip = new JSZip()
+			for (const filename of STATIC_ATTACHMENTS) {
+				const filePath = path.join(process.cwd(), 'private', 'acceptance-documents', filename)
+				const fileContent = await fs.readFile(filePath)
+				zip.file(filename, fileContent)
+			}
+
+			const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
+
+			nodemailerAttachments.push({
+				filename: 'Załączniki do pisma w sprawie przyjęcia w poczet członków.zip',
+				content: zipBuffer,
+				contentType: 'application/zip',
 			})
 		}
 
