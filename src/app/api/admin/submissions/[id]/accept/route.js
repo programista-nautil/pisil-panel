@@ -8,6 +8,9 @@ import path from 'path'
 import PizZip from 'pizzip'
 import Docxtemplater from 'docxtemplater'
 import JSZip from 'jszip'
+import { uploadFileToGCS } from '@/lib/gcs'
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'programista@nautil.pl'
 
 const STATIC_ATTACHMENTS = [
 	'34.pdf',
@@ -66,7 +69,8 @@ export async function POST(request, { params }) {
 			return NextResponse.json({ message: 'Nie znaleziono zgłoszenia' }, { status: 404 })
 		}
 
-		const nodemailerAttachments = []
+		const userNodemailerAttachments = []
+		const generatedDocsData = []
 
 		if (submission.formType === FormType.DEKLARACJA_CZLONKOWSKA) {
 			const counter = await prisma.documentCounter.upsert({
@@ -91,9 +95,9 @@ export async function POST(request, { params }) {
 				mail: submission.email,
 			})
 
-			nodemailerAttachments.push({
+			generatedDocsData.push({
 				filename: `pismo zaśw. przyjęcie_${docNumber}.docx`,
-				content: doc1.getZip().generate({ type: 'nodebuffer' }),
+				buffer: doc1.getZip().generate({ type: 'nodebuffer' }),
 				contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 			})
 
@@ -108,9 +112,9 @@ export async function POST(request, { params }) {
 				adres_linia2: addressParts.line2 ? `\n${addressParts.line2}` : '',
 				mail: submission.email,
 			})
-			nodemailerAttachments.push({
+			generatedDocsData.push({
 				filename: `pismo w sprawie składek_${docNumber}.docx`,
-				content: doc2.getZip().generate({ type: 'nodebuffer' }),
+				buffer: doc2.getZip().generate({ type: 'nodebuffer' }),
 				contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 			})
 
@@ -125,10 +129,31 @@ export async function POST(request, { params }) {
 				adres_linia2: addressParts.line2 ? `\n${addressParts.line2}` : '',
 				data: currentDate.toLocaleDateString('pl-PL'),
 			})
-			nodemailerAttachments.push({
+			generatedDocsData.push({
 				filename: `zasw_${docNumber}.docx`,
-				content: doc3.getZip().generate({ type: 'nodebuffer' }),
+				buffer: doc3.getZip().generate({ type: 'nodebuffer' }),
 				contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+			})
+
+			await Promise.all(
+				generatedDocsData.map(async docData => {
+					const gcsPath = await uploadFileToGCS(docData.buffer, docData.filename)
+					await prisma.attachment.create({
+						data: {
+							fileName: docData.filename,
+							filePath: gcsPath,
+							submissionId: submission.id,
+						},
+					})
+				})
+			)
+
+			generatedDocsData.forEach(doc => {
+				userNodemailerAttachments.push({
+					filename: doc.filename,
+					content: doc.buffer,
+					contentType: doc.contentType,
+				})
 			})
 
 			const zip = new JSZip()
@@ -140,7 +165,7 @@ export async function POST(request, { params }) {
 
 			const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
 
-			nodemailerAttachments.push({
+			userNodemailerAttachments.push({
 				filename: 'Załączniki do pisma w sprawie przyjęcia w poczet członków.zip',
 				content: zipBuffer,
 				contentType: 'application/zip',
@@ -159,7 +184,7 @@ export async function POST(request, { params }) {
 			auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
 		})
 
-		const mailOptions = {
+		const userMailOptions = {
 			from: process.env.SMTP_USER,
 			to: submission.email,
 			subject: `Witamy w PISiL! Państwa członkostwo zostało przyjęte.`,
@@ -174,10 +199,24 @@ export async function POST(request, { params }) {
         <p>W załącznikach przesyłamy stosowne dokumenty powitalne.</p>
         <p>Z pozdrowieniami,<br>Zespół PISiL</p>
       `,
-			attachments: nodemailerAttachments, // Dodajemy wszystkie załączniki
+			attachments: userNodemailerAttachments,
 		}
 
-		await transporter.sendMail(mailOptions)
+		await transporter.sendMail(userMailOptions)
+
+		const adminMailOptions = {
+			from: process.env.SMTP_USER,
+			to: ADMIN_EMAIL,
+			subject: `Potwierdzenie przyjęcia członka: ${submission.companyName}`,
+			html: `Wygenerowano i wysłano dokumenty powitalne dla <strong>${submission.companyName}</strong>. Zostały one również zapisane jako załączniki do zgłoszenia w panelu.`,
+			attachments: generatedDocsData.map(doc => ({
+				filename: doc.filename,
+				content: doc.buffer,
+				contentType: doc.contentType,
+			})),
+		}
+
+		await transporter.sendMail(adminMailOptions)
 
 		return NextResponse.json({ message: 'Email akceptacyjny został wysłany' }, { status: 200 })
 	} catch (error) {
