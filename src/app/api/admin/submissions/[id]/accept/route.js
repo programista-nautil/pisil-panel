@@ -74,34 +74,58 @@ export async function POST(request, { params }) {
 			})
 			const docNumber = counter.lastNumber
 
-			// 2. Wczytaj szablon .docx
-			const templatePath = path.join(process.cwd(), 'private', 'document-templates', 'pismo zaśw. przyjęcie.docx')
-			const templateContent = await fs.readFile(templatePath)
-
-			const zip = new PizZip(templateContent)
-			const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true })
-
-			// 3. Przygotuj dane do wstawienia
+			const currentDate = new Date()
 			const addressParts = splitAddress(submission.address)
-			const renderData = {
-				data: new Date().toLocaleDateString('pl-PL'),
+
+			const template1Path = path.join(process.cwd(), 'private', 'document-templates', 'pismo zaśw. przyjęcie.docx')
+			const template1Content = await fs.readFile(template1Path)
+			const doc1 = new Docxtemplater(new PizZip(template1Content))
+			doc1.render({
+				data: currentDate.toLocaleDateString('pl-PL'),
 				nazwa_firmy: submission.companyName,
 				imie_nazwisko_kierownika: submission.ceoName || 'Brak danych',
 				adres_linia1: addressParts.line1,
 				adres_linia2: addressParts.line2,
 				mail: submission.email,
-			}
+			})
 
-			doc.render(renderData)
-
-			// 4. Wygeneruj finalny plik .docx jako bufor
-			const generatedDocBuffer = doc.getZip().generate({ type: 'nodebuffer' })
-			const finalDocName = `pismo zaśw. przyjęcie_${docNumber}.docx`
-
-			// 5. Dodaj wygenerowany dokument do listy załączników
 			nodemailerAttachments.push({
-				filename: finalDocName,
-				content: generatedDocBuffer,
+				filename: `pismo zaśw. przyjęcie_${docNumber}.docx`,
+				content: doc1.getZip().generate({ type: 'nodebuffer' }),
+				contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+			})
+
+			const template2Path = path.join(process.cwd(), 'private', 'document-templates', 'pismo w sprawie składek.docx')
+			const template2Content = await fs.readFile(template2Path)
+			const doc2 = new Docxtemplater(new PizZip(template2Content))
+			doc2.render({
+				data: currentDate.toLocaleDateString('pl-PL'),
+				nazwa_firmy: submission.companyName,
+				imie_nazwisko_kierownika: submission.ceoName || 'Brak danych',
+				adres_linia1: addressParts.line1,
+				adres_linia2: addressParts.line2,
+				mail: submission.email,
+			})
+			nodemailerAttachments.push({
+				filename: `pismo w sprawie składek_${docNumber}.docx`,
+				content: doc2.getZip().generate({ type: 'nodebuffer' }),
+				contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+			})
+
+			const template3Path = path.join(process.cwd(), 'private', 'document-templates', 'zasw.docx')
+			const template3Content = await fs.readFile(template3Path)
+			const doc3 = new Docxtemplater(new PizZip(template3Content))
+			doc3.render({
+				numer: docNumber,
+				rok: currentDate.getFullYear(),
+				nazwa_firmy: submission.companyName,
+				adres_linia1: addressParts.line1,
+				adres_linia2: addressParts.line2,
+				data: currentDate.toLocaleDateString('pl-PL'),
+			})
+			nodemailerAttachments.push({
+				filename: `zasw_${docNumber}.docx`,
+				content: doc3.getZip().generate({ type: 'nodebuffer' }),
 				contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 			})
 		}
