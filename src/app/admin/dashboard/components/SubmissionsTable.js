@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useMemo } from 'react'
+import { Fragment } from 'react'
 import Link from 'next/link'
 import StatusDropdown from './StatusDropdown'
 import { PencilSquareIcon } from '@heroicons/react/24/solid'
@@ -135,11 +135,8 @@ export default function SubmissionsTable({
 					{submissions.map(submission => {
 						const isOpen = expanded[submission.id]
 						const isExpandable = submission.formType === 'DEKLARACJA_CZLONKOWSKA' || submission.formType === 'PATRONAT'
-						const { clientFiles, generatedFiles } = useMemo(() => {
-							const clientFiles = submission.attachments?.filter(att => att.source === 'CLIENT_UPLOAD') || []
-							const generatedFiles = submission.attachments?.filter(att => att.source === 'GENERATED') || []
-							return { clientFiles, generatedFiles }
-						}, [submission.attachments])
+						const clientFiles = submission.attachments?.filter(att => att.source === 'CLIENT_UPLOAD') || []
+						const generatedFiles = submission.attachments?.filter(att => att.source === 'GENERATED') || []
 
 						return (
 							<Fragment key={submission.id}>
