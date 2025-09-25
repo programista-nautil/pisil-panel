@@ -102,10 +102,10 @@ export function useNotificationModals(submissions, setSubmissions) {
 			})
 			if (!response.ok) throw new Error('Nie udało się wysłać e-maila akceptacyjnego.')
 
+			const updatedSubmission = await response.json()
+
 			// Odświeżamy dane po stronie klienta
-			setSubmissions(current =>
-				current.map(sub => (sub.id === submissionToAccept.id ? { ...sub, status: 'ACCEPTED' } : sub))
-			)
+			setSubmissions(current => current.map(sub => (sub.id === updatedSubmission.id ? updatedSubmission : sub)))
 			setSuccessMessage('Email akceptacyjny z załącznikami został wysłany!')
 		} catch (error) {
 			console.error(error)

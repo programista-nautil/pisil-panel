@@ -203,4 +203,11 @@ export async function processAcceptance(submission) {
 	}
 
 	await transporter.sendMail(adminMailOptions)
+
+	const updatedSubmission = await prisma.submission.findUnique({
+		where: { id: submission.id },
+		include: { attachments: true },
+	})
+
+	return updatedSubmission
 }

@@ -17,9 +17,9 @@ export async function POST(request, { params }) {
 			return NextResponse.json({ message: 'Nie znaleziono zgłoszenia' }, { status: 404 })
 		}
 
-		await processAcceptance(submission)
+		const updatedSubmissionWithAttachments = await processAcceptance(submission)
 
-		return NextResponse.json({ message: 'Email akceptacyjny został wysłany' }, { status: 200 })
+		return NextResponse.json(updatedSubmissionWithAttachments, { status: 200 })
 	} catch (error) {
 		console.error('Błąd podczas akceptacji zgłoszenia:', error)
 		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })
