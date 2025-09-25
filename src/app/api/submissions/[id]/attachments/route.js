@@ -33,6 +33,7 @@ export async function POST(request, { params }) {
 					fileName: filename,
 					filePath: gcsPath,
 					submissionId: submissionId,
+					source: 'CLIENT_UPLOAD',
 				},
 			})
 		})

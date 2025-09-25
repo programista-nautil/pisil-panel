@@ -128,6 +128,7 @@ export async function processAcceptance(submission) {
 						fileName: docData.filename,
 						filePath: gcsPath,
 						submissionId: submission.id,
+						source: 'GENERATED',
 					},
 				})
 			})

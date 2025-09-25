@@ -93,6 +93,7 @@ export async function POST(request) {
 							fileName: filename,
 							filePath: gcsPath,
 							submissionId: submission.id,
+							source: 'CLIENT_UPLOAD',
 						},
 					})
 				}

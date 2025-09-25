@@ -109,6 +109,11 @@ model DocumentCounter {
   lastNumber Int    @default(0)
 }
 
+enum AttachmentSource {
+  CLIENT_UPLOAD
+  GENERATED
+}
+
 model Attachment {
   id           String     @id @default(cuid())
   createdAt    DateTime   @default(now())
@@ -116,4 +121,6 @@ model Attachment {
   filePath     String    
   submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   submissionId String
+
+  source       AttachmentSource @default(CLIENT_UPLOAD)
 }
