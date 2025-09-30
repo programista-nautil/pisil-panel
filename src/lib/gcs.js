@@ -57,12 +57,17 @@ export const downloadFileFromGCS = async fileName => {
  * @returns {Promise<void>}
  */
 export const deleteFileFromGCS = async fileName => {
+	const gcsFileName = fileName.replace(`https://storage.googleapis.com/${bucketName}/`, '')
 	try {
-		await bucket.file(fileName).delete()
+		await bucket.file(gcsFileName).delete()
 		console.log(`Plik ${fileName} został usunięty z GCS.`)
 	} catch (error) {
-		console.error(`Nie udało się usunąć pliku ${fileName} z GCS:`, error)
-		// Rzucamy błąd dalej, aby API mogło go obsłużyć
+		if (error.code === 404) {
+			console.warn(`Próbowano usunąć plik, którego nie ma w GCS: ${gcsFileName}. Operacja kontynuowana.`)
+			return
+		}
+
+		console.error(`Błąd podczas usuwania pliku ${gcsFileName} z GCS:`, error)
 		throw new Error('Nie udało się usunąć pliku z GCS')
 	}
 }
