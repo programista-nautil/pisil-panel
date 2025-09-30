@@ -58,6 +58,10 @@ export default function AdminDashboard() {
 		return { declarations, activeSurveys, archivedSurveys }
 	}, [submissions])
 
+	const activeSubmissionsCount = useMemo(() => {
+		return submissions.filter(submission => !submission.isArchived).length
+	}, [submissions])
+
 	const handleArchiveToggle = async (submission, isArchived) => {
 		const originalSubmissions = submissions
 		setSubmissions(current => current.map(sub => (sub.id === submission.id ? { ...sub, isArchived } : sub)))
@@ -228,7 +232,7 @@ export default function AdminDashboard() {
 				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
 					<div className='bg-white p-6 rounded-lg shadow'>
 						<h3 className='text-sm font-medium text-gray-500'>Wszystkie zgłoszenia</h3>
-						<p className='mt-2 text-3xl font-bold text-gray-900'>{submissions.length}</p>
+						<p className='mt-2 text-3xl font-bold text-gray-900'>{activeSubmissionsCount}</p>
 					</div>
 					<div className='flex items-center justify-center md:col-start-4'>
 						<button
