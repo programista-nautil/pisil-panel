@@ -10,6 +10,7 @@ export async function POST(request, { params }) {
 	}
 
 	const { id } = params
+	const { acceptanceDate } = await request.json()
 
 	try {
 		const submission = await prisma.submission.findUnique({ where: { id } })
@@ -17,7 +18,7 @@ export async function POST(request, { params }) {
 			return NextResponse.json({ message: 'Nie znaleziono zgłoszenia' }, { status: 404 })
 		}
 
-		const updatedSubmissionWithAttachments = await processAcceptance(submission)
+		const updatedSubmissionWithAttachments = await processAcceptance(submission, acceptanceDate)
 
 		return NextResponse.json(updatedSubmissionWithAttachments, { status: 200 })
 	} catch (error) {

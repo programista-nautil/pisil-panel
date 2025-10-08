@@ -17,6 +17,8 @@ export function useNotificationModals(submissions, setSubmissions) {
 	const [isRejectionModalOpen, setIsRejectionModalOpen] = useState(false)
 	const [submissionToReject, setSubmissionToReject] = useState(null)
 
+	const [acceptanceDate, setAcceptanceDate] = useState(new Date().toISOString().split('T')[0])
+
 	const updateStatus = async (submissionId, newStatus) => {
 		const originalSubmissions = submissions
 		setSubmissions(current => current.map(sub => (sub.id === submissionId ? { ...sub, status: newStatus } : sub)))
@@ -40,6 +42,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 
 		if (submission.formType === 'DEKLARACJA_CZLONKOWSKA' && newStatus === 'APPROVED') {
 			setSubmissionToVerify({ ...submission, status: newStatus })
+			setAcceptanceDate(new Date().toISOString().split('T')[0])
 			setIsVerificationModalOpen(true)
 		} else if (newStatus === 'ACCEPTED') {
 			setSubmissionToAccept({ ...submission, status: newStatus })
@@ -99,6 +102,8 @@ export function useNotificationModals(submissions, setSubmissions) {
 		try {
 			const response = await fetch(`/api/admin/submissions/${submissionToAccept.id}/accept`, {
 				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ acceptanceDate }),
 			})
 			if (!response.ok) throw new Error('Nie udało się wysłać e-maila akceptacyjnego.')
 
@@ -119,6 +124,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 	const closeAcceptanceModal = () => {
 		setIsAcceptanceModalOpen(false)
 		setSubmissionToAccept(null)
+		setAcceptanceDate(new Date().toISOString().split('T')[0])
 		setSuccessMessage('')
 		setIsSubmitting(false)
 	}
@@ -175,7 +181,20 @@ export function useNotificationModals(submissions, setSubmissions) {
 				message={`Spowoduje to zmianę statusu na "Przyjęty" i wysłanie powiadomienia e-mail z załącznikami na adres: ${submissionToAccept?.email}.`}
 				confirmButtonText='Przyjmij i wyślij'
 				isLoading={isSubmitting}
-				successMessage={successMessage}></ConfirmationModal>
+				successMessage={successMessage}>
+				<div>
+					<label htmlFor='acceptance-date' className='block text-sm font-medium text-gray-700 text-left'>
+						Data uchwały (do dokumentów)
+					</label>
+					<input
+						type='date'
+						id='acceptance-date'
+						value={acceptanceDate}
+						onChange={e => setAcceptanceDate(e.target.value)}
+						className='mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-500'
+					/>
+				</div>
+			</ConfirmationModal>
 
 			<ConfirmationModal
 				isOpen={isRejectionModalOpen}

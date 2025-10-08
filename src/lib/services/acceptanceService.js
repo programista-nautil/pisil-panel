@@ -53,7 +53,7 @@ const getCeoWithTitle = ceoName => {
 	return `Pan ${ceoName}`
 }
 
-export async function processAcceptance(submission) {
+export async function processAcceptance(submission, acceptanceDate) {
 	const userNodemailerAttachments = []
 	const generatedDocsData = []
 
@@ -66,6 +66,11 @@ export async function processAcceptance(submission) {
 		const docNumber = counter.lastNumber
 
 		const currentDate = new Date()
+		const dateForDocs = acceptanceDate ? new Date(acceptanceDate) : new Date()
+		const day = String(dateForDocs.getDate()).padStart(2, '0')
+		const month = String(dateForDocs.getMonth() + 1).padStart(2, '0')
+		const year = dateForDocs.getFullYear()
+		const formattedDate = `${day}.${month}.${year}`
 		const addressParts = splitAddress(submission.address)
 
 		const template1Path = path.join(process.cwd(), 'private', 'document-templates', 'pismo zaśw. przyjęcie.docx')
@@ -73,6 +78,7 @@ export async function processAcceptance(submission) {
 		const doc1 = new Docxtemplater(new PizZip(template1Content))
 		doc1.render({
 			data: currentDate.toLocaleDateString('pl-PL'),
+			data_uchwala: formattedDate,
 			nazwa_firmy: submission.companyName,
 			imie_nazwisko_kierownika: getCeoWithTitle(submission.ceoName) || 'Brak danych',
 			adres_linia1: addressParts.line1,
@@ -112,7 +118,7 @@ export async function processAcceptance(submission) {
 			nazwa_firmy: submission.companyName,
 			adres_linia1: addressParts.line1,
 			adres_linia2: addressParts.line2 ? `\n${addressParts.line2}` : '',
-			data: currentDate.toLocaleDateString('pl-PL'),
+			data_uchwala: formattedDate,
 		})
 		generatedDocsData.push({
 			filename: `zasw_${docNumber}.docx`,
