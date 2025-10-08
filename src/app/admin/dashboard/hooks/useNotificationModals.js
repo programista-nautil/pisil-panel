@@ -1,8 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import ConfirmationModal from '@/components/ConfirmationModal'
-import { MultiAttachmentInput } from '../components/AttachmentInputs'
+
+const DEFAULT_PATRONAGE_VERIFICATION_BODY = `Szanowni Państwo,
+
+dziękujemy za przesłanie wniosku o patronat. Informujemy, że wniosek jest obecnie weryfikowany.
+
+Z pozdrowieniami,
+Zespół PISiL`
+
+const DEFAULT_PATRONAGE_ACCEPTANCE_BODY = `Szanowni Państwo,
+
+z przyjemnością informujemy, że Państwa wniosek o patronat został rozpatrzony pozytywnie.
+
+Z pozdrowieniami,
+Zespół PISiL`
 
 export function useNotificationModals(submissions, setSubmissions) {
 	const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false)
@@ -18,6 +30,9 @@ export function useNotificationModals(submissions, setSubmissions) {
 	const [submissionToReject, setSubmissionToReject] = useState(null)
 
 	const [acceptanceDate, setAcceptanceDate] = useState(new Date().toISOString().split('T')[0])
+
+	const [patronageVerificationBody, setPatronageVerificationBody] = useState(DEFAULT_PATRONAGE_VERIFICATION_BODY)
+	const [patronageAcceptanceBody, setPatronageAcceptanceBody] = useState(DEFAULT_PATRONAGE_ACCEPTANCE_BODY)
 
 	const updateStatus = async (submissionId, newStatus) => {
 		const originalSubmissions = submissions
@@ -40,19 +55,42 @@ export function useNotificationModals(submissions, setSubmissions) {
 	const handleStatusChange = async (submission, newStatus) => {
 		if (submission.status === newStatus) return
 
-		if (submission.formType === 'DEKLARACJA_CZLONKOWSKA' && newStatus === 'APPROVED') {
-			setSubmissionToVerify({ ...submission, status: newStatus })
-			setAcceptanceDate(new Date().toISOString().split('T')[0])
-			setIsVerificationModalOpen(true)
-		} else if (newStatus === 'ACCEPTED') {
-			setSubmissionToAccept({ ...submission, status: newStatus })
-			setIsAcceptanceModalOpen(true)
-		} else if (newStatus === 'REJECTED') {
-			setSubmissionToReject({ ...submission, status: newStatus })
-			setIsRejectionModalOpen(true)
-		} else {
-			updateStatus(submission.id, newStatus)
+		if (submission.formType === 'DEKLARACJA_CZLONKOWSKA') {
+			if (newStatus === 'APPROVED') {
+				setSubmissionToVerify({ ...submission, status: newStatus })
+				setIsVerificationModalOpen(true)
+			} else if (newStatus === 'ACCEPTED') {
+				setSubmissionToAccept({ ...submission, status: newStatus })
+				setAcceptanceDate(new Date().toISOString().split('T')[0])
+				setIsAcceptanceModalOpen(true)
+			} else if (newStatus === 'REJECTED') {
+				setSubmissionToReject({ ...submission, status: newStatus })
+				setIsRejectionModalOpen(true)
+			} else {
+				updateStatus(submission.id, newStatus)
+			}
+			return
 		}
+
+		if (submission.formType === 'PATRONAT') {
+			if (newStatus === 'APPROVED') {
+				setSubmissionToVerify({ ...submission, status: newStatus })
+				setPatronageVerificationBody(DEFAULT_PATRONAGE_VERIFICATION_BODY)
+				setIsVerificationModalOpen(true)
+			} else if (newStatus === 'ACCEPTED') {
+				setSubmissionToAccept({ ...submission, status: newStatus })
+				setPatronageAcceptanceBody(DEFAULT_PATRONAGE_ACCEPTANCE_BODY)
+				setIsAcceptanceModalOpen(true)
+			} else if (newStatus === 'REJECTED') {
+				setSubmissionToReject({ ...submission, status: newStatus })
+				setIsRejectionModalOpen(true)
+			} else {
+				updateStatus(submission.id, newStatus)
+			}
+			return
+		}
+
+		updateStatus(submission.id, newStatus)
 	}
 
 	const confirmAndSendVerificationEmail = async () => {
@@ -161,53 +199,90 @@ export function useNotificationModals(submissions, setSubmissions) {
 		setIsSubmitting(false)
 	}
 
-	const Modals = () => (
-		<>
-			<ConfirmationModal
-				isOpen={isVerificationModalOpen}
-				onClose={closeVerificationModal}
-				onConfirm={confirmAndSendVerificationEmail}
-				title={successMessage ? 'Operacja zakończona' : 'Potwierdź wysłanie e-maila'}
-				message={`Czy na pewno chcesz oznaczyć to zgłoszenie jako zweryfikowane i wysłać powiadomienie na adres: ${submissionToVerify?.email}?`}
-				confirmButtonText='Oznacz i wyślij'
-				isLoading={isSubmitting}
-				successMessage={successMessage}></ConfirmationModal>
+	const confirmAndSendPatronageVerification = async () => {
+		if (!submissionToVerify) return
+		setIsSubmitting(true)
 
-			<ConfirmationModal
-				isOpen={isAcceptanceModalOpen}
-				onClose={closeAcceptanceModal}
-				onConfirm={confirmAndSendAcceptanceEmail}
-				title={successMessage ? 'Operacja zakończona' : 'Potwierdź przyjęcie członka'}
-				message={`Spowoduje to zmianę statusu na "Przyjęty" i wysłanie powiadomienia e-mail z załącznikami na adres: ${submissionToAccept?.email}.`}
-				confirmButtonText='Przyjmij i wyślij'
-				isLoading={isSubmitting}
-				successMessage={successMessage}>
-				<div>
-					<label htmlFor='acceptance-date' className='block text-sm font-medium text-gray-700 text-left'>
-						Data uchwały (do dokumentów)
-					</label>
-					<input
-						type='date'
-						id='acceptance-date'
-						value={acceptanceDate}
-						onChange={e => setAcceptanceDate(e.target.value)}
-						className='mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-500'
-					/>
-				</div>
-			</ConfirmationModal>
+		try {
+			// Krok 1: Zaktualizuj status zgłoszenia na 'APPROVED'
+			await updateStatus(submissionToVerify.id, 'APPROVED')
 
-			<ConfirmationModal
-				isOpen={isRejectionModalOpen}
-				onClose={closeRejectionModal}
-				onConfirm={confirmAndSendRejectionEmail}
-				title={successMessage ? 'Operacja zakończona' : 'Potwierdź odrzucenie zgłoszenia'}
-				message={`Spowoduje to zmianę statusu na "Odrzucony" i wysłanie powiadomienia e-mail na adres: ${submissionToReject?.email}.`}
-				confirmButtonText='Odrzuć i wyślij'
-				isLoading={isSubmitting}
-				successMessage={successMessage}
-			/>
-		</>
-	)
+			// Krok 2: Wyślij e-mail z edytowalną treścią
+			const response = await fetch(`/api/admin/submissions/${submissionToVerify.id}/send-patronage-verification`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ emailBody: patronageVerificationBody }),
+			})
+			if (!response.ok) {
+				throw new Error('Nie udało się wysłać e-maila weryfikacyjnego.')
+			}
 
-	return { handleStatusChange, Modals }
+			setSuccessMessage('Powiadomienie e-mail zostało wysłane pomyślnie!')
+		} catch (error) {
+			console.error(error)
+			alert('Wystąpił błąd podczas wysyłania e-maila.')
+			// W razie błędu zamykamy modal, żeby uniknąć blokady
+			closeVerificationModal()
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
+
+	const confirmAndSendPatronageAcceptance = async () => {
+		if (!submissionToAccept) return
+		setIsSubmitting(true)
+
+		try {
+			// Krok 1: Zaktualizuj status zgłoszenia na 'ACCEPTED'
+			await updateStatus(submissionToAccept.id, 'ACCEPTED')
+
+			// Krok 2: Wyślij e-mail z edytowalną treścią
+			const response = await fetch(`/api/admin/submissions/${submissionToAccept.id}/send-patronage-acceptance`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ emailBody: patronageAcceptanceBody }),
+			})
+
+			if (!response.ok) {
+				throw new Error('Nie udało się wysłać e-maila akceptacyjnego.')
+			}
+
+			setSuccessMessage('Email akceptacyjny został pomyślnie wysłany!')
+		} catch (error) {
+			console.error(error)
+			alert('Wystąpił błąd podczas wysyłania e-maila.')
+			// W razie błędu zamykamy modal
+			closeAcceptanceModal()
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
+
+	return {
+		handleStatusChange,
+		modalStates: {
+			isVerificationModalOpen,
+			closeVerificationModal,
+			submissionToVerify,
+			confirmAndSendPatronageVerification,
+			confirmAndSendVerificationEmail,
+			isSubmitting,
+			successMessage,
+			patronageVerificationBody,
+			setPatronageVerificationBody,
+			isAcceptanceModalOpen,
+			closeAcceptanceModal,
+			submissionToAccept,
+			confirmAndSendPatronageAcceptance,
+			confirmAndSendAcceptanceEmail,
+			acceptanceDate,
+			setAcceptanceDate,
+			patronageAcceptanceBody,
+			setPatronageAcceptanceBody,
+			isRejectionModalOpen,
+			closeRejectionModal,
+			submissionToReject,
+			confirmAndSendRejectionEmail,
+		},
+	}
 }

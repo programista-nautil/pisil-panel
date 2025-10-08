@@ -6,6 +6,7 @@ import SubmissionsTable from './components/SubmissionsTable'
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal'
 import { useNotificationModals } from './hooks/useNotificationModals'
 import AddSubmissionModal from './components/AddSubmissionModal'
+import NotificationModals from './components/NotificationModals'
 import { DocumentDuplicateIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline'
 
 export default function AdminDashboard() {
@@ -14,7 +15,7 @@ export default function AdminDashboard() {
 	const [isLoading, setIsLoading] = useState(true)
 	const [activeTab, setActiveTab] = useState('declarations')
 
-	const { handleStatusChange, Modals } = useNotificationModals(submissions, setSubmissions)
+	const { handleStatusChange, modalStates } = useNotificationModals(submissions, setSubmissions)
 
 	const [deletingAttachmentId, setDeletingAttachmentId] = useState(null)
 	const [attachmentModal, setAttachmentModal] = useState({
@@ -350,7 +351,7 @@ export default function AdminDashboard() {
 				itemName={attachmentModal.fileName}
 				context='attachment'
 			/>
-			<Modals />
+			<NotificationModals {...modalStates} />
 		</div>
 	)
 }

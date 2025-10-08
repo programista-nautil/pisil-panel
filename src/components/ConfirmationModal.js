@@ -20,7 +20,6 @@ export default function ConfirmationModal({
 	return (
 		<div
 			className='fixed inset-0 bg-gray-900/50 z-50 flex justify-center items-center '
-			onClick={!isLoading ? onClose : () => {}}
 			role='dialog'
 			aria-modal='true'>
 			<div
