@@ -179,18 +179,13 @@ export async function processAcceptance(submission, acceptanceDate) {
 	const userMailOptions = {
 		from: process.env.SMTP_USER,
 		to: submission.email,
-		subject: `Witamy w PISiL! Państwa członkostwo zostało przyjęte.`,
+		subject: `Potwierdzenie członkostwa w Polskiej Izbie Spedycji i Logistyki`,
 		html: `
-        <h2>Szanowni Państwo,</h2>
-        <p>
-          Z przyjemnością informujemy, że Rada Izby PISiL pozytywnie rozpatrzyła Państwa deklarację członkowską dla firmy <strong>${submission.companyName}</strong>.
-        </p>
-        <p>
-          Witamy w gronie członków Polskiej Izby Specjalistów IT i Logistyki!
-        </p>
-        <p>W załącznikach przesyłamy stosowne dokumenty powitalne.</p>
-        <p>Z pozdrowieniami,<br>Zespół PISiL</p>
-      `,
+            <p>Szanowni Państwo,</p>
+            <p>Z przyjemnością informujemy, że uchwałą Rady PISiL firma <strong>${submission.companyName}</strong> została przyjęta w poczet członków Polskiej Izby Spedycji i Logistyki.</p>
+            <p>Prosimy o zapoznanie się z załączonymi dokumentami.</p>
+            <p>Z poważaniem,<br>Biuro PISiL</p>
+        `,
 		attachments: userNodemailerAttachments,
 	}
 

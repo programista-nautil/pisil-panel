@@ -38,16 +38,11 @@ export async function POST(request, { params }) {
 		const mailOptions = {
 			from: process.env.SMTP_USER,
 			to: submission.email,
-			subject: `Informacja dot. zgłoszenia w PISiL`,
+			subject: `Informacja dot. deklaracji członkowskiej PISiL`,
 			html: `
-                <h2>Szanowni Państwo,</h2>
-                <p>
-                    Dziękujemy za przesłanie zgłoszenia dla <strong>${submission.companyName}</strong>.
-                </p>
-                <p>
-                    Z przykrością informujemy, że na tym etapie Państwa wniosek został odrzucony. W celu uzyskania dalszych informacji prosimy o kontakt z biurem Izby.
-                </p>
-                <p>Z pozdrowieniami,<br>Zespół PISiL</p>
+                <p>Szanowni Państwo,</p>
+                <p>Z przykrością informujemy, że Państwa wniosek o członkostwo w Polskiej Izbie Spedycji i Logistyki uchwałą Rady PISiL został odrzucony. W celu uzyskania dalszych informacji prosimy o kontakt z biurem Izby.</p>
+                <p>Z poważaniem,<br>Biuro PISiL</p>
             `,
 		}
 

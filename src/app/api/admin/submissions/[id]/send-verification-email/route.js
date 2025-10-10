@@ -40,15 +40,11 @@ export async function POST(request, { params }) {
 			to: submission.email,
 			subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
 			html: `
-        <h2>Szanowni Państwo,</h2>
-        <p>
-          Informujemy, że Państwa deklaracja członkowska dla firmy <strong>${submission.companyName}</strong> została wstępnie zweryfikowana przez nasze biuro.
-        </p>
-        <p>
-          Kolejnym krokiem będzie przedstawienie Państwa kandydatury na najbliższym posiedzeniu Rady Izby. O decyzji Rady poinformujemy Państwa w osobnej wiadomości.
-        </p>
-        <p>Z pozdrowieniami,<br>Zespół PISiL</p>
-      `,
+                <p>Szanowni Państwo,</p>
+                <p>Informujemy, że Państwa deklaracja członkowska dla firmy <strong>${submission.companyName}</strong> została wstępnie zweryfikowana przez nasze biuro. Informacja o Państwa kandydaturze na członka Polskiej Izby Spedycji i Logistyki zostanie przekazana do wszystkich członków.</p>
+                <p>Kolejnym krokiem będzie przedstawienie Państwa kandydatury na najbliższym posiedzeniu Rady Izby. O decyzji Rady poinformujemy Państwa w osobnej wiadomości.</p>
+                <p>Z poważaniem,<br>Biuro PISiL</p>
+            `,
 		}
 
 		await transporter.sendMail(mailOptions)

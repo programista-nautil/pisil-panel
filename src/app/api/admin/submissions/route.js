@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
 import { sanitizeFilename } from '@/lib/utils'
+import nodemailer from 'nodemailer'
 import path from 'path'
 
 export async function GET() {
@@ -103,6 +104,30 @@ export async function POST(request) {
 				where: { id: submission.id },
 				include: { attachments: true },
 			})
+		})
+
+		const transporter = nodemailer.createTransport({
+			host: 'smtp.gmail.com',
+			port: 587,
+			secure: false,
+			auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+		})
+
+		const isDeclaration = newSubmission.formType === 'DEKLARACJA_CZLONKOWSKA'
+		const mailSubject = isDeclaration
+			? 'Twoja deklaracja członkowska PISIL jest w trakcie weryfikacji.'
+			: 'Potwierdzenie otrzymania wniosku o patronat - PISiL'
+		const mailHtml = `
+			<p>Szanowni Państwo,</p>
+			<p>Dziękujemy za przesłanie deklaracji członkowskiej. Państwa dokumenty są w trakcie weryfikacji.</p>
+			<p>Z poważaniem,<br>Biuro PISiL</p>
+		`
+
+		await transporter.sendMail({
+			from: process.env.SMTP_USER,
+			to: newSubmission.email,
+			subject: mailSubject,
+			html: mailHtml,
 		})
 
 		return NextResponse.json(newSubmission, { status: 201 })
