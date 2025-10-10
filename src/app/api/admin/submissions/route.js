@@ -117,11 +117,17 @@ export async function POST(request) {
 		const mailSubject = isDeclaration
 			? 'Twoja deklaracja członkowska PISIL jest w trakcie weryfikacji.'
 			: 'Potwierdzenie otrzymania wniosku o patronat - PISiL'
-		const mailHtml = `
-			<p>Szanowni Państwo,</p>
-			<p>Dziękujemy za przesłanie deklaracji członkowskiej. Państwa dokumenty są w trakcie weryfikacji.</p>
-			<p>Z poważaniem,<br>Biuro PISiL</p>
-		`
+		const mailHtml = isDeclaration
+			? `
+				<p>Szanowni Państwo,</p>
+				<p>Dziękujemy za przesłanie deklaracji członkowskiej. Państwa dokumenty są w trakcie weryfikacji.</p>
+				<p>Z poważaniem,<br>Biuro PISiL</p>
+			`
+			: `
+				<p>Szanowni Państwo,</p>
+				<p>Dziękujemy za Państwa wniosek o patronat, który zostanie wkrótce rozpatrzony.</p>
+				<p>Z poważaniem,<br>Biuro PISiL</p>
+			`
 
 		await transporter.sendMail({
 			from: process.env.SMTP_USER,

@@ -4,17 +4,18 @@ import { useState } from 'react'
 
 const DEFAULT_PATRONAGE_VERIFICATION_BODY = `Szanowni Państwo,
 
-dziękujemy za przesłanie wniosku o patronat. Informujemy, że wniosek jest obecnie weryfikowany.
+w odpowiedzi na wniosek niniejszym informujemy, że Polska Izba Spedycji i Logistyki z przyjemnością obejmie patronatem [NAZWA WYDARZENIA] w [MIEJSCE] w dniach [DATY].
 
-Z pozdrowieniami,
-Zespół PISiL`
+W załączniku przekazujemy logo PISiL celem wykorzystania przy organizacji w/w imprezy.
+Prosimy o przesłania bannera o wymiarach 150x200 i adresu strony, do której go „podlinkujemy” po umieszczeniu na naszej stronie internetowej oraz informacji o wydarzeniu, którą przekażemy naszym członkom.
+W sprawach organizacyjnych dotyczących współpracy przy w/w przedsięwzięciu proszę kontaktować się z Czesławem Ciesielskim – tel. 58 620 19 50 lub kom.: 728445248, e-mail: c.ciesielski@pisil.pl.
 
-const DEFAULT_PATRONAGE_ACCEPTANCE_BODY = `Szanowni Państwo,
+Z poważaniem
+Marek Tarczyński
+Przewodniczący Rady
+Polskiej Izby Spedycji i Logistyki`
 
-z przyjemnością informujemy, że Państwa wniosek o patronat został rozpatrzony pozytywnie.
-
-Z pozdrowieniami,
-Zespół PISiL`
+const DEFAULT_PATRONAGE_ACCEPTANCE_BODY = `...`
 
 export function useNotificationModals(submissions, setSubmissions) {
 	const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false)

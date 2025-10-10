@@ -27,6 +27,23 @@ export async function POST(request, { params }) {
 			data: { status: Status.REJECTED },
 		})
 
+		let mailSubject, mailHtml
+		if (submission.formType === 'DEKLARACJA_CZLONKOWSKA') {
+			mailSubject = `Informacja dot. deklaracji członkowskiej PISiL`
+			mailHtml = `
+                <p>Szanowni Państwo,</p>
+                <p>Z przykrością informujemy, że Państwa wniosek o członkostwo w Polskiej Izbie Spedycji i Logistyki uchwałą Rady PISiL został odrzucony. W celu uzyskania dalszych informacji prosimy o kontakt z biurem Izby.</p>
+                <p>Z poważaniem,<br>Biuro PISiL</p>
+            `
+		} else if (submission.formType === 'PATRONAT') {
+			mailSubject = `Informacja dot. wniosku o patronat PISiL`
+			mailHtml = `
+				<p>Szanowni Państwo,</p>
+				<p>Ze względu na niezgodność z zakresem działania PISiL nie możemy objąć Państwa wydarzenia patronatem.</p>
+				<p>Biuro PISiL</p>
+			`
+		}
+
 		// Krok 2: Wyślij e-mail z powiadomieniem
 		const transporter = nodemailer.createTransport({
 			host: 'smtp.gmail.com',
@@ -38,12 +55,8 @@ export async function POST(request, { params }) {
 		const mailOptions = {
 			from: process.env.SMTP_USER,
 			to: submission.email,
-			subject: `Informacja dot. deklaracji członkowskiej PISiL`,
-			html: `
-                <p>Szanowni Państwo,</p>
-                <p>Z przykrością informujemy, że Państwa wniosek o członkostwo w Polskiej Izbie Spedycji i Logistyki uchwałą Rady PISiL został odrzucony. W celu uzyskania dalszych informacji prosimy o kontakt z biurem Izby.</p>
-                <p>Z poważaniem,<br>Biuro PISiL</p>
-            `,
+			subject: mailSubject,
+			html: mailHtml,
 		}
 
 		await transporter.sendMail(mailOptions)

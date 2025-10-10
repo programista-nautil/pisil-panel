@@ -36,14 +36,15 @@ export default function StatusDropdown({ submission, onStatusChange }) {
 	const currentStatus = statuses[submission.status] || { text: 'Nieznany', style: 'bg-gray-100 text-gray-800' }
 
 	const availableOptions = Object.entries(statuses).filter(([statusKey]) => {
-		// Pokaż "Przyjęty" tylko jeśli status to "Zweryfikowany"
-		if (statusKey === 'ACCEPTED') {
-			return submission.status === 'APPROVED'
+		if (submission.formType === 'DEKLARACJA_CZLONKOWSKA') {
+			if (statusKey === 'ACCEPTED') return submission.status === 'APPROVED'
+			if (statusKey === 'APPROVED' && submission.status === 'ACCEPTED') return false
 		}
-		// Nie pokazuj "Zweryfikowany", jeśli już jest "Przyjęty"
-		if (statusKey === 'APPROVED' && submission.status === 'ACCEPTED') {
+
+		if (submission.formType === 'PATRONAT' && statusKey === 'ACCEPTED') {
 			return false
 		}
+
 		return true
 	})
 
