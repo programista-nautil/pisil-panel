@@ -58,12 +58,24 @@ export async function processAcceptance(submission, acceptanceDate) {
 	const generatedDocsData = []
 
 	if (submission.formType === FormType.DEKLARACJA_CZLONKOWSKA) {
-		const counter = await prisma.documentCounter.upsert({
-			where: { id: 'acceptance_letter' },
-			update: { lastNumber: { increment: 1 } },
-			create: { id: 'acceptance_letter', lastNumber: 1 },
-		})
-		const docNumber = counter.lastNumber
+		let docNumber
+		if (submission.acceptanceNumber) {
+			docNumber = submission.acceptanceNumber
+		} else {
+			const maxResult = await prisma.submission.aggregate({
+				_max: {
+					acceptanceNumber: true,
+				},
+			})
+			const maxNumber = maxResult._max.acceptanceNumber || 0
+
+			docNumber = maxNumber + 1
+
+			await prisma.submission.update({
+				where: { id: submission.id },
+				data: { acceptanceNumber: docNumber, status: Status.ACCEPTED },
+			})
+		}
 
 		const currentDate = new Date()
 		const dateForDocs = acceptanceDate ? new Date(acceptanceDate) : new Date()
@@ -163,11 +175,6 @@ export async function processAcceptance(submission, acceptanceDate) {
 			contentType: 'application/zip',
 		})
 	}
-
-	await prisma.submission.update({
-		where: { id: submission.id },
-		data: { status: Status.ACCEPTED },
-	})
 
 	const transporter = nodemailer.createTransport({
 		host: 'smtp.gmail.com',

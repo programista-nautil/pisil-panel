@@ -100,13 +100,10 @@ model Submission {
 
   attachments Attachment[]
 
+  acceptanceNumber Int?     @unique
+
   ceoName String?
   address String?
-}
-
-model DocumentCounter {
-  id         String @id @default("acceptance_letter")
-  lastNumber Int    @default(0)
 }
 
 enum AttachmentSource {
