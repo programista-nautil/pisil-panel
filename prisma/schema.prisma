@@ -104,6 +104,9 @@ model Submission {
 
   ceoName String?
   address String?
+
+  member   Member? @relation(fields: [memberId], references: [id])
+  memberId String?
 }
 
 enum AttachmentSource {
@@ -130,4 +133,6 @@ model Member {
   company   String? 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  submissions Submission[]
 }

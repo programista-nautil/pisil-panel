@@ -71,42 +71,56 @@ export async function processAcceptance(submission, acceptanceDate) {
 
 	if (submission.formType === FormType.DEKLARACJA_CZLONKOWSKA) {
 		let docNumber
-		if (submission.acceptanceNumber) {
-			docNumber = submission.acceptanceNumber
-		} else {
-			const maxResult = await prisma.submission.aggregate({
-				_max: {
-					acceptanceNumber: true,
-				},
-			})
-			const maxNumber = maxResult._max.acceptanceNumber || 0
+		let memberId = submission.memberId
+		let plainPassword = null
 
-			docNumber = maxNumber + 1
+		if (!submission.acceptanceNumber || !memberId) {
+			let memberRecord
+
+			const existingMember = await prisma.member.findUnique({ where: { email: submission.email } })
+
+			if (existingMember) {
+				memberRecord = existingMember
+				memberId = existingMember.id
+
+				await prisma.member.update({
+					where: { id: memberId },
+					data: { company: submission.companyName, name: submission.ceoName },
+				})
+			} else {
+				plainPassword = generateRandomPassword()
+				const hashedPassword = await bcrypt.hash(plainPassword, SALT_ROUNDS)
+				memberRecord = await prisma.member.create({
+					data: {
+						email: submission.email,
+						password: hashedPassword,
+						company: submission.companyName,
+						name: submission.ceoName,
+					},
+				})
+				memberId = memberRecord.id
+			}
+
+			if (!submission.acceptanceNumber) {
+				const maxResult = await prisma.submission.aggregate({ _max: { acceptanceNumber: true } })
+				docNumber = (maxResult._max.acceptanceNumber || 0) + 1
+			} else {
+				docNumber = submission.acceptanceNumber
+			}
 
 			await prisma.submission.update({
 				where: { id: submission.id },
-				data: { acceptanceNumber: docNumber, status: Status.ACCEPTED },
-			})
-		}
-
-		let plainPassword = null
-		if (!submission.acceptanceNumber) {
-			plainPassword = generateRandomPassword()
-			const hashedPassword = await bcrypt.hash(plainPassword, SALT_ROUNDS)
-
-			// 3. Zapisz członka w bazie danych (lub zaktualizuj, jeśli już istnieje)
-			await prisma.member.upsert({
-				where: { email: submission.email },
-				update: {
-					company: submission.companyName,
-				},
-				create: {
-					email: submission.email,
-					password: hashedPassword,
-					company: submission.companyName,
-					name: submission.ceoName,
+				data: {
+					acceptanceNumber: docNumber,
+					memberId: memberId,
+					status: Status.ACCEPTED,
 				},
 			})
+
+			submission = await prisma.submission.findUnique({ where: { id: submission.id } })
+		} else {
+			docNumber = submission.acceptanceNumber
+			memberId = submission.memberId
 		}
 
 		const currentDate = new Date()
