@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
-export default function LoginPage() {
-	const [username, setUsername] = useState('')
+export default function MemberLoginPage() {
+	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
 	const [error, setError] = useState('')
 	const router = useRouter()
@@ -14,30 +14,30 @@ export default function LoginPage() {
 		e.preventDefault()
 		setError('')
 
-		const result = await signIn('admin-credentials', {
+		const result = await signIn('member-credentials', {
 			redirect: false,
-			username,
+			email, // Używamy email jako loginu
 			password,
 		})
 
 		if (result.error) {
-			setError('Nieprawidłowe dane logowania. Spróbuj ponownie.')
+			setError('Nieprawidłowy adres e-mail lub hasło. Spróbuj ponownie.')
 		} else {
-			router.push('/admin/dashboard')
+			router.push('/member/dashboard')
 		}
 	}
 
 	return (
 		<div className='min-h-screen bg-gray-50 flex items-center justify-center'>
 			<div className='max-w-md w-full bg-white p-8 rounded-lg shadow-md'>
-				<h2 className='text-2xl font-bold text-center text-gray-900 mb-6'>Logowanie do Panelu</h2>
+				<h2 className='text-2xl font-bold text-center text-gray-900 mb-6'>Logowanie do Panelu Członka</h2>
 				<form onSubmit={handleSubmit} className='space-y-6'>
 					<div>
-						<label className='block text-sm font-medium text-gray-700'>Nazwa użytkownika</label>
+						<label className='block text-sm font-medium text-gray-700'>Adres e-mail</label>
 						<input
-							type='text'
-							value={username}
-							onChange={e => setUsername(e.target.value)}
+							type='email'
+							value={email}
+							onChange={e => setEmail(e.target.value)}
 							required
 							className='mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-600'
 						/>

@@ -121,3 +121,13 @@ model Attachment {
 
   source       AttachmentSource @default(CLIENT_UPLOAD)
 }
+
+model Member {
+  id        String   @id @default(cuid())
+  email     String   @unique 
+  password  String   
+  name      String?  
+  company   String? 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

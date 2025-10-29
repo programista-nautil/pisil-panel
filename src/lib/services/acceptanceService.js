@@ -7,6 +7,9 @@ import PizZip from 'pizzip'
 import Docxtemplater from 'docxtemplater'
 import JSZip from 'jszip'
 import { uploadFileToGCS } from '@/lib/gcs'
+import bcrypt from 'bcrypt'
+
+const SALT_ROUNDS = 10
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'programista@nautil.pl'
 
@@ -21,6 +24,15 @@ const STATIC_ATTACHMENTS = [
 	'SA regulamin-pol.pdf',
 	'ubezp..pdf',
 ]
+
+const generateRandomPassword = (length = 12) => {
+	const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789'
+	let password = ''
+	for (let i = 0; i < length; i++) {
+		password += chars.charAt(Math.floor(Math.random() * chars.length))
+	}
+	return password
+}
 
 const splitAddress = address => {
 	if (!address) return { line1: '', line2: '' }
@@ -77,6 +89,26 @@ export async function processAcceptance(submission, acceptanceDate) {
 			})
 		}
 
+		let plainPassword = null
+		if (!submission.acceptanceNumber) {
+			plainPassword = generateRandomPassword()
+			const hashedPassword = await bcrypt.hash(plainPassword, SALT_ROUNDS)
+
+			// 3. Zapisz członka w bazie danych (lub zaktualizuj, jeśli już istnieje)
+			await prisma.member.upsert({
+				where: { email: submission.email },
+				update: {
+					company: submission.companyName,
+				},
+				create: {
+					email: submission.email,
+					password: hashedPassword,
+					company: submission.companyName,
+					name: submission.ceoName,
+				},
+			})
+		}
+
 		const currentDate = new Date()
 		const dateForDocs = acceptanceDate ? new Date(acceptanceDate) : new Date()
 		const day = String(dateForDocs.getDate()).padStart(2, '0')
@@ -96,6 +128,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 			adres_linia1: addressParts.line1,
 			adres_linia2: addressParts.line2 ? `\n${addressParts.line2}` : '',
 			mail: submission.email,
+			haslo: plainPassword ? plainPassword : '(Hasło pozostaje bez zmian)',
 		})
 
 		generatedDocsData.push({

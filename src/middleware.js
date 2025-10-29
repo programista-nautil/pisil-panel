@@ -1,17 +1,15 @@
-import { auth } from '@/auth'
-import { NextResponse } from 'next/server'
+import NextAuth from 'next-auth'
+import { authConfig } from '../auth.config'
 
-export default auth(req => {
-	const isLoggedIn = !!req.auth
-	const { nextUrl } = req
+const { auth } = NextAuth(authConfig)
 
-	const isAdminRoute = nextUrl.pathname.startsWith('/admin')
-
-	if (isAdminRoute && !isLoggedIn) {
-		return NextResponse.redirect(new URL('/login', nextUrl))
-	}
-})
+export default auth
 
 export const config = {
-	matcher: ['/admin/:path*', '/login'],
+	matcher: [
+		// Dopasuj wszystkie ścieżki /admin/*
+		'/admin/:path*',
+		// Dopasuj wszystkie ścieżki /member/* OPRÓCZ /member/login
+		'/member/((?!login$).*)',
+	],
 }
