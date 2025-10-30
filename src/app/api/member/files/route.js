@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { Status } from '@prisma/client'
+import { Status, AttachmentSource } from '@prisma/client'
 
 export async function GET() {
 	const session = await auth()
@@ -23,7 +23,9 @@ export async function GET() {
 			include: {
 				attachments: {
 					where: {
-						source: 'GENERATED',
+						source: {
+							in: [AttachmentSource.GENERATED, AttachmentSource.ADMIN_UPLOAD],
+						},
 					},
 					orderBy: {
 						createdAt: 'desc',

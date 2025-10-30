@@ -110,8 +110,9 @@ model Submission {
 }
 
 enum AttachmentSource {
-  CLIENT_UPLOAD
-  GENERATED
+  CLIENT_UPLOAD // Pliki od klienta LUB dodane ręcznie przez admina (traktujemy je tak samo)
+  GENERATED     // Pliki wygenerowane przez system (np. dokumenty przyjęcia)
+  ADMIN_UPLOAD  // Pliki wgrane przez admina, widoczne dla klienta
 }
 
 model Attachment {

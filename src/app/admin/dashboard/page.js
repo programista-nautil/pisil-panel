@@ -31,6 +31,8 @@ export default function AdminDashboard() {
 
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
+	const [uploadingMemberFile, setUploadingMemberFile] = useState(null)
+
 	useEffect(() => {
 		const fetchSubmissions = async () => {
 			setIsLoading(true)
@@ -196,6 +198,42 @@ export default function AdminDashboard() {
 		}
 	}
 
+	const handleMemberFileUpload = async (submissionId, files) => {
+		if (!files || files.length === 0) return
+		setUploadingMemberFile(submissionId)
+
+		const formData = new FormData()
+		files.forEach(file => formData.append('files[]', file))
+
+		try {
+			const response = await fetch(`/api/admin/submissions/${submissionId}/upload-member-file`, {
+				method: 'POST',
+				body: formData,
+			})
+			if (!response.ok) throw new Error('Nie udało się wgrać plików.')
+
+			const newAttachments = await response.json()
+
+			// Odświeżamy stan zgłoszeń, dodając nowe załączniki
+			setSubmissions(currentSubmissions =>
+				currentSubmissions.map(sub => {
+					if (sub.id === submissionId) {
+						return {
+							...sub,
+							attachments: [...sub.attachments, ...newAttachments],
+						}
+					}
+					return sub
+				})
+			)
+		} catch (error) {
+			console.error(error)
+			alert('Wystąpił błąd podczas wgrywania plików.')
+		} finally {
+			setUploadingMemberFile(null)
+		}
+	}
+
 	return (
 		<div className='min-h-screen bg-gray-100'>
 			<div className='max-w-7xl mx-auto p-4 sm:p-6 lg:p-8'>
@@ -285,6 +323,9 @@ export default function AdminDashboard() {
 									openAttachmentDeleteModal={openAttachmentDeleteModal}
 									deletingAttachmentId={deletingAttachmentId}
 									openDeleteModal={openDeleteModal}
+									onArchiveToggle={null}
+									onMemberFileUpload={handleMemberFileUpload}
+									uploadingMemberFileId={uploadingMemberFile}
 								/>
 							)}
 							{activeTab === 'surveys' && (

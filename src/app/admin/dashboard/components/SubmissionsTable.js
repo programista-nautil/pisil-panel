@@ -1,10 +1,15 @@
 'use client'
-
-import { Fragment } from 'react'
+import { Fragment, useState, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import StatusDropdown from './StatusDropdown'
-import { PencilSquareIcon } from '@heroicons/react/24/solid'
-import { ArchiveBoxArrowDownIcon, ArrowUpOnSquareIcon, UserIcon, Cog8ToothIcon } from '@heroicons/react/24/outline'
+import { PencilSquareIcon, DocumentArrowUpIcon } from '@heroicons/react/24/solid'
+import {
+	ArchiveBoxArrowDownIcon,
+	ArrowUpOnSquareIcon,
+	UserIcon,
+	Cog8ToothIcon,
+	CloudArrowUpIcon,
+} from '@heroicons/react/24/outline'
 import { getFormTypeName } from '../../../../utils/getFormTypeName'
 
 const AttachmentList = ({ title, icon: Icon, files, submissionId, onDownload, onDelete, deletingId }) => (
@@ -88,6 +93,51 @@ const AttachmentList = ({ title, icon: Icon, files, submissionId, onDownload, on
 	</div>
 )
 
+const MemberFileUploader = ({ submissionId, onUpload, isUploading }) => {
+	const [files, setFiles] = useState([])
+	const fileInputRef = useRef(null)
+
+	const handleFileChange = e => {
+		setFiles(Array.from(e.target.files))
+	}
+
+	const handleUploadClick = () => {
+		onUpload(submissionId, files)
+		setFiles([])
+		if (fileInputRef.current) {
+			fileInputRef.current.value = null
+		}
+	}
+
+	return (
+		<div className='p-3 bg-gray-50 rounded-lg border border-dashed border-gray-300'>
+			<label className='block text-sm font-medium text-gray-700 mb-2'>Wgraj pliki dla klienta:</label>
+			<div className='flex flex-col sm:flex-row gap-2'>
+				<input
+					ref={fileInputRef}
+					type='file'
+					multiple
+					onChange={handleFileChange}
+					className='block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100'
+				/>
+				<button
+					onClick={handleUploadClick}
+					disabled={isUploading || files.length === 0}
+					className='inline-flex justify-center items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-blue-700 disabled:bg-gray-300'>
+					{isUploading ? (
+						<svg className='animate-spin h-4 w-4 text-white' fill='none' viewBox='0 0 24 24'>
+							{/* ... (ikona spinnera) ... */}
+						</svg>
+					) : (
+						<CloudArrowUpIcon className='h-4 w-4' />
+					)}
+					<span>{isUploading ? 'Przesyłanie...' : 'Wgraj'}</span>
+				</button>
+			</div>
+		</div>
+	)
+}
+
 export default function SubmissionsTable({
 	submissions,
 	expanded,
@@ -98,6 +148,8 @@ export default function SubmissionsTable({
 	deletingAttachmentId,
 	openDeleteModal,
 	onArchiveToggle,
+	onMemberFileUpload,
+	uploadingMemberFileId,
 }) {
 	if (!submissions || submissions.length === 0) {
 		return <p className='p-6 text-center text-gray-500'>Brak zgłoszeń do wyświetlenia w tej kategorii.</p>
@@ -137,6 +189,7 @@ export default function SubmissionsTable({
 						const isExpandable = submission.formType === 'DEKLARACJA_CZLONKOWSKA' || submission.formType === 'PATRONAT'
 						const clientFiles = submission.attachments?.filter(att => att.source === 'CLIENT_UPLOAD') || []
 						const generatedFiles = submission.attachments?.filter(att => att.source === 'GENERATED') || []
+						const adminFiles = submission.attachments?.filter(att => att.source === 'ADMIN_UPLOAD') || []
 
 						return (
 							<Fragment key={submission.id}>
@@ -242,6 +295,24 @@ export default function SubmissionsTable({
 													onDelete={openAttachmentDeleteModal}
 													deletingId={deletingAttachmentId}
 												/>
+												<section>
+													<AttachmentList
+														title='Pliki dla klienta'
+														icon={DocumentArrowUpIcon} // Nowa ikona
+														files={adminFiles}
+														submissionId={submission.id}
+														onDownload={handleDownloadAttachment}
+														onDelete={openAttachmentDeleteModal}
+														deletingId={deletingAttachmentId}
+													/>
+													<div className='mt-4'>
+														<MemberFileUploader
+															submissionId={submission.id}
+															onUpload={onMemberFileUpload}
+															isUploading={uploadingMemberFileId === submission.id}
+														/>
+													</div>
+												</section>
 
 												{/* Stopka sekcji można wykorzystać później */}
 											</div>
