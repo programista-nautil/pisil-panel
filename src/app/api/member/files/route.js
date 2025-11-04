@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { Status, AttachmentSource } from '@prisma/client'
+import { STATIC_ACCEPTANCE_DOCUMENTS } from '@/lib/staticDocuments'
 
 export async function GET() {
 	const session = await auth()
@@ -38,7 +39,19 @@ export async function GET() {
 
 		const individualFiles = submission?.attachments || []
 
-		const generalFiles = []
+		const acceptanceDocs = STATIC_ACCEPTANCE_DOCUMENTS.map((name, index) => ({
+			id: `static-${index}`,
+			fileName: name,
+		}))
+
+		const generalFiles = [
+			{
+				category: 'Dokumenty członkowskie (statuty, regulaminy)',
+				files: acceptanceDocs,
+			},
+			// W przyszłości możesz dodać tu inne kategorie, np.:
+			// { category: "Newslettery", files: [...] }
+		]
 
 		return NextResponse.json({ generalFiles, individualFiles })
 	} catch (error) {

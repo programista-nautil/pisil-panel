@@ -8,22 +8,11 @@ import Docxtemplater from 'docxtemplater'
 import JSZip from 'jszip'
 import { uploadFileToGCS } from '@/lib/gcs'
 import bcrypt from 'bcrypt'
+import { STATIC_ACCEPTANCE_DOCUMENTS } from '@/lib/staticDocuments'
 
 const SALT_ROUNDS = 10
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'programista@nautil.pl'
-
-const STATIC_ATTACHMENTS = [
-	'34.pdf',
-	'44.pdf',
-	'219 A.pdf',
-	'Biuletyn_2012_11-12.pdf',
-	'FIATA MR.pdf',
-	'FIATA zakaz FCR steel products.pdf',
-	'regulam ekspert.pdf',
-	'SA regulamin-pol.pdf',
-	'ubezp..pdf',
-]
 
 const generateRandomPassword = (length = 12) => {
 	const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789'
@@ -208,7 +197,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 		})
 
 		const zip = new JSZip()
-		for (const filename of STATIC_ATTACHMENTS) {
+		for (const filename of STATIC_ACCEPTANCE_DOCUMENTS) {
 			const filePath = path.join(process.cwd(), 'private', 'acceptance-documents', filename)
 			const fileContent = await fs.readFile(filePath)
 			zip.file(filename, fileContent)

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
-import { DocumentTextIcon, UserCircleIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+import { DocumentTextIcon, UserCircleIcon, ArrowDownTrayIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 
 const FileList = ({ title, icon: Icon, files }) => (
 	<section className='mb-8'>
@@ -33,6 +33,47 @@ const FileList = ({ title, icon: Icon, files }) => (
 		)}
 	</section>
 )
+
+const CollapsibleFileCategory = ({ category }) => {
+	const [isOpen, setIsOpen] = useState(false)
+
+	return (
+		<section className='mb-4 bg-white rounded-lg shadow'>
+			<button
+				onClick={() => setIsOpen(!isOpen)}
+				className='flex items-center justify-between w-full p-4 bg-gray-50 rounded-t-lg hover:bg-gray-100'>
+				<div className='flex items-center gap-3'>
+					<DocumentTextIcon className='h-6 w-6 text-gray-500' />
+					<h2 className='text-lg font-semibold text-gray-800'>{category.category}</h2>
+				</div>
+				<div className='flex items-center gap-2'>
+					<span className='text-sm text-gray-500'>{category.files.length} plików</span>
+					<ChevronDownIcon className={`h-5 w-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+				</div>
+			</button>
+
+			{isOpen && (
+				<ul className='divide-y divide-gray-200 p-4'>
+					{category.files.map(file => (
+						<li key={file.id} className='flex items-center justify-between gap-3 py-3'>
+							<div className='flex items-center gap-3 min-w-0'>
+								<DocumentTextIcon className='h-5 w-5 text-gray-400 flex-shrink-0' />
+								<span className='text-sm font-medium text-gray-800 truncate'>{file.fileName}</span>
+							</div>
+							<a
+								href={`/api/member/static-document/${file.fileName}`} // Link do nowego endpointu
+								download
+								className='inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100'>
+								<ArrowDownTrayIcon className='h-4 w-4' />
+								Pobierz
+							</a>
+						</li>
+					))}
+				</ul>
+			)}
+		</section>
+	)
+}
 
 export default function MemberDashboard() {
 	const { data: session } = useSession()
@@ -100,7 +141,9 @@ export default function MemberDashboard() {
 					) : (
 						<>
 							<FileList title='Pliki indywidualne' icon={UserCircleIcon} files={files.individualFiles} />
-							<FileList title='Pliki ogólne' icon={DocumentTextIcon} files={files.generalFiles} />
+							{files.generalFiles.map((category, index) => (
+								<CollapsibleFileCategory key={index} category={category} />
+							))}
 						</>
 					)}
 				</main>
