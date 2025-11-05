@@ -135,6 +135,8 @@ model Member {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  memberNumber Int?     @unique
+
   submissions Submission[]
 }
 

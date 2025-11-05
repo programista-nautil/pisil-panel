@@ -17,7 +17,7 @@ export default function MemberBrowser() {
 	const fetchMembers = async (page = 1) => {
 		setIsLoading(true)
 		try {
-			const response = await fetch(`/api/admin/members?page=${page}&limit=15`)
+			const response = await fetch(`/api/admin/members?page=${page}&limit=50`)
 			if (!response.ok) throw new Error('Nie udało się pobrać listy członków.')
 			const data = await response.json()
 			setMembers(data.members)
@@ -85,9 +85,14 @@ export default function MemberBrowser() {
 						<ul className='divide-y divide-gray-200'>
 							{members.map(member => (
 								<li key={member.id} className='flex items-center justify-between gap-3 px-4 py-3'>
-									<div>
-										<p className='text-sm font-medium text-gray-900'>{member.company || 'Brak nazwy'}</p>
-										<p className='text-sm text-gray-500'>{member.email}</p>
+									<div className='flex items-center gap-3'>
+										{/* Wyświetlamy numer członkowski */}
+										<span className='text-sm font-semibold text-gray-500 w-10'>#{member.memberNumber}</span>
+										<div className='h-6 border-l border-gray-200'></div>
+										<div>
+											<p className='text-sm font-medium text-gray-900'>{member.company || 'Brak nazwy'}</p>
+											<p className='text-sm text-gray-500'>{member.email}</p>
+										</div>
 									</div>
 									<button
 										onClick={() => handleDeleteMember(member.id)}

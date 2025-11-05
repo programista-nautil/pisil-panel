@@ -64,37 +64,39 @@ export async function processAcceptance(submission, acceptanceDate) {
 		let plainPassword = null
 
 		if (!submission.acceptanceNumber || !memberId) {
-			let memberRecord
+			if (submission.acceptanceNumber) {
+				docNumber = submission.acceptanceNumber
+			} else {
+				const maxResult = await prisma.submission.aggregate({ _max: { acceptanceNumber: true } })
+				docNumber = (maxResult._max.acceptanceNumber || 0) + 1
+			}
 
+			// 2. Znajdź lub stwórz członka
 			const existingMember = await prisma.member.findUnique({ where: { email: submission.email } })
 
 			if (existingMember) {
-				memberRecord = existingMember
 				memberId = existingMember.id
-
 				await prisma.member.update({
 					where: { id: memberId },
-					data: { company: submission.companyName, name: submission.ceoName },
+					data: {
+						company: submission.companyName,
+						name: submission.ceoName,
+						memberNumber: docNumber,
+					},
 				})
 			} else {
 				plainPassword = generateRandomPassword()
 				const hashedPassword = await bcrypt.hash(plainPassword, SALT_ROUNDS)
-				memberRecord = await prisma.member.create({
+				const newMember = await prisma.member.create({
 					data: {
 						email: submission.email,
 						password: hashedPassword,
 						company: submission.companyName,
 						name: submission.ceoName,
+						memberNumber: docNumber,
 					},
 				})
-				memberId = memberRecord.id
-			}
-
-			if (!submission.acceptanceNumber) {
-				const maxResult = await prisma.submission.aggregate({ _max: { acceptanceNumber: true } })
-				docNumber = (maxResult._max.acceptanceNumber || 0) + 1
-			} else {
-				docNumber = submission.acceptanceNumber
+				memberId = newMember.id
 			}
 
 			await prisma.submission.update({
@@ -109,7 +111,6 @@ export async function processAcceptance(submission, acceptanceDate) {
 			submission = await prisma.submission.findUnique({ where: { id: submission.id } })
 		} else {
 			docNumber = submission.acceptanceNumber
-			memberId = submission.memberId
 		}
 
 		const currentDate = new Date()
