@@ -15,7 +15,7 @@ export async function GET(request, { params }) {
 	}
 
 	const { attachmentId } = params
-	const userEmail = session.user.email
+	const memberId = session.user.id
 
 	try {
 		// 1. Znajdź załącznik i powiązane zgłoszenie
@@ -25,9 +25,10 @@ export async function GET(request, { params }) {
 		})
 
 		// 2. Sprawdź, czy załącznik istnieje i czy należy do zalogowanego członka
-		if (!attachment || attachment.submission.email !== userEmail) {
+		if (!attachment || attachment.submission.memberId !== memberId) {
 			return NextResponse.json({ message: 'Nie znaleziono pliku lub brak dostępu' }, { status: 404 })
 		}
+		console.log('Pobrany załącznik:', attachment)
 
 		// 3. Pobierz plik z GCS jako strumień
 		const gcsFileName = attachment.filePath.replace(`https://storage.googleapis.com/${bucketName}/`, '')

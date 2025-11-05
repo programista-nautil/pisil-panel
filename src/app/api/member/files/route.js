@@ -42,18 +42,32 @@ export async function GET() {
 		const acceptanceDocs = STATIC_ACCEPTANCE_DOCUMENTS.map((name, index) => ({
 			id: `static-${index}`,
 			fileName: name,
+			downloadUrl: `/api/member/static-document/${name}`, // Link do ich dedykowanego API
 		}))
 
-		const generalFiles = [
+		const generalFilesCategories = [
 			{
 				category: 'Dokumenty członkowskie (statuty, regulaminy)',
 				files: acceptanceDocs,
 			},
-			// W przyszłości możesz dodać tu inne kategorie, np.:
-			// { category: "Newslettery", files: [...] }
 		]
 
-		return NextResponse.json({ generalFiles, individualFiles })
+		const dynamicGeneralFiles = await prisma.generalFile.findMany({
+			orderBy: { createdAt: 'desc' },
+		})
+
+		if (dynamicGeneralFiles.length > 0) {
+			generalFilesCategories.push({
+				category: 'Pliki Ogólne',
+				files: dynamicGeneralFiles.map(file => ({
+					id: file.id,
+					fileName: file.fileName,
+					downloadUrl: `/api/member/general-files/${file.id}/download`, // Link do nowego API
+				})),
+			})
+		}
+
+		return NextResponse.json({ generalFiles: generalFilesCategories, individualFiles })
 	} catch (error) {
 		console.error('Błąd podczas pobierania plików członka:', error)
 		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })
