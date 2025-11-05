@@ -1,7 +1,20 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { UserGroupIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { UserGroupIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+
+function useDebounce(value, delay) {
+	const [debouncedValue, setDebouncedValue] = useState(value)
+	useEffect(() => {
+		const handler = setTimeout(() => {
+			setDebouncedValue(value)
+		}, delay)
+		return () => {
+			clearTimeout(handler)
+		}
+	}, [value, delay])
+	return debouncedValue
+}
 
 export default function MemberBrowser() {
 	const [members, setMembers] = useState([])
@@ -11,13 +24,16 @@ export default function MemberBrowser() {
 	const [totalPages, setTotalPages] = useState(1)
 	const [totalMembers, setTotalMembers] = useState(0)
 
+	const [searchQuery, setSearchQuery] = useState('')
+	const debouncedSearchQuery = useDebounce(searchQuery, 300)
+
 	const topOfListComponent = useRef(null)
 	const isInitialLoad = useRef(true)
 
-	const fetchMembers = async (page = 1) => {
+	const fetchMembers = async (page = 1, query = '') => {
 		setIsLoading(true)
 		try {
-			const response = await fetch(`/api/admin/members?page=${page}&limit=50`)
+			const response = await fetch(`/api/admin/members?page=${page}&limit=10&search=${encodeURIComponent(query)}`)
 			if (!response.ok) throw new Error('Nie udało się pobrać listy członków.')
 			const data = await response.json()
 			setMembers(data.members)
@@ -35,6 +51,12 @@ export default function MemberBrowser() {
 	useEffect(() => {
 		fetchMembers(1)
 	}, [])
+
+	useEffect(() => {
+		if (!isInitialLoad.current) {
+			fetchMembers(1, debouncedSearchQuery)
+		}
+	}, [debouncedSearchQuery])
 
 	useEffect(() => {
 		if (!isInitialLoad.current && !isLoading) {
@@ -74,9 +96,31 @@ export default function MemberBrowser() {
 
 	return (
 		<div className='p-2' ref={topOfListComponent}>
-			<div className='flex items-center gap-3 mb-4 p-4 bg-gray-50 border rounded-lg'>
-				<UserGroupIcon className='h-6 w-6 text-gray-500' />
-				<h2 className='text-lg font-semibold text-gray-800'>Lista Członków ({totalMembers})</h2>
+			<div className='flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 p-4 bg-gray-50 border rounded-lg'>
+				<div className='flex items-center gap-3'>
+					<UserGroupIcon className='h-6 w-6 text-gray-500' />
+					<h2 className='text-lg font-semibold text-gray-800'>Lista Członków ({totalMembers})</h2>
+				</div>
+
+				<div className='w-full sm:w-auto sm:max-w-xs'>
+					<label htmlFor='member-search' className='sr-only'>
+						Szukaj członka
+					</label>
+					<div className='relative'>
+						<div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
+							<MagnifyingGlassIcon className='h-5 w-5 text-gray-400' aria-hidden='true' />
+						</div>
+						<input
+							id='member-search'
+							name='member-search'
+							type='search'
+							placeholder='Szukaj po nazwie, email, tel...'
+							value={searchQuery}
+							onChange={e => setSearchQuery(e.target.value)}
+							className='block w-full rounded-md border-0 py-2 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm'
+						/>
+					</div>
+				</div>
 			</div>
 			<div className='bg-white rounded-lg shadow'>
 				{isLoading && <p className='p-4 text-center text-gray-500'>Ładowanie listy członków...</p>}
