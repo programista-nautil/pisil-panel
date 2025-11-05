@@ -10,6 +10,17 @@ import NotificationModals from './components/NotificationModals'
 import MemberManagement from './components/MemberManagement'
 import { DocumentDuplicateIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline'
 
+const StatCard = ({ title, value, isLoading }) => (
+	<div className='bg-white p-3 rounded-lg shadow'>
+		<h3 className='text-sm font-medium text-gray-500'>{title}</h3>
+		{isLoading ? (
+			<p className='mt-2 text-3xl font-bold text-gray-900'>...</p>
+		) : (
+			<p className='mt-2 text-3xl font-bold text-gray-900'>{value}</p>
+		)}
+	</div>
+)
+
 export default function AdminDashboard() {
 	const [submissions, setSubmissions] = useState([])
 	const [expanded, setExpanded] = useState({}) // id -> bool
@@ -62,9 +73,25 @@ export default function AdminDashboard() {
 		return { declarations, activeSurveys, archivedSurveys }
 	}, [submissions])
 
-	const activeSubmissionsCount = useMemo(() => {
-		return submissions.filter(submission => !submission.isArchived).length
-	}, [submissions])
+	const [stats, setStats] = useState({ activeSubmissions: 0, totalMembers: 0, totalGeneralFiles: 0 })
+	const [isStatsLoading, setIsStatsLoading] = useState(true)
+
+	useEffect(() => {
+		const fetchStats = async () => {
+			setIsStatsLoading(true)
+			try {
+				const response = await fetch('/api/admin/stats')
+				if (!response.ok) throw new Error('Nie udało się pobrać statystyk.')
+				const data = await response.json()
+				setStats(data)
+			} catch (error) {
+				console.error(error)
+			} finally {
+				setIsStatsLoading(false)
+			}
+		}
+		fetchStats()
+	}, [])
 
 	const handleArchiveToggle = async (submission, isArchived) => {
 		const originalSubmissions = submissions
@@ -270,10 +297,9 @@ export default function AdminDashboard() {
 
 				{/* Karty ze statystykami */}
 				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
-					<div className='bg-white p-6 rounded-lg shadow'>
-						<h3 className='text-sm font-medium text-gray-500'>Wszystkie zgłoszenia</h3>
-						<p className='mt-2 text-3xl font-bold text-gray-900'>{activeSubmissionsCount}</p>
-					</div>
+					<StatCard title='Wszystkie zgłoszenia' value={stats.activeSubmissions} isLoading={isStatsLoading} />
+					<StatCard title='Liczba członków' value={stats.totalMembers} isLoading={isStatsLoading} />
+					<StatCard title='Pliki ogólne' value={stats.totalGeneralFiles} isLoading={isStatsLoading} />
 					<div className='flex items-center justify-center md:col-start-4'>
 						<button
 							onClick={() => setIsAddModalOpen(true)}
