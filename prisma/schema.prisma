@@ -137,3 +137,13 @@ model Member {
 
   submissions Submission[]
 }
+
+model GeneralFile {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  fileName  String   
+  filePath  String   
+  
+  category String? 
+}
