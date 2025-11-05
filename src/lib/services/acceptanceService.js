@@ -82,6 +82,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 						company: submission.companyName,
 						name: submission.ceoName,
 						memberNumber: docNumber,
+						phones: submission.phones,
 					},
 				})
 			} else {
@@ -94,6 +95,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 						company: submission.companyName,
 						name: submission.ceoName,
 						memberNumber: docNumber,
+						phones: submission.phones,
 					},
 				})
 				memberId = newMember.id

@@ -69,6 +69,7 @@ export async function POST(request) {
 				formType: userData.formType,
 				ceoName: userData.ceoName,
 				address: userData.address,
+				phones: userData.phones,
 			},
 		})
 
@@ -95,6 +96,7 @@ export async function POST(request) {
         <h2>Nowa deklaracja członkowska</h2>
         <p><strong>Firma:</strong> ${displayCompanyOrOrg}</p>
         <p><strong>Email:</strong> ${userData.email}</p>
+		<p><strong>Telefon:</strong> ${userData.phones || 'Nie podano'}</p>
         <p><strong>Status podpisu:</strong> ${
 					hasSignature ? '✅ Potwierdzono obecność pola podpisu' : '❌ Nie znaleziono pola podpisu'
 				}</p>
@@ -104,6 +106,7 @@ export async function POST(request) {
         <h2>Nowy wniosek o patronat</h2>
         <p><strong>Organizator/Wydarzenie:</strong> ${displayCompanyOrOrg}</p>
         <p><strong>Email:</strong> ${userData.email}</p>
+		<p><strong>Telefon:</strong> ${userData.phones || 'Nie podano'}</p>
         <p><strong>Status podpisu:</strong> ${
 					hasSignature ? '✅ Potwierdzono obecność pola podpisu' : '❌ Nie znaleziono pola podpisu'
 				}</p>
@@ -127,6 +130,7 @@ export async function POST(request) {
 				<ul>
 					<li><strong>Firma:</strong> ${displayCompanyOrOrg}</li>
 					<li><strong>Email:</strong> ${userData.email}</li>
+					<li><strong>Telefon:</strong> ${userData.phones || 'Nie podano'}</li>
 					<li><strong>Status podpisu:</strong> ${
 						hasSignature ? '✅ Potwierdzono obecność podpisu' : '❌ Brak wymaganego podpisu'
 					}</li>
@@ -148,6 +152,7 @@ export async function POST(request) {
 				<ul>
 					<li><strong>Organizator/Wydarzenie:</strong> ${displayCompanyOrOrg}</li>
 					<li><strong>Email:</strong> ${userData.email}</li>
+					<li><strong>Telefon:</strong> ${userData.phones || 'Nie podano'}</li>
           <li><strong>Status podpisu:</strong> ${
 						hasSignature ? '✅ Potwierdzono obecność podpisu' : '❌ Brak wymaganego podpisu'
 					}</li>

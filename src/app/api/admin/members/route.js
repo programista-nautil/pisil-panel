@@ -21,6 +21,15 @@ export async function GET(request) {
 				orderBy: {
 					company: 'asc',
 				},
+				select: {
+					id: true,
+					email: true,
+					name: true,
+					company: true,
+					createdAt: true,
+					memberNumber: true,
+					phones: true,
+				},
 			}),
 			prisma.member.count(),
 		])
