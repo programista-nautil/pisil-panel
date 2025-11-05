@@ -1,43 +1,46 @@
 {
-  "name": "pisil-panel",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@auth/core": "^0.40.0",
-    "@auth/prisma-adapter": "^2.10.0",
-    "@google-cloud/storage": "^7.16.0",
-    "@headlessui/react": "^2.2.7",
-    "@heroicons/react": "^2.2.0",
-    "@prisma/client": "^6.12.0",
-    "bcrypt": "^6.0.0",
-    "docxtemplater": "^3.66.3",
-    "html2canvas": "^1.4.1",
-    "js-cookie": "^3.0.5",
-    "jspdf": "^3.0.1",
-    "jszip": "^3.10.1",
-    "multer": "^2.0.1",
-    "next": "15.4.1",
-    "next-auth": "^5.0.0-beta.25",
-    "nodemailer": "^6.10.1",
-    "pdf-lib": "^1.17.1",
-    "pizzip": "^3.2.0",
-    "prisma": "^6.12.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "react-hook-form": "^7.60.0"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "@types/bcrypt": "^6.0.0",
-    "eslint": "^9",
-    "eslint-config-next": "15.4.1",
-    "tailwindcss": "^4"
-  }
+	"name": "pisil-panel",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"start": "next start",
+		"lint": "next lint"
+	},
+	"dependencies": {
+		"@auth/core": "^0.40.0",
+		"@auth/prisma-adapter": "^2.10.0",
+		"@google-cloud/storage": "^7.16.0",
+		"@headlessui/react": "^2.2.7",
+		"@heroicons/react": "^2.2.0",
+		"@prisma/client": "^6.12.0",
+		"bcrypt": "^6.0.0",
+		"docxtemplater": "^3.66.3",
+		"html2canvas": "^1.4.1",
+		"js-cookie": "^3.0.5",
+		"jspdf": "^3.0.1",
+		"jszip": "^3.10.1",
+		"multer": "^2.0.1",
+		"next": "15.4.1",
+		"next-auth": "^5.0.0-beta.25",
+		"nodemailer": "^6.10.1",
+		"pdf-lib": "^1.17.1",
+		"pizzip": "^3.2.0",
+		"prisma": "^6.12.0",
+		"react": "19.1.0",
+		"react-dom": "19.1.0",
+		"react-hook-form": "^7.60.0"
+	},
+	"devDependencies": {
+		"@eslint/eslintrc": "^3",
+		"@tailwindcss/postcss": "^4",
+		"@types/bcrypt": "^6.0.0",
+		"eslint": "^9",
+		"eslint-config-next": "15.4.1",
+		"tailwindcss": "^4"
+	},
+	"prisma": {
+		"seed": "node prisma/seed.js"
+	}
 }

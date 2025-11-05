@@ -105,7 +105,7 @@ model Submission {
   ceoName String?
   address String?
 
-  member   Member? @relation(fields: [memberId], references: [id])
+  member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
   memberId String?
 }
 
