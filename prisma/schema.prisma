@@ -113,7 +113,6 @@ model Submission {
 enum AttachmentSource {
   CLIENT_UPLOAD // Pliki od klienta LUB dodane ręcznie przez admina (traktujemy je tak samo)
   GENERATED     // Pliki wygenerowane przez system (np. dokumenty przyjęcia)
-  ADMIN_UPLOAD  // Pliki wgrane przez admina, widoczne dla klienta
 }
 
 model Attachment {
@@ -140,6 +139,18 @@ model Member {
   phones       String?
 
   submissions Submission[]
+  files       MemberFile[]
+}
+
+model MemberFile {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  fileName  String   // Nazwa pliku widoczna dla użytkownika
+  filePath  String   // Ścieżka do pliku w GCS
+
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId  String
 }
 
 model GeneralFile {

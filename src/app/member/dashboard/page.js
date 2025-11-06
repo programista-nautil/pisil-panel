@@ -25,7 +25,7 @@ const FileList = ({ title, icon: Icon, files }) => (
 							<span className='text-sm font-medium text-gray-800 truncate'>{file.fileName}</span>
 						</div>
 						<a
-							href={`/api/member/attachments/${file.id}/download`}
+							href={file.downloadUrl}
 							download
 							className='inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100'>
 							<ArrowDownTrayIcon className='h-4 w-4' />

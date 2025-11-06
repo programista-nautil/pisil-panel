@@ -21,23 +21,38 @@ export async function GET() {
 				formType: 'DEKLARACJA_CZLONKOWSKA',
 				status: Status.ACCEPTED,
 			},
-			include: {
+			select: {
 				attachments: {
-					where: {
-						source: {
-							in: [AttachmentSource.GENERATED, AttachmentSource.ADMIN_UPLOAD],
-						},
-					},
-					orderBy: {
-						createdAt: 'desc',
-					},
+					where: { source: AttachmentSource.GENERATED },
+					orderBy: { createdAt: 'desc' },
+					select: { id: true, fileName: true },
 				},
 			},
 		})
 
-		console.log('Pobrane zgłoszenie członka:', submission)
+		const generatedFiles = (submission?.attachments || []).map(file => ({
+			...file,
+			downloadUrl: `/api/member/attachments/${file.id}/download`,
+		}))
 
-		const individualFiles = submission?.attachments || []
+		// 2. Pobierz pliki wgrane przez admina (z 'MemberFile') i od razu je oznacz
+		const adminUploadedFiles = (
+			await prisma.memberFile.findMany({
+				where: { memberId: memberId },
+				orderBy: { createdAt: 'desc' },
+				select: { id: true, fileName: true }, // Pobieramy tylko potrzebne dane
+			})
+		).map(file => ({
+			...file,
+			downloadUrl: `/api/member/member-files/${file.id}/download`, // Używamy NOWEGO endpointu
+		}))
+
+		console.log(adminUploadedFiles, 'pliki wgrane przez admina dla członka:', memberId)
+
+		// 3. Połącz obie listy
+		const individualFiles = [...generatedFiles, ...adminUploadedFiles]
+
+		console.log('Pliki indywidualne członka:', individualFiles)
 
 		const acceptanceDocs = STATIC_ACCEPTANCE_DOCUMENTS.map((name, index) => ({
 			id: `static-${index}`,
@@ -62,7 +77,7 @@ export async function GET() {
 				files: dynamicGeneralFiles.map(file => ({
 					id: file.id,
 					fileName: file.fileName,
-					downloadUrl: `/api/member/general-files/${file.id}/download`, // Link do nowego API
+					downloadUrl: `/api/member/general-files/${file.id}/download`,
 				})),
 			})
 		}

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { Storage } from '@google-cloud/storage' // Potrzebne do GCS
+import { Storage } from '@google-cloud/storage'
 
 const storage = new Storage({
 	credentials: JSON.parse(process.env.GCS_CREDENTIALS),
@@ -14,26 +14,22 @@ export async function GET(request, { params }) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 	}
 
-	const { attachmentId } = params
+	const { id } = params
 	const memberId = session.user.id
-	console.log(memberId, 'próbuje pobrać załącznik o ID:', attachmentId)
 
 	try {
-		// 1. Znajdź załącznik i powiązane zgłoszenie
-		const attachment = await prisma.attachment.findUnique({
-			where: { id: attachmentId },
-			include: { submission: true },
+		// Szukamy w tabeli MemberFile
+		const fileRecord = await prisma.memberFile.findUnique({
+			where: { id },
 		})
 
-		console.log('Znaleziony załącznik:', attachment)
-
-		// 2. Sprawdź, czy załącznik istnieje i czy należy do zalogowanego członka
-		if (!attachment || attachment.submission.memberId !== memberId) {
+		// Sprawdzamy, czy plik istnieje I czy należy do zalogowanego członka
+		if (!fileRecord || fileRecord.memberId !== memberId) {
 			return NextResponse.json({ message: 'Nie znaleziono pliku lub brak dostępu' }, { status: 404 })
 		}
 
-		// 3. Pobierz plik z GCS jako strumień
-		const gcsFileName = attachment.filePath.replace(`https://storage.googleapis.com/${bucketName}/`, '')
+		// Reszta logiki pobierania z GCS jest taka sama
+		const gcsFileName = fileRecord.filePath.replace(`https://storage.googleapis.com/${bucketName}/`, '')
 		const file = storage.bucket(bucketName).file(gcsFileName)
 		const [exists] = await file.exists()
 
@@ -42,17 +38,14 @@ export async function GET(request, { params }) {
 		}
 
 		const stream = file.createReadStream()
-
-		const encodedFilename = encodeURIComponent(attachment.fileName)
-
 		const headers = new Headers({
-			'Content-Disposition': `attachment; filename*=UTF-8''${encodedFilename}`,
+			'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(fileRecord.fileName)}`,
 			'Content-Type': 'application/octet-stream',
 		})
 
 		return new Response(stream, { headers })
 	} catch (error) {
-		console.error('Błąd podczas pobierania załącznika przez członka:', error)
+		console.error('Błąd podczas pobierania pliku członka:', error)
 		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })
 	}
 }

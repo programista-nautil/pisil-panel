@@ -10,22 +10,22 @@ const bucketName = process.env.GCS_BUCKET_NAME
 
 export async function GET(request, { params }) {
 	const session = await auth()
-	// 1. Sprawdzamy sesję CZŁONKA
-	if (!session?.user || session.user.role !== 'member') {
+	// 1. Sprawdzamy sesję ADMINA
+	if (!session) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 	}
 
 	const { id } = params
 	try {
-		const fileRecord = await prisma.generalFile.findUnique({
+		const fileRecord = await prisma.memberFile.findUnique({
 			where: { id },
 		})
 
 		if (!fileRecord) {
-			return NextResponse.json({ message: 'Nie znaleziono pliku' }, { status: 404 })
+			return NextResponse.json({ message: 'Nie znaleziono pliku.' }, { status: 404 })
 		}
 
-		// 2. Logika pobierania z GCS (taka sama jak dla admina)
+		// 3. Logika pobierania z GCS (taka sama)
 		const gcsFileName = fileRecord.filePath.replace(`https://storage.googleapis.com/${bucketName}/`, '')
 		const file = storage.bucket(bucketName).file(gcsFileName)
 		const [exists] = await file.exists()
@@ -33,8 +33,6 @@ export async function GET(request, { params }) {
 		if (!exists) {
 			return NextResponse.json({ message: 'Plik nie istnieje w GCS' }, { status: 404 })
 		}
-
-		console.log('Pobieranie pliku ogólnego przez członka:', fileRecord)
 
 		const stream = file.createReadStream()
 		const headers = new Headers({
@@ -44,7 +42,7 @@ export async function GET(request, { params }) {
 
 		return new Response(stream, { headers })
 	} catch (error) {
-		console.error('Błąd podczas pobierania pliku ogólnego przez członka:', error)
+		console.error('Błąd podczas pobierania pliku członka przez admina:', error)
 		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })
 	}
 }

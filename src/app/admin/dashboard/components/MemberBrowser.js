@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { UserGroupIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { useState, useEffect, useRef, Fragment } from 'react'
+import { UserGroupIcon, TrashIcon, MagnifyingGlassIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import MemberFileEditor from './MemberFileEditor'
 
 function useDebounce(value, delay) {
 	const [debouncedValue, setDebouncedValue] = useState(value)
@@ -23,6 +24,7 @@ export default function MemberBrowser() {
 	const [currentPage, setCurrentPage] = useState(1)
 	const [totalPages, setTotalPages] = useState(1)
 	const [totalMembers, setTotalMembers] = useState(0)
+	const [expanded, setExpanded] = useState({})
 
 	const [searchQuery, setSearchQuery] = useState('')
 	const debouncedSearchQuery = useDebounce(searchQuery, 300)
@@ -58,6 +60,10 @@ export default function MemberBrowser() {
 		}
 		fetchMembers(1, debouncedSearchQuery)
 	}, [debouncedSearchQuery])
+
+	const toggleExpanded = id => {
+		setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
+	}
 
 	const handleDeleteMember = async memberId => {
 		if (
@@ -131,50 +137,63 @@ export default function MemberBrowser() {
 						</li>
 					)}
 					{members.map(member => (
-						<li key={member.id} className='flex items-center justify-between gap-3 px-4 py-3'>
-							<div className='flex items-center gap-3'>
-								<span className='text-sm font-semibold text-gray-500 w-10 text-center'>#{member.memberNumber}</span>
-								<div className='h-10 border-l border-gray-200'></div>
-								<div>
-									<p className='text-sm font-medium text-gray-900'>{member.company || 'Brak nazwy firmy'}</p>
-									<p className='text-sm text-gray-700'>{member.name || 'Brak imienia i nazwiska'}</p>
-									<p className='text-sm text-gray-500'>{member.email}</p>
-									<p className='text-sm text-gray-500'>{member.phones || 'Brak telefonu'}</p>
+						<Fragment key={member.id}>
+							<li className='flex items-center justify-between gap-3 px-4 py-3'>
+								<div className='flex items-center gap-3'>
+									{/* Przycisk rozwijania */}
+									<button onClick={() => toggleExpanded(member.id)} className='p-1 rounded hover:bg-gray-200'>
+										<ChevronRightIcon
+											className={`h-5 w-5 transform transition-transform ${expanded[member.id] ? 'rotate-90' : ''}`}
+										/>
+									</button>
+									<span className='text-sm font-semibold text-gray-500 w-10 text-center'>#{member.memberNumber}</span>
+									<div className='h-10 border-l border-gray-200'></div>
+									<div>
+										<p className='text-sm font-medium text-gray-900'>{member.company || 'Brak nazwy firmy'}</p>
+										<p className='text-sm text-gray-700'>{member.name || 'Brak imienia i nazwiska'}</p>
+										<p className='text-sm text-gray-500'>{member.email}</p>
+										<p className='text-sm text-gray-500'>{member.phones || 'Brak telefonu'}</p>
+									</div>
 								</div>
-							</div>
-							<div className='flex items-center gap-4'>
-								{/* DODANE POLE: Data dodania */}
-								<div className='text-right hidden sm:block'>
-									<p className='text-xs text-gray-500'>Dodano:</p>
-									<p className='text-sm font-medium text-gray-700'>
-										{new Date(member.createdAt).toLocaleDateString('pl-PL')}
-									</p>
+								<div className='flex items-center gap-4'>
+									{/* DODANE POLE: Data dodania */}
+									<div className='text-right hidden sm:block'>
+										<p className='text-xs text-gray-500'>Dodano:</p>
+										<p className='text-sm font-medium text-gray-700'>
+											{new Date(member.createdAt).toLocaleDateString('pl-PL')}
+										</p>
+									</div>
+									<button
+										onClick={() => handleDeleteMember(member.id)}
+										disabled={deletingId === member.id || isLoading}
+										className='p-2 text-red-500 hover:bg-red-100 rounded-md disabled:opacity-50'
+										title='Usuń członka'>
+										{deletingId === member.id ? (
+											<svg className='animate-spin h-5 w-5 text-red-500' fill='none' viewBox='0 0 24 24'>
+												<circle
+													className='opacity-25'
+													cx='12'
+													cy='12'
+													r='10'
+													stroke='currentColor'
+													strokeWidth='4'></circle>
+												<path
+													className='opacity-75'
+													fill='currentColor'
+													d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+											</svg>
+										) : (
+											<TrashIcon className='h-5 w-5' />
+										)}
+									</button>
 								</div>
-								<button
-									onClick={() => handleDeleteMember(member.id)}
-									disabled={deletingId === member.id || isLoading}
-									className='p-2 text-red-500 hover:bg-red-100 rounded-md disabled:opacity-50'
-									title='Usuń członka'>
-									{deletingId === member.id ? (
-										<svg className='animate-spin h-5 w-5 text-red-500' fill='none' viewBox='0 0 24 24'>
-											<circle
-												className='opacity-25'
-												cx='12'
-												cy='12'
-												r='10'
-												stroke='currentColor'
-												strokeWidth='4'></circle>
-											<path
-												className='opacity-75'
-												fill='currentColor'
-												d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
-										</svg>
-									) : (
-										<TrashIcon className='h-5 w-5' />
-									)}
-								</button>
-							</div>
-						</li>
+							</li>
+							{expanded[member.id] && (
+								<li className='bg-gray-50 p-4'>
+									<MemberFileEditor memberId={member.id} />
+								</li>
+							)}
+						</Fragment>
 					))}
 				</ul>
 				{/* Paginacja */}
