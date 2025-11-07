@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 
-// ... (Definicje ikon MenuIcon, AdminIcon, MemberIcon bez zmian) ...
+// Ikony, które umieścimy bezpośrednio w komponencie
 const MenuIcon = () => (
 	<svg className='h-6 w-6' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
 		<path
@@ -38,10 +38,6 @@ const MemberIcon = () => (
 	</svg>
 )
 
-/**
- * Komponent wewnętrzny, który zawiera całą logikę i hooki.
- * Renderuje się tylko wtedy, gdy nagłówek ma być widoczny.
- */
 function HeaderContent() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
 	const menuRef = useRef(null)
@@ -61,12 +57,12 @@ function HeaderContent() {
 	}, [menuRef]) // Zależność jest poprawna
 
 	return (
-		<header className='w-full h-16 bg-white border-b border-gray-200 shadow-sm flex-shrink-0'>
-			<nav className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between'>
+		<header className='w-full h-25 bg-white border-b border-gray-200 shadow-sm flex-shrink-0'>
+			<nav className='px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between'>
 				{/* Lewa strona: Logo */}
 				<div className='flex-shrink-0'>
-					<Link href='/' className='flex items-center gap-2'>
-						<Image src='/logo.png' alt='Logo PISiL' width={40} height={40} />
+					<Link href='/' className='flex items-center '>
+						<Image src='/logo.png' alt='Logo PISiL' width={150} height={50} />
 					</Link>
 				</div>
 
@@ -83,7 +79,7 @@ function HeaderContent() {
 						<div className='absolute right-0 mt-2 w-56 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50'>
 							<div className='py-1' role='menu' aria-orientation='vertical'>
 								<Link
-									href='/logowanie-admin'
+									href='/login'
 									className='flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
 									role='menuitem'
 									onClick={() => setIsMenuOpen(false)}>
@@ -91,7 +87,7 @@ function HeaderContent() {
 									<span>Panel Admina</span>
 								</Link>
 								<Link
-									href='/logowanie-czlonka'
+									href='/member/login'
 									className='flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
 									role='menuitem'
 									onClick={() => setIsMenuOpen(false)}>
