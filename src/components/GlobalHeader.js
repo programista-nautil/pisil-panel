@@ -1,0 +1,112 @@
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useSession } from 'next-auth/react'
+import { usePathname } from 'next/navigation'
+
+// Ikony, które umieścimy bezpośrednio w komponencie
+const MenuIcon = () => (
+	<svg className='h-6 w-6' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+		<path
+			strokeLinecap='round'
+			strokeLinejoin='round'
+			strokeWidth={2}
+			d='M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z'
+		/>
+	</svg>
+)
+const AdminIcon = () => (
+	<svg className='h-5 w-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+		<path
+			strokeLinecap='round'
+			strokeLinejoin='round'
+			strokeWidth={2}
+			d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'
+		/>
+	</svg>
+)
+const MemberIcon = () => (
+	<svg className='h-5 w-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+		<path
+			strokeLinecap='round'
+			strokeLinejoin='round'
+			strokeWidth={2}
+			d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
+		/>
+	</svg>
+)
+
+export default function GlobalHeader() {
+	const [isMenuOpen, setIsMenuOpen] = useState(false)
+	const { status } = useSession() // Pobieramy status sesji
+	const pathname = usePathname() // Pobieramy aktualną ścieżkę
+	const menuRef = useRef(null) // Ref do zamykania menu po kliknięciu na zewnątrz
+
+	// Logika ukrywania: ukryj, jeśli zalogowany LUB na chronionej ścieżce
+	const isAuthenticated = status === 'authenticated'
+	const isAuthPage = pathname.startsWith('/admin') || pathname.startsWith('/member/dashboard')
+	if (isAuthenticated || isAuthPage) {
+		return null // Nie renderuj nagłówka na stronach admina/członka
+	}
+
+	// Logika zamykania menu po kliknięciu na zewnątrz
+	useEffect(() => {
+		function handleClickOutside(event) {
+			if (menuRef.current && !menuRef.current.contains(event.target)) {
+				setIsMenuOpen(false)
+			}
+		}
+		document.addEventListener('mousedown', handleClickOutside)
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside)
+		}
+	}, [menuRef])
+
+	return (
+		<header className='w-full h-25 bg-white border-b border-gray-200 shadow-sm flex-shrink-0'>
+			<nav className='px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between'>
+				{/* Lewa strona: Logo */}
+				<div className='flex-shrink-0'>
+					<Link href='/' className='flex items-center '>
+						<Image src='/logo.png' alt='Logo PISiL' width={150} height={50} />
+					</Link>
+				</div>
+
+				{/* Prawa strona: Menu */}
+				<div className='relative' ref={menuRef}>
+					<button
+						onClick={() => setIsMenuOpen(!isMenuOpen)}
+						className='p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500'>
+						<MenuIcon />
+					</button>
+
+					{/* Rozwijane menu */}
+					{isMenuOpen && (
+						<div className='absolute right-0 mt-2 w-56 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50'>
+							<div className='py-1' role='menu' aria-orientation='vertical'>
+								<Link
+									href='/login'
+									className='flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+									role='menuitem'
+									onClick={() => setIsMenuOpen(false)}>
+									<AdminIcon />
+									<span>Panel Admina</span>
+								</Link>
+								<Link
+									href='/member/login'
+									className='flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+									role='menuitem'
+									onClick={() => setIsMenuOpen(false)}>
+									<MemberIcon />
+									<span>Panel Członka</span>
+								</Link>
+							</div>
+						</div>
+					)}
+				</div>
+			</nav>
+		</header>
+	)
+}

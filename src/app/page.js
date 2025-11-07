@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function HomePage() {
 	return (
-		<div className='min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col items-center justify-center p-6'>
+		<div className='h-full bg-gradient-to-b from-gray-50 to-white flex flex-col items-center justify-center p-6'>
 			<div className='mx-auto w-full max-w-7xl'>
 				<header className='mb-10 text-center'>
 					<h1 className='text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900'>
