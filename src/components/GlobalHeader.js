@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 
-// Ikony, które umieścimy bezpośrednio w komponencie
+// ... (Definicje ikon MenuIcon, AdminIcon, MemberIcon bez zmian) ...
 const MenuIcon = () => (
 	<svg className='h-6 w-6' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
 		<path
@@ -38,20 +38,16 @@ const MemberIcon = () => (
 	</svg>
 )
 
-export default function GlobalHeader() {
+/**
+ * Komponent wewnętrzny, który zawiera całą logikę i hooki.
+ * Renderuje się tylko wtedy, gdy nagłówek ma być widoczny.
+ */
+function HeaderContent() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
-	const { status } = useSession() // Pobieramy status sesji
-	const pathname = usePathname() // Pobieramy aktualną ścieżkę
-	const menuRef = useRef(null) // Ref do zamykania menu po kliknięciu na zewnątrz
+	const menuRef = useRef(null)
 
-	// Logika ukrywania: ukryj, jeśli zalogowany LUB na chronionej ścieżce
-	const isAuthenticated = status === 'authenticated'
-	const isAuthPage = pathname.startsWith('/admin') || pathname.startsWith('/member/dashboard')
-	if (isAuthenticated || isAuthPage) {
-		return null // Nie renderuj nagłówka na stronach admina/członka
-	}
-
-	// Logika zamykania menu po kliknięciu na zewnątrz
+	// Ten useEffect jest teraz wywoływany zawsze, gdy HeaderContent jest renderowany.
+	// Nie jest już warunkowy.
 	useEffect(() => {
 		function handleClickOutside(event) {
 			if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -62,15 +58,15 @@ export default function GlobalHeader() {
 		return () => {
 			document.removeEventListener('mousedown', handleClickOutside)
 		}
-	}, [menuRef])
+	}, [menuRef]) // Zależność jest poprawna
 
 	return (
-		<header className='w-full h-25 bg-white border-b border-gray-200 shadow-sm flex-shrink-0'>
-			<nav className='px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between'>
+		<header className='w-full h-16 bg-white border-b border-gray-200 shadow-sm flex-shrink-0'>
+			<nav className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between'>
 				{/* Lewa strona: Logo */}
 				<div className='flex-shrink-0'>
-					<Link href='/' className='flex items-center '>
-						<Image src='/logo.png' alt='Logo PISiL' width={150} height={50} />
+					<Link href='/' className='flex items-center gap-2'>
+						<Image src='/logo.png' alt='Logo PISiL' width={40} height={40} />
 					</Link>
 				</div>
 
@@ -87,7 +83,7 @@ export default function GlobalHeader() {
 						<div className='absolute right-0 mt-2 w-56 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50'>
 							<div className='py-1' role='menu' aria-orientation='vertical'>
 								<Link
-									href='/login'
+									href='/logowanie-admin'
 									className='flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
 									role='menuitem'
 									onClick={() => setIsMenuOpen(false)}>
@@ -95,7 +91,7 @@ export default function GlobalHeader() {
 									<span>Panel Admina</span>
 								</Link>
 								<Link
-									href='/member/login'
+									href='/logowanie-czlonka'
 									className='flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
 									role='menuitem'
 									onClick={() => setIsMenuOpen(false)}>
@@ -109,4 +105,23 @@ export default function GlobalHeader() {
 			</nav>
 		</header>
 	)
+}
+
+/**
+ * Główny komponent, który decyduje, CZY pokazać nagłówek.
+ */
+export default function GlobalHeader() {
+	const { status } = useSession()
+	const pathname = usePathname()
+
+	const isAuthenticated = status === 'authenticated'
+	// Sprawdzamy wszystkie chronione ścieżki
+	const isAuthPage = pathname.startsWith('/admin') || pathname.startsWith('/member/dashboard')
+
+	if (isAuthenticated || isAuthPage) {
+		return null // Zalogowany lub na stronie panelu -> nie pokazuj nagłówka
+	}
+
+	// Niezalogowany i na stronie publicznej -> pokaż nagłówek
+	return <HeaderContent />
 }
