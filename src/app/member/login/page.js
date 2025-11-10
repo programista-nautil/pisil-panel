@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function MemberLoginPage() {
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
 	const [error, setError] = useState('')
+	const [message, setMessage] = useState('')
 	const router = useRouter()
 
 	const handleSubmit = async e => {
@@ -24,6 +26,32 @@ export default function MemberLoginPage() {
 			setError('Nieprawidłowy adres e-mail lub hasło. Spróbuj ponownie.')
 		} else {
 			router.push('/member/dashboard')
+		}
+	}
+
+	const handleForgotPassword = async () => {
+		if (!email) {
+			setError('Wpisz adres e-mail, aby zresetować hasło.')
+			return
+		}
+		setError('')
+		setMessage('Przetwarzanie...')
+
+		try {
+			const response = await fetch('/api/member/forgot-password', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email }),
+			})
+
+			const data = await response.json()
+			if (!response.ok) {
+				throw new Error(data.message || 'Wystąpił błąd.')
+			}
+			setMessage('Jeśli konto istnieje, wysłano link do resetu hasła.')
+		} catch (error) {
+			setError(error.message)
+			setMessage('')
 		}
 	}
 
@@ -53,6 +81,7 @@ export default function MemberLoginPage() {
 						/>
 					</div>
 					{error && <p className='text-red-500 text-sm text-center'>{error}</p>}
+					{message && <p className='text-green-600 text-sm text-center'>{message}</p>}
 					<div>
 						<button
 							type='submit'
@@ -61,6 +90,14 @@ export default function MemberLoginPage() {
 						</button>
 					</div>
 				</form>
+				<div className='text-center mt-4'>
+					<button
+						type='button'
+						onClick={handleForgotPassword}
+						className='text-sm font-medium text-blue-600 hover:text-blue-500'>
+						Nie pamiętasz hasła?
+					</button>
+				</div>
 			</div>
 		</div>
 	)

@@ -11,8 +11,9 @@ export const authConfig = {
 			const isMemberRoute = nextUrl.pathname.startsWith('/member')
 			const isLoginPage = nextUrl.pathname === '/login'
 			const isMemberLoginPage = nextUrl.pathname === '/member/login'
-			const isAuthRoute = isLoginPage || isMemberLoginPage
-			const isPublicRoute = isAuthRoute || nextUrl.pathname === '/unauthorized' || nextUrl.pathname === '/' // Zakładamy, że strona główna jest publiczna
+			const isMemberResetPage = nextUrl.pathname.startsWith('/member/reset-password')
+			const isPublicAuthRoute = isLoginPage || isMemberLoginPage || isMemberResetPage
+			const isPublicRoute = isPublicAuthRoute || nextUrl.pathname === '/unauthorized' || nextUrl.pathname === '/' // Zakładamy, że strona główna jest publiczna
 
 			// --- NOWA, BARDZIEJ CZYTELNA LOGIKA ---
 
@@ -24,14 +25,14 @@ export const authConfig = {
 			}
 
 			// 2. Ochrona tras /member (z wyjątkiem /member/login)
-			if (isMemberRoute && !isMemberLoginPage) {
+			if (isMemberRoute && !isPublicAuthRoute) {
 				if (!isLoggedIn) return Response.redirect(new URL('/member/login', nextUrl)) // Niezalogowany -> /member/login
 				if (userRole !== 'member') return Response.redirect(new URL('/unauthorized', nextUrl)) // Zły rola -> /unauthorized
 				return true // Zalogowany członek -> OK
 			}
 
 			// 3. Obsługa stron logowania (/login, /member/login)
-			if (isAuthRoute) {
+			if (isPublicAuthRoute) {
 				if (isLoggedIn) {
 					// Jeśli już zalogowany, przekieruj do odpowiedniego panelu
 					const redirectUrl = userRole === 'admin' ? '/admin/dashboard' : '/member/dashboard'

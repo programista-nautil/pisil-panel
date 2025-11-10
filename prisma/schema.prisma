@@ -138,6 +138,9 @@ model Member {
   memberNumber Int?     @unique
   phones       String?
 
+  passwordResetToken   String?   @unique 
+  passwordResetExpires DateTime?
+
   submissions Submission[]
   files       MemberFile[]
 }

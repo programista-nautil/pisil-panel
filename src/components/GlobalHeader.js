@@ -111,11 +111,13 @@ export default function GlobalHeader() {
 	const pathname = usePathname()
 
 	const isAuthenticated = status === 'authenticated'
-	// Sprawdzamy wszystkie chronione ścieżki
+
+	const isLoading = status === 'loading'
+
 	const isAuthPage = pathname.startsWith('/admin') || pathname.startsWith('/member/dashboard')
 
-	if (isAuthenticated || isAuthPage) {
-		return null // Zalogowany lub na stronie panelu -> nie pokazuj nagłówka
+	if (isAuthenticated || isAuthPage || isLoading) {
+		return null
 	}
 
 	// Niezalogowany i na stronie publicznej -> pokaż nagłówek
