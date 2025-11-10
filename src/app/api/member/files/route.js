@@ -30,7 +30,7 @@ export async function GET() {
 			},
 		})
 
-		const generatedFiles = (submission?.attachments || []).map(file => ({
+		const generatedAcceptanceDocs = (submission?.attachments || []).map(file => ({
 			...file,
 			downloadUrl: `/api/member/attachments/${file.id}/download`,
 		}))
@@ -48,11 +48,6 @@ export async function GET() {
 		}))
 
 		console.log(adminUploadedFiles, 'pliki wgrane przez admina dla członka:', memberId)
-
-		// 3. Połącz obie listy
-		const individualFiles = [...generatedFiles, ...adminUploadedFiles]
-
-		console.log('Pliki indywidualne członka:', individualFiles)
 
 		const acceptanceDocs = STATIC_ACCEPTANCE_DOCUMENTS.map((name, index) => ({
 			id: `static-${index}`,
@@ -82,7 +77,11 @@ export async function GET() {
 			})
 		}
 
-		return NextResponse.json({ generalFiles: generalFilesCategories, individualFiles })
+		return NextResponse.json({
+			generalFiles: generalFilesCategories,
+			adminUploadedFiles: adminUploadedFiles,
+			generatedAcceptanceDocs: generatedAcceptanceDocs,
+		})
 	} catch (error) {
 		console.error('Błąd podczas pobierania plików członka:', error)
 		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })
