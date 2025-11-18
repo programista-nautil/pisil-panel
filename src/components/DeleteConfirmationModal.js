@@ -2,7 +2,16 @@
 
 import { useState, useMemo } from 'react'
 
-export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, itemName, context = 'submission' }) {
+export default function DeleteConfirmationModal({
+	isOpen,
+	onClose,
+	onConfirm,
+	itemName,
+	context = 'submission',
+	title,
+	message,
+	confirmButtonText,
+}) {
 	const [isDeleting, setIsDeleting] = useState(false)
 
 	// Heurystyka: jeżeli nazwa > 45 znaków lub zawiera podkreślenia/kropki (plik), zwiększamy szerokość
@@ -22,6 +31,38 @@ export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, it
 		} finally {
 			setIsDeleting(false)
 		}
+	}
+
+	const finalTitle = title || (context === 'attachment' ? 'Potwierdzenie usunięcia pliku' : 'Potwierdzenie usunięcia')
+	const finalButtonText = confirmButtonText || 'Usuń'
+
+	// Renderowanie treści wiadomości (message)
+	const renderMessage = () => {
+		// Jeśli przekazano gotową wiadomość (np. dla archiwizacji), wyświetl ją
+		if (message) {
+			return <div className='text-sm text-gray-600 whitespace-pre-line'>{message}</div>
+		}
+
+		// Stara logika dla załączników i prostego usuwania
+		if (context === 'attachment') {
+			return (
+				<div className='text-sm text-gray-500'>
+					<p>Czy na pewno chcesz usunąć załącznik:</p>
+					<p className='mt-1 font-medium text-gray-700 break-words break-all bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs leading-relaxed max-h-32 overflow-auto'>
+						{itemName}
+					</p>
+					<p className='mt-3'>Operacja nieodwracalna – plik zostanie trwale usunięty z magazynu.</p>
+				</div>
+			)
+		}
+
+		return (
+			<div className='text-sm text-gray-500'>
+				<p>Czy na pewno chcesz usunąć zgłoszenie dla:</p>
+				<p className='mt-1 font-medium text-gray-700 break-words break-all'>{itemName}</p>
+				<p className='mt-3'>Tej operacji nie można cofnąć.</p>
+			</div>
+		)
 	}
 
 	return (
@@ -54,25 +95,9 @@ export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, it
 						</svg>
 					</div>
 					<h3 className='text-lg leading-6 font-medium text-gray-900 mt-5' id='modal-title'>
-						Potwierdzenie usunięcia
+						{finalTitle}
 					</h3>
-					<div className='mt-2'>
-						{context === 'attachment' ? (
-							<div className='text-sm text-gray-500'>
-								<p>Czy na pewno chcesz usunąć załącznik:</p>
-								<p className='mt-1 font-medium text-gray-700 break-words break-all bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs leading-relaxed max-h-32 overflow-auto'>
-									{itemName}
-								</p>
-								<p className='mt-3'>Operacja nieodwracalna – plik zostanie trwale usunięty z magazynu.</p>
-							</div>
-						) : (
-							<div className='text-sm text-gray-500'>
-								<p>Czy na pewno chcesz usunąć zgłoszenie dla:</p>
-								<p className='mt-1 font-medium text-gray-700 break-words break-all'>{itemName}</p>
-								<p className='mt-3'>Tej operacji nie można cofnąć.</p>
-							</div>
-						)}
-					</div>
+					<div className='mt-2'>{renderMessage()}</div>
 				</div>
 				<div className='mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense'>
 					<button
@@ -89,10 +114,10 @@ export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, it
 										fill='currentColor'
 										d='m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
 								</svg>
-								Usuwanie...
+								Przetwarzanie...
 							</>
 						) : (
-							'Usuń'
+							finalButtonText
 						)}
 					</button>
 					<button

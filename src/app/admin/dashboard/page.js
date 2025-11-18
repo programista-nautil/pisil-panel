@@ -45,6 +45,10 @@ export default function AdminDashboard() {
 
 	const [uploadingMemberFile, setUploadingMemberFile] = useState(null)
 
+	const [deleteModalTitle, setDeleteModalTitle] = useState('Potwierdź usunięcie')
+	const [deleteModalMessage, setDeleteModalMessage] = useState('')
+	const [deleteModalButtonText, setDeleteModalButtonText] = useState('Usuń')
+
 	useEffect(() => {
 		const fetchSubmissions = async () => {
 			setIsLoading(true)
@@ -148,6 +152,23 @@ export default function AdminDashboard() {
 
 	const openDeleteModal = submission => {
 		setSubmissionToDelete(submission)
+
+		if (submission.acceptanceNumber) {
+			// Wariant: Archiwizacja
+			setDeleteModalTitle('Potwierdź archiwizację')
+			setDeleteModalMessage(
+				`To zgłoszenie posiada nadany numer członkowski (#${submission.acceptanceNumber}).\n\nAby zachować ciągłość numeracji, zgłoszenie nie zostanie usunięte fizycznie, lecz PRZENIESIONE DO ARCHIWUM.\n\nCzy chcesz kontynuować?`
+			)
+			setDeleteModalButtonText('Archiwizuj')
+		} else {
+			// Wariant: Trwałe usunięcie
+			setDeleteModalTitle('Potwierdź usunięcie')
+			setDeleteModalMessage(
+				`Czy na pewno chcesz trwale usunąć zgłoszenie firmy "${submission.companyName}"?\n\nTej operacji nie można cofnąć.`
+			)
+			setDeleteModalButtonText('Usuń trwale')
+		}
+
 		setIsModalOpen(true)
 	}
 
@@ -424,6 +445,9 @@ export default function AdminDashboard() {
 				isOpen={isModalOpen}
 				onClose={closeDeleteModal}
 				onConfirm={handleDeleteSubmission}
+				title={deleteModalTitle}
+				message={deleteModalMessage}
+				confirmButtonText={deleteModalButtonText}
 				itemName={submissionToDelete?.companyName}
 			/>
 			<DeleteConfirmationModal
