@@ -8,7 +8,9 @@ import {
 	ArrowDownTrayIcon,
 	ChevronDownIcon,
 	FolderIcon,
+	KeyIcon,
 } from '@heroicons/react/24/outline'
+import ChangePasswordModal from './components/ChangePasswordModal'
 
 const CollapsibleFileCategory = ({ category }) => {
 	const [isOpen, setIsOpen] = useState(false)
@@ -60,6 +62,7 @@ export default function MemberDashboard() {
 		generatedAcceptanceDocs: [],
 	})
 	const [isLoading, setIsLoading] = useState(true)
+	const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
 
 	useEffect(() => {
 		const fetchFiles = async () => {
@@ -106,12 +109,18 @@ export default function MemberDashboard() {
 						<h1 className='text-3xl font-bold text-gray-900 tracking-tight'>Panel Członka PISiL</h1>
 						<p className='text-gray-600 mt-1'>Witaj w strefie dla członków.</p>
 					</div>
-					<div className='flex items-center gap-4'>
+					<div className='flex flex-wrap items-center gap-4'>
 						{session?.user && (
 							<span className='text-sm text-gray-700 hidden sm:block'>
 								Zalogowano jako: <strong>{session.user.name || session.user.email}</strong>
 							</span>
 						)}
+						<button
+							onClick={() => setIsPasswordModalOpen(true)}
+							className='inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors shadow-sm'>
+							<KeyIcon className='h-4 w-4' />
+							<span>Zmień hasło</span>
+						</button>
 						<button
 							onClick={() => signOut({ callbackUrl: '/member/login' })}
 							className='inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors shadow-sm'>
@@ -214,6 +223,7 @@ export default function MemberDashboard() {
 						</>
 					)}
 				</main>
+				<ChangePasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} />
 			</div>
 		</div>
 	)
