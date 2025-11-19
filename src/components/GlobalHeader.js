@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 
 // Ikony, które umieścimy bezpośrednio w komponencie
@@ -106,17 +105,14 @@ function HeaderContent() {
 /**
  * Główny komponent, który decyduje, CZY pokazać nagłówek.
  */
-export default function GlobalHeader() {
-	const { status } = useSession()
+export default function GlobalHeader({ initialSession }) {
 	const pathname = usePathname()
 
-	const isAuthenticated = status === 'authenticated'
-
-	const isLoading = status === 'loading'
+	const isAuthenticated = !!initialSession?.user
 
 	const isAuthPage = pathname.startsWith('/admin') || pathname.startsWith('/member/dashboard')
 
-	if (isAuthenticated || isAuthPage || isLoading) {
+	if (isAuthenticated || isAuthPage) {
 		return null
 	}
 

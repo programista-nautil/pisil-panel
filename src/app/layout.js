@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { SessionProvider } from 'next-auth/react'
+import { auth } from '@/auth'
 import GlobalHeader from '@/components/GlobalHeader'
 
 const geistSans = Geist({
@@ -18,16 +19,15 @@ export const metadata = {
 	description: 'Platforma formularzy PISil do wypełniania formularzy i ankiet.',
 }
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+	const session = await auth()
 	return (
-		<html lang='en' className='h-full'>
-			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased h-full`}
-				suppressHydrationWarning={true}>
-				<SessionProvider>
-					<div className='flex flex-col min-h-full h-full'>
-						<GlobalHeader />
-						<main className='flex-1 overflow-y-auto bg-gray-50'>{children}</main>
+		<html lang='en'>
+			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning={true}>
+				<SessionProvider session={session}>
+					<div className='flex flex-col h-full'>
+						<GlobalHeader initialSession={session} />
+						<main className='flex-1 bg-gray-50'>{children}</main>
 					</div>
 				</SessionProvider>
 			</body>
