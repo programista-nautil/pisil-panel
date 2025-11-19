@@ -86,7 +86,7 @@ export async function POST(request) {
 						2,
 						'0'
 					)}-${now.getFullYear()}`
-					const filename = `attachment_${formattedDate}_${sanitizeFilename(file.name)}`
+					const filename = `${formattedDate}_${sanitizeFilename(file.name)}`
 					const gcsPath = await uploadFileToGCS(buffer, filename)
 
 					await tx.attachment.create({
