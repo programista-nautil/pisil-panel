@@ -102,7 +102,7 @@ export default function MemberFileEditor({ memberId }) {
 						) : (
 							<CloudArrowUpIcon className='h-4 w-4' />
 						)}
-						<span>{isUploading ? 'Przesyłanie...' : 'Wgraj nowy plik'}</span>
+						<span>{isUploading ? 'Przesyłanie...' : 'Wgraj nowe pliki'}</span>
 					</div>
 				</label>
 			</div>

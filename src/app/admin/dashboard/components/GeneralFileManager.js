@@ -6,7 +6,6 @@ import Link from 'next/link'
 export default function GeneralFileManager() {
 	const [generalFiles, setGeneralFiles] = useState([])
 	const [isLoading, setIsLoading] = useState(true)
-	const [fileToUpload, setFileToUpload] = useState(null)
 	const [isUploading, setIsUploading] = useState(false)
 	const [deletingFileId, setDeletingFileId] = useState(null)
 	const fileInputRef = useRef(null)
@@ -29,18 +28,16 @@ export default function GeneralFileManager() {
 		fetchFiles()
 	}, [])
 
-	const handleFileChange = e => {
-		if (e.target.files && e.target.files[0]) {
-			setFileToUpload(e.target.files[0])
-		}
-	}
-
 	const handleUpload = async () => {
-		if (!fileToUpload) return
+		const files = fileInputRef.current?.files
+		if (!files || files.length === 0) return
+
 		setIsUploading(true)
 
 		const formData = new FormData()
-		formData.append('file', fileToUpload)
+		for (let i = 0; i < files.length; i++) {
+			formData.append('files[]', files[i])
+		}
 
 		try {
 			const response = await fetch('/api/admin/general-files', {
@@ -49,10 +46,9 @@ export default function GeneralFileManager() {
 			})
 			if (!response.ok) throw new Error('Błąd podczas wysyłania pliku.')
 
-			const newFile = await response.json()
-			setGeneralFiles(prev => [newFile, ...prev]) // Dodaj nowy plik na początek listy
+			const newFiles = await response.json()
+			setGeneralFiles(prev => [...newFiles, ...prev])
 
-			setFileToUpload(null)
 			if (fileInputRef.current) fileInputRef.current.value = null
 		} catch (error) {
 			console.error(error)
@@ -95,12 +91,12 @@ export default function GeneralFileManager() {
 						<input
 							ref={fileInputRef}
 							type='file'
-							onChange={handleFileChange}
+							multiple
 							className='block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100'
 						/>
 						<button
 							onClick={handleUpload}
-							disabled={isUploading || !fileToUpload}
+							disabled={isUploading}
 							className='inline-flex justify-center items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-blue-700 disabled:bg-gray-300'>
 							<ArrowUpOnSquareIcon className='h-4 w-4' />
 							<span>{isUploading ? 'Wgrywanie...' : 'Wgraj'}</span>

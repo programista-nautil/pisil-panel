@@ -34,30 +34,35 @@ export async function POST(request) {
 
 	try {
 		const data = await request.formData()
-		const file = data.get('file')
+		const files = data.getAll('files[]')
 
-		if (!file) {
-			return NextResponse.json({ message: 'Nie przesłano pliku.' }, { status: 400 })
+		if (!files || files.length === 0) {
+			return NextResponse.json({ message: 'Nie przesłano żadnych plików.' }, { status: 400 })
 		}
 
-		// Przetwarzanie i wysyłka do GCS
-		const buffer = Buffer.from(await file.arrayBuffer())
-		const originalFilename = sanitizeFilename(file.name)
-		const fileExtension = path.extname(originalFilename)
-		const fileNameWithoutExt = path.basename(originalFilename, fileExtension)
+		const createdFiles = []
 
-		const gcsFilename = `general/${fileNameWithoutExt}_${Date.now()}${fileExtension}`
-		const gcsPath = await uploadFileToGCS(buffer, gcsFilename)
+		for (const file of files) {
+			// Przetwarzanie i wysyłka do GCS
+			const buffer = Buffer.from(await file.arrayBuffer())
+			const originalFilename = sanitizeFilename(file.name)
+			const fileExtension = path.extname(originalFilename)
+			const fileNameWithoutExt = path.basename(originalFilename, fileExtension)
 
-		// Zapis w bazie danych
-		const newFile = await prisma.generalFile.create({
-			data: {
-				fileName: originalFilename, // Zapisujemy oryginalną nazwę pliku
-				filePath: gcsPath,
-			},
-		})
+			const gcsFilename = `general/${fileNameWithoutExt}_${Date.now()}${fileExtension}`
+			const gcsPath = await uploadFileToGCS(buffer, gcsFilename)
 
-		return NextResponse.json(newFile, { status: 201 })
+			// Zapis w bazie danych
+			const newFile = await prisma.generalFile.create({
+				data: {
+					fileName: originalFilename,
+					filePath: gcsPath,
+				},
+			})
+			createdFiles.push(newFile) // Dodajemy do tablicy wyników
+		}
+
+		return NextResponse.json(createdFiles, { status: 201 })
 	} catch (error) {
 		console.error('Błąd podczas dodawania pliku ogólnego:', error)
 		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })

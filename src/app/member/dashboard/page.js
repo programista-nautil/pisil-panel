@@ -186,7 +186,7 @@ export default function MemberDashboard() {
 											</>
 										) : (
 											<div className='p-8 text-center text-gray-500 text-sm'>
-												Brak plików wgranych przez administratora.
+												Brak dodatkowych plików wgranych przez administratora.
 											</div>
 										)}
 
@@ -230,7 +230,7 @@ export default function MemberDashboard() {
 												))}
 											</>
 										) : (
-											<div className='p-8 text-center text-gray-500 text-sm'>Brak plików ogólnych.</div>
+											<div className='p-8 text-center text-gray-500 text-sm'>Brak dodatkowych plików ogólnych.</div>
 										)}
 
 										{/* 6. Rozwijana lista plików statycznych */}
