@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
+import { sanitizeFilename } from '@/lib/utils'
 
 export async function POST(request, { params }) {
 	const submissionId = params.id
@@ -24,7 +25,7 @@ export async function POST(request, { params }) {
 				2,
 				'0'
 			)}-${now.getFullYear()}`
-			const filename = `${formattedDate}_${file.name}`
+			const filename = `${formattedDate}_${sanitizeFilename(file.name)}`
 
 			const gcsPath = await uploadFileToGCS(buffer, filename)
 

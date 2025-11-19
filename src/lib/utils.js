@@ -1,1 +1,6 @@
-export const sanitizeFilename = name => name.replace(/[^a-zA-Z0-9.\-_]/g, '_')
+export const sanitizeFilename = name => {
+	return name
+		.replace(/[/\\?%*:|"<>]/g, '_')
+		.trim()
+		.replace(/\s+/g, ' ')
+}

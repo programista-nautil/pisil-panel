@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import jsPDF from 'jspdf'
+import { sanitizeFilename } from '@/lib/utils'
 
 const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 	const [isGenerating, setIsGenerating] = useState(false)
@@ -440,7 +441,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 
 			const a = document.createElement('a')
 			a.href = url
-			a.download = `deklaracja_czlonkowska_${formData.companyName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+			a.download = `deklaracja_czlonkowska_${sanitizeFilename(formData.companyName)}.pdf`
 			document.body.appendChild(a)
 			a.click()
 			document.body.removeChild(a)

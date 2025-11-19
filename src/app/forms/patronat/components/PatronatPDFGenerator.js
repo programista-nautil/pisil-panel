@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import jsPDF from 'jspdf'
+import { sanitizeFilename } from '@/lib/utils'
 
 const PatronatPDFGenerator = ({ formData, onGenerated, disabled }) => {
 	const [isGenerating, setIsGenerating] = useState(false)
@@ -194,7 +195,7 @@ const PatronatPDFGenerator = ({ formData, onGenerated, disabled }) => {
 			)
 
 			// Zapis
-			const safeName = (formData.eventName || 'formularz').toString().replace(/[^a-zA-Z0-9ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, '_')
+			const safeName = sanitizeFilename(formData.eventName || 'formularz')
 			const pdfBlob = pdf.output('blob')
 			const url = URL.createObjectURL(pdfBlob)
 			const a = document.createElement('a')
