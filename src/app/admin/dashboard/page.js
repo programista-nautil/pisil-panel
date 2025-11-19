@@ -127,6 +127,9 @@ export default function AdminDashboard() {
 		if (data.address) {
 			formData.append('address', data.address)
 		}
+		if (data.phones) {
+			formData.append('phones', data.phones)
+		}
 		additionalFiles.forEach(file => {
 			formData.append('additionalFiles[]', file)
 		})

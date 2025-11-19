@@ -26,6 +26,7 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 				email: '',
 				ceoName: '',
 				address: '',
+				phones: '',
 			})
 
 			setMainPdf(null)
@@ -114,6 +115,18 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 								className='mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-gray-500'
 							/>
 							{errors.email && <p className='text-red-500 text-xs mt-1'>{errors.email.message}</p>}
+						</div>
+
+						<div>
+							<label htmlFor='phones' className='block text-sm font-medium text-gray-700'>
+								Numer telefonu
+							</label>
+							<input
+								type='text'
+								id='phones'
+								{...register('phones')}
+								className='mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-gray-500'
+							/>
 						</div>
 
 						{formType === 'DEKLARACJA_CZLONKOWSKA' && (
