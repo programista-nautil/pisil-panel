@@ -25,7 +25,7 @@ export default function MemberLoginPage() {
 		if (result.error) {
 			setError('Nieprawidłowy adres e-mail lub hasło. Spróbuj ponownie.')
 		} else {
-			router.push('/member/dashboard')
+			router.push('/panel-czlonka')
 		}
 	}
 

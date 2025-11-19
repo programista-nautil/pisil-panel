@@ -17,7 +17,7 @@ export default function HomePage() {
 					<div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6'>
 						{/* Deklaracja członkowska */}
 						<Link
-							href='/forms/deklaracja-czlonkowska'
+							href='/formularz/deklaracja-czlonkowska'
 							className='group relative block focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 rounded-2xl'>
 							<div className='h-full rounded-2xl border border-gray-200 bg-white/90 p-6 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md'>
 								<div className='mb-4 flex items-center gap-2'>
@@ -45,7 +45,7 @@ export default function HomePage() {
 
 						{/* Patronat */}
 						<Link
-							href='/forms/patronat'
+							href='/formularz/patronat'
 							className='group relative block focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 rounded-2xl'>
 							<div className='h-full rounded-2xl border border-gray-200 bg-white/90 p-6 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md'>
 								<div className='mb-4 flex items-center gap-2'>
@@ -73,7 +73,7 @@ export default function HomePage() {
 
 						{/* Ankieta Spedytor Roku */}
 						<Link
-							href='/forms/ankieta-spedytor-roku'
+							href='/formularz/ankieta-spedytor-roku'
 							className='group relative block focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 rounded-2xl'>
 							<div className='h-full rounded-2xl border border-gray-200 bg-white/90 p-6 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md'>
 								<div className='mb-4 flex items-center gap-2'>
@@ -101,7 +101,7 @@ export default function HomePage() {
 
 						{/* Młody Spedytor Roku */}
 						<Link
-							href='/forms/mlody-spedytor-roku'
+							href='/formularz/mlody-spedytor-roku'
 							className='group relative block focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 rounded-2xl'>
 							<div className='h-full rounded-2xl border border-gray-200 bg-white/90 p-6 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md'>
 								<div className='mb-4 flex items-center gap-2'>

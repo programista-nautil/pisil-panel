@@ -7,9 +7,19 @@ export default auth
 
 export const config = {
 	matcher: [
-		// Dopasuj wszystkie ścieżki /admin/*
+		// Oryginalne ścieżki
 		'/admin/:path*',
-		// Dopasuj wszystkie ścieżki /member/* OPRÓCZ /member/login
-		'/member/((?!login$).*)',
+		// '/member/:path*', // To zastąpimy bardziej precyzyjnym matcherem poniżej, aby wykluczyć api
+
+		// Nowe "ładne" ścieżki (rewrites)
+		'/panel-admina/:path*',
+		'/panel-czlonka/:path*',
+		'/logowanie-admin',
+		'/logowanie-czlonka',
+		'/zmiana-hasla',
+
+		// Regex dla member, aby złapać wszystko oprócz logowania (dla bezpieczeństwa)
+		// Ale skoro mamy logikę w auth.config.js, możemy po prostu dać:
+		'/member/:path*',
 	],
 }

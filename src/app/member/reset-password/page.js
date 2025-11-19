@@ -49,7 +49,7 @@ function ResetPasswordForm() {
 			}
 
 			setMessage('Hasło zostało pomyślnie zmienione. Możesz się teraz zalogować.')
-			setTimeout(() => router.push('/member/login'), 3000)
+			setTimeout(() => router.push('/logowanie-czlonka'), 3000)
 		} catch (error) {
 			setError(error.message)
 		}
@@ -57,7 +57,7 @@ function ResetPasswordForm() {
 
 	return (
 		<>
-			<h2 className='text-2xl font-bold text-center text-gray-900 mb-6'>Ustaw Nowe Hasło</h2>
+			<h2 className='text-2xl font-bold text-center text-gray-900 mb-6'>Ustaw nowe hasło</h2>
 			{message ? (
 				<p className='text-green-600 text-sm text-center'>{message}</p>
 			) : (

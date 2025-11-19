@@ -23,7 +23,7 @@ export default function LoginPage() {
 		if (result.error) {
 			setError('Nieprawidłowe dane logowania. Spróbuj ponownie.')
 		} else {
-			router.push('/admin/dashboard')
+			router.push('/panel-admina')
 		}
 	}
 

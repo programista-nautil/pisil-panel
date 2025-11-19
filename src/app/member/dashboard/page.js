@@ -130,7 +130,7 @@ export default function MemberDashboard() {
 							<span>Zmień hasło</span>
 						</button>
 						<button
-							onClick={() => signOut({ callbackUrl: '/member/login' })}
+							onClick={() => signOut({ callbackUrl: '/logowanie-czlonka' })}
 							className='inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors shadow-sm'>
 							<svg
 								xmlns='http://www.w3.org/2000/svg'

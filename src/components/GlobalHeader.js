@@ -78,7 +78,7 @@ function HeaderContent() {
 						<div className='absolute right-0 mt-2 w-56 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50'>
 							<div className='py-1' role='menu' aria-orientation='vertical'>
 								<Link
-									href='/login'
+									href='/logowanie-admin'
 									className='flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
 									role='menuitem'
 									onClick={() => setIsMenuOpen(false)}>
@@ -86,7 +86,7 @@ function HeaderContent() {
 									<span>Panel Admina</span>
 								</Link>
 								<Link
-									href='/member/login'
+									href='/logowanie-czlonka'
 									className='flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
 									role='menuitem'
 									onClick={() => setIsMenuOpen(false)}>
@@ -110,7 +110,11 @@ export default function GlobalHeader({ initialSession }) {
 
 	const isAuthenticated = !!initialSession?.user
 
-	const isAuthPage = pathname.startsWith('/admin') || pathname.startsWith('/member/dashboard')
+	const isAuthPage =
+		pathname.startsWith('/admin') ||
+		pathname.startsWith('/member/dashboard') ||
+		pathname.startsWith('/panel-admina') ||
+		pathname.startsWith('/panel-czlonka')
 
 	if (isAuthenticated || isAuthPage) {
 		return null

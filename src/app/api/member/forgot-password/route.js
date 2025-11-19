@@ -29,7 +29,7 @@ export async function POST(request) {
 			},
 		})
 
-		const resetUrl = `${process.env.NEXTAUTH_URL}/member/reset-password?token=${token}`
+		const resetUrl = `${process.env.NEXTAUTH_URL}/zmiana-hasla?token=${token}`
 
 		const transporter = nodemailer.createTransport({
 			host: 'smtp.gmail.com',

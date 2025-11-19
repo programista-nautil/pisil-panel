@@ -299,7 +299,7 @@ export default function AdminDashboard() {
 							Witaj, <strong>{session?.user?.name || 'Admin'}</strong>
 						</span>
 						<button
-							onClick={() => signOut({ callbackUrl: '/login' })}
+							onClick={() => signOut({ callbackUrl: '/logowanie-admin' })}
 							className='inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors shadow-sm'>
 							<svg
 								xmlns='http://www.w3.org/2000/svg'
