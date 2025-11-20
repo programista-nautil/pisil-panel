@@ -30,7 +30,7 @@ export default function LoginPage() {
 	return (
 		<div className='h-full bg-gray-50 flex items-center justify-center'>
 			<div className='max-w-md w-full bg-white p-8 rounded-lg shadow-md'>
-				<h2 className='text-2xl font-bold text-center text-gray-900 mb-6'>Logowanie do Panelu</h2>
+				<h2 className='text-2xl font-bold text-center text-gray-900 mb-6'>Logowanie do Panelu Administratora</h2>
 				<form onSubmit={handleSubmit} className='space-y-6'>
 					<div>
 						<label className='block text-sm font-medium text-gray-700'>Nazwa użytkownika</label>

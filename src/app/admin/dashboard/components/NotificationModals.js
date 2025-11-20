@@ -39,7 +39,8 @@ export default function NotificationModals({
 				message={`Czy na pewno chcesz kontynuować dla zgłoszenia od: ${submissionToVerify?.companyName}?`}
 				confirmButtonText='Potwierdź i wyślij'
 				isLoading={isSubmitting}
-				successMessage={successMessage}>
+				successMessage={successMessage}
+				maxWidth={submissionToVerify?.formType === 'PATRONAT' ? 'max-w-3xl' : 'max-w-md'}>
 				{/* Warunkowo renderujemy zawartość wewnątrz modala */}
 				{submissionToVerify?.formType === 'PATRONAT' && (
 					<div className='text-left'>

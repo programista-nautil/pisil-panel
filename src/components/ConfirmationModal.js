@@ -12,6 +12,7 @@ export default function ConfirmationModal({
 	successMessage = null,
 	isConfirmDisabled = false,
 	children,
+	maxWidth = 'max-w-md',
 }) {
 	if (!isOpen) {
 		return null
@@ -23,7 +24,7 @@ export default function ConfirmationModal({
 			role='dialog'
 			aria-modal='true'>
 			<div
-				className='bg-white rounded-lg shadow-xl p-6 m-4 max-w-md w-full transform transition-all'
+				className={`bg-white rounded-lg shadow-xl p-6 m-4 ${maxWidth} w-full transform transition-all`}
 				onClick={e => e.stopPropagation()}>
 				{successMessage ? (
 					<div className='text-center'>

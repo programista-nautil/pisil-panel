@@ -60,16 +60,12 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 	}
 
 	return (
-		<div
-			className='fixed inset-0 bg-gray-900/50 z-40 flex justify-center items-center'
-			onClick={onClose}
-			role='dialog'
-			aria-modal='true'>
+		<div className='fixed inset-0 bg-gray-900/50 z-40 flex justify-center items-center' role='dialog' aria-modal='true'>
 			<div
-				className='bg-white rounded-lg shadow-xl p-6 m-4 max-w-2xl w-full transform transition-all animate-fade-in-scale'
+				className='bg-white rounded-lg shadow-xl m-4 max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden transform transition-all animate-fade-in-scale'
 				onClick={e => e.stopPropagation()}>
-				<form onSubmit={handleSubmit(handleFinalSubmit)}>
-					<h2 className='text-2xl font-bold text-gray-800 mb-6'>Dodaj nowe zgłoszenie</h2>
+				<form className='p-6 space-y-4 overflow-y-auto flex-grow' onSubmit={handleSubmit(handleFinalSubmit)}>
+					<h2 className='text-2xl font-bold text-gray-800'>Dodaj nowe zgłoszenie</h2>
 
 					<div className='space-y-4'>
 						{/* Typ Formularza */}
