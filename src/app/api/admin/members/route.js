@@ -35,7 +35,7 @@ export async function GET(request) {
 				skip: skip,
 				take: limit,
 				orderBy: {
-					company: 'asc',
+					memberNumber: 'desc',
 				},
 				select: {
 					id: true,

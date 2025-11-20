@@ -143,7 +143,9 @@ export default function MemberBrowser() {
 									{/* Przycisk rozwijania */}
 									<button onClick={() => toggleExpanded(member.id)} className='p-1 rounded hover:bg-gray-200'>
 										<ChevronRightIcon
-											className={`h-5 w-5 transform transition-transform ${expanded[member.id] ? 'rotate-90' : ''}`}
+											className={`h-5 w-5 transform transition-transform ${
+												expanded[member.id] ? 'rotate-90' : ''
+											}text-gray-500`}
 										/>
 									</button>
 									<span className='text-sm font-semibold text-gray-500 w-10 text-center'>#{member.memberNumber}</span>
