@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer'
 import { PDFDocument, PDFSignature } from 'pdf-lib'
 import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
+import { sanitizeFilename } from '@/lib/utils'
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'programista@nautil.pl'
 
@@ -42,14 +43,17 @@ export async function POST(request) {
 
 		// Dynamiczna nazwa pliku zależnie od typu formularza + bezpieczne fallbacki
 		const formType = userData.formType
-		const safe = val => (val ? val.toString().replace(/[^a-zA-Z0-9]/g, '_') : '')
 		const isDeclaration = formType === 'DEKLARACJA_CZLONKOWSKA'
 		const displayCompanyOrOrg = userData.companyName || userData.organizerName || userData.eventName || 'Nieznana firma'
 		const baseName = isDeclaration
-			? `deklaracja_${safe(userData.companyName) || safe(displayCompanyOrOrg)}`
+			? `deklaracja_${sanitizeFilename(userData.companyName) || sanitizeFilename(displayCompanyOrOrg)}`
 			: formType === 'PATRONAT'
-			? `patronat_${safe(userData.eventName) || safe(userData.organizerName) || safe(displayCompanyOrOrg)}`
-			: `formularz_${safe(displayCompanyOrOrg)}`
+			? `patronat_${
+					sanitizeFilename(userData.eventName) ||
+					sanitizeFilename(userData.organizerName) ||
+					sanitizeFilename(displayCompanyOrOrg)
+			  }`
+			: `formularz_${sanitizeFilename(displayCompanyOrOrg)}`
 		const now = new Date()
 		const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(
 			2,
