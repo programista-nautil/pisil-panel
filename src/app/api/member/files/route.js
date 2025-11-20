@@ -13,7 +13,6 @@ export async function GET() {
 
 	try {
 		const memberId = session.user.id
-		console.log('ID zalogowanego członka:', memberId)
 
 		const submission = await prisma.submission.findFirst({
 			where: {
@@ -46,8 +45,6 @@ export async function GET() {
 			...file,
 			downloadUrl: `/api/member/member-files/${file.id}/download`, // Używamy NOWEGO endpointu
 		}))
-
-		console.log(adminUploadedFiles, 'pliki wgrane przez admina dla członka:', memberId)
 
 		const acceptanceDocs = STATIC_ACCEPTANCE_DOCUMENTS.map((name, index) => ({
 			id: `static-${index}`,

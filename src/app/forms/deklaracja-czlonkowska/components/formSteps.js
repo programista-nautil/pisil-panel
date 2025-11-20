@@ -250,13 +250,6 @@ export const Step3 = ({ register, errors }) => (
 )
 
 export const Step4 = ({ register, errors, watch, setValue }) => {
-	const organizacjaPrzewozowValue = watch('organizacjaPrzewozow')
-
-	useEffect(() => {
-		const isTrue = organizacjaPrzewozowValue === 'true'
-		setValue('agencjeCelne', isTrue)
-	}, [organizacjaPrzewozowValue, setValue])
-
 	return (
 		<div className='space-y-6'>
 			<h2 className='text-xl font-semibold text-gray-900'>Wachlarz świadczonych usług</h2>
