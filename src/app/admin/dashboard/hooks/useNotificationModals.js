@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 
 const DEFAULT_PATRONAGE_VERIFICATION_BODY = `Szanowni Państwo,
 
@@ -49,7 +50,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 		} catch (error) {
 			console.error(error)
 			setSubmissions(originalSubmissions)
-			alert('Nie udało się zaktualizować statusu.')
+			toast.error('Nie udało się zaktualizować statusu.')
 		}
 	}
 
@@ -112,7 +113,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 			setSuccessMessage('Powiadomienie e-mail zostało wysłane pomyślnie!')
 		} catch (error) {
 			console.error(error)
-			alert('Wystąpił błąd podczas wysyłania e-maila.')
+			toast.error('Wystąpił błąd podczas wysyłania e-maila.')
 			closeVerificationModal() // Zamknij modal w razie błędu
 		} finally {
 			setIsSubmitting(false)
@@ -153,7 +154,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 			setSuccessMessage('Email akceptacyjny z załącznikami został wysłany!')
 		} catch (error) {
 			console.error(error)
-			alert('Wystąpił błąd podczas wysyłania e-maila.')
+			toast.error('Wystąpił błąd podczas wysyłania e-maila.')
 			closeAcceptanceModal()
 		} finally {
 			setIsSubmitting(false)
@@ -186,7 +187,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 			setSuccessMessage('Powiadomienie o odrzuceniu zostało wysłane pomyślnie!')
 		} catch (error) {
 			console.error(error)
-			alert('Wystąpił błąd podczas wysyłania e-maila.')
+			toast.error('Wystąpił błąd podczas wysyłania e-maila.')
 			closeRejectionModal()
 		} finally {
 			setIsSubmitting(false)
@@ -221,7 +222,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 			setSuccessMessage('Powiadomienie e-mail zostało wysłane pomyślnie!')
 		} catch (error) {
 			console.error(error)
-			alert('Wystąpił błąd podczas wysyłania e-maila.')
+			toast.error('Wystąpił błąd podczas wysyłania e-maila.')
 			// W razie błędu zamykamy modal, żeby uniknąć blokady
 			closeVerificationModal()
 		} finally {
@@ -251,7 +252,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 			setSuccessMessage('Email akceptacyjny został pomyślnie wysłany!')
 		} catch (error) {
 			console.error(error)
-			alert('Wystąpił błąd podczas wysyłania e-maila.')
+			toast.error('Wystąpił błąd podczas wysyłania e-maila.')
 			// W razie błędu zamykamy modal
 			closeAcceptanceModal()
 		} finally {

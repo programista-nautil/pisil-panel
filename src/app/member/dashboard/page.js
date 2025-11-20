@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useSession, signOut } from 'next-auth/react'
+import toast from 'react-hot-toast'
 import {
 	DocumentTextIcon,
 	UserCircleIcon,
@@ -88,6 +89,7 @@ export default function MemberDashboard() {
 				})
 			} catch (error) {
 				console.error(error)
+				toast.error('Nie udało się pobrać plików.')
 			} finally {
 				setIsLoading(false)
 			}

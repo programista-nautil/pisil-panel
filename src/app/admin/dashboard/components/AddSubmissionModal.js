@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { MultiAttachmentInput, AttachmentInput } from './AttachmentInputs'
+import toast from 'react-hot-toast'
 
 export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 	const {
@@ -46,7 +47,7 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 
 	const handleFinalSubmit = async data => {
 		if (!mainPdf) {
-			alert('Proszę dodać główny plik PDF.')
+			toast.error('Proszę dodać główny plik PDF.')
 			return
 		}
 		setIsSubmitting(true)
@@ -54,6 +55,7 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 			await onFormSubmit(data, mainPdf, additionalFiles)
 		} catch (error) {
 			console.error('Błąd podczas dodawania zgłoszenia:', error)
+			toast.error('Wystąpił błąd podczas dodawania zgłoszenia.')
 		} finally {
 			setIsSubmitting(false)
 		}

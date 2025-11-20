@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, forwardRef } from 'react'
+import toast from 'react-hot-toast'
 
 const FileUpload = forwardRef(function FileUpload({ formData, onUploadSuccess }, ref) {
 	const [file, setFile] = useState(null)
@@ -13,12 +14,12 @@ const FileUpload = forwardRef(function FileUpload({ formData, onUploadSuccess },
 		if (!selectedFile) return false
 
 		if (selectedFile.type !== 'application/pdf') {
-			alert('Proszę wybrać plik PDF.')
+			toast.error('Proszę wybrać plik PDF.')
 			return false
 		}
 
 		if (selectedFile.size > 10 * 1024 * 1024) {
-			alert('Plik jest za duży. Maksymalny rozmiar to 10MB.')
+			toast.error('Plik jest za duży. Maksymalny rozmiar to 10MB.')
 			return false
 		}
 
@@ -65,7 +66,7 @@ const FileUpload = forwardRef(function FileUpload({ formData, onUploadSuccess },
 
 	const handleUpload = async () => {
 		if (!file) {
-			alert('Proszę wybrać plik PDF.')
+			toast.error('Proszę wybrać plik PDF.')
 			return
 		}
 

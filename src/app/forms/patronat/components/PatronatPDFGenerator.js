@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import jsPDF from 'jspdf'
+import toast from 'react-hot-toast'
 import { sanitizeFilename } from '@/lib/utils'
 
 const PatronatPDFGenerator = ({ formData, onGenerated, disabled }) => {
@@ -209,7 +210,7 @@ const PatronatPDFGenerator = ({ formData, onGenerated, disabled }) => {
 			onGenerated()
 		} catch (error) {
 			console.error('Błąd generowania PDF:', error)
-			alert('Wystąpił błąd podczas generowania PDF.')
+			toast.error('Wystąpił błąd podczas generowania PDF.')
 		} finally {
 			setIsGenerating(false)
 		}

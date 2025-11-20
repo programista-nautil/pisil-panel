@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { TrashIcon, ArrowDownTrayIcon, CloudArrowUpIcon, DocumentArrowUpIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+import toast from 'react-hot-toast'
 
 export default function MemberFileEditor({ memberId }) {
 	const [files, setFiles] = useState([])
@@ -46,9 +47,10 @@ export default function MemberFileEditor({ memberId }) {
 			const newFiles = await response.json()
 			setFiles(prev => [...newFiles, ...prev])
 			if (fileInputRef.current) fileInputRef.current.value = null
+			toast.success('Pliki zostały wgrane pomyślnie.')
 		} catch (error) {
 			console.error(error)
-			alert(error.message)
+			toast.error(error.message)
 		} finally {
 			setIsUploading(false)
 		}
@@ -63,9 +65,10 @@ export default function MemberFileEditor({ memberId }) {
 				})
 				if (!response.ok) throw new Error('Błąd usuwania pliku.')
 				setFiles(prev => prev.filter(f => f.id !== fileId))
+				toast.success('Plik został usunięty.')
 			} catch (error) {
 				console.error(error)
-				alert(error.message)
+				toast.error(error.message)
 			} finally {
 				setDeletingId(null)
 			}

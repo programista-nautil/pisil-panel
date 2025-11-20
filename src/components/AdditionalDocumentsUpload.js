@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, forwardRef } from 'react'
+import toast from 'react-hot-toast'
 
 const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload({ submissionId, onAllUploaded }, ref) {
 	const [files, setFiles] = useState([])
@@ -47,7 +48,7 @@ const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(
 
 	const handleUpload = async () => {
 		if (files.length === 0) {
-			alert('Nie wybrano żadnych plików.')
+			toast.error('Nie wybrano żadnych plików.')
 			return
 		}
 		setIsUploading(true)

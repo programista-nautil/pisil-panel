@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Fragment } from 'react'
 import { UserGroupIcon, TrashIcon, MagnifyingGlassIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import MemberFileEditor from './MemberFileEditor'
+import toast from 'react-hot-toast'
 
 function useDebounce(value, delay) {
 	const [debouncedValue, setDebouncedValue] = useState(value)
@@ -43,7 +44,7 @@ export default function MemberBrowser() {
 			setTotalMembers(data.totalMembers)
 		} catch (error) {
 			console.error(error)
-			alert(error.message)
+			toast.error(error.message)
 		} finally {
 			setIsLoading(false)
 		}
@@ -79,9 +80,10 @@ export default function MemberBrowser() {
 				if (!response.ok) throw new Error('Błąd podczas usuwania członka.')
 
 				await fetchMembers(currentPage)
+				toast.success('Członek został usunięty.')
 			} catch (error) {
 				console.error(error)
-				alert(error.message)
+				toast.error(error.message)
 			} finally {
 				setDeletingId(null)
 			}

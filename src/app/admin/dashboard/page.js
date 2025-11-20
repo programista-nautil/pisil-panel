@@ -9,6 +9,7 @@ import AddSubmissionModal from './components/AddSubmissionModal'
 import NotificationModals from './components/NotificationModals'
 import MemberManagement from './components/MemberManagement'
 import { DocumentDuplicateIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline'
+import toast from 'react-hot-toast'
 
 const StatCard = ({ title, value, isLoading }) => (
 	<div className='bg-white p-3 rounded-lg shadow'>
@@ -108,10 +109,11 @@ export default function AdminDashboard() {
 				body: JSON.stringify({ isArchived }),
 			})
 			if (!response.ok) throw new Error('Zmiana statusu archiwum nie powiodła się.')
+			toast.success(isArchived ? 'Zgłoszenie zostało zarchiwizowane.' : 'Zgłoszenie zostało przywrócone.')
 		} catch (error) {
 			console.error(error)
 			setSubmissions(originalSubmissions)
-			alert('Wystąpił błąd podczas archiwizacji.')
+			toast.error('Wystąpił błąd podczas archiwizacji.')
 		}
 	}
 
@@ -147,9 +149,10 @@ export default function AdminDashboard() {
 			const newSubmission = await response.json()
 			setSubmissions(prev => [newSubmission, ...prev])
 			setIsAddModalOpen(false)
+			toast.success('Zgłoszenie zostało dodane pomyślnie.')
 		} catch (error) {
 			console.error(error)
-			alert('Wystąpił błąd podczas dodawania zgłoszenia.')
+			toast.error('Wystąpił błąd podczas dodawania zgłoszenia.')
 		}
 	}
 
@@ -194,9 +197,10 @@ export default function AdminDashboard() {
 
 			setSubmissions(currentSubmissions => currentSubmissions.filter(sub => sub.id !== submissionToDelete.id))
 			closeDeleteModal()
+			toast.success('Zgłoszenie zostało usunięte.')
 		} catch (error) {
 			console.error(error)
-			alert('Wystąpił błąd podczas usuwania.')
+			toast.error('Wystąpił błąd podczas usuwania.')
 			// Nie zamykamy modala w przypadku błędu, żeby użytkownik mógł spróbować ponownie
 		}
 	}
@@ -243,6 +247,7 @@ export default function AdminDashboard() {
 			}
 			await refreshSingleSubmission(submissionId)
 			closeAttachmentDeleteModal()
+			toast.success('Załącznik został usunięty.')
 		} catch (e) {
 			console.error(e)
 		} finally {
@@ -278,9 +283,10 @@ export default function AdminDashboard() {
 					return sub
 				})
 			)
+			toast.success('Pliki zostały wgrane pomyślnie.')
 		} catch (error) {
 			console.error(error)
-			alert('Wystąpił błąd podczas wgrywania plików.')
+			toast.error('Wystąpił błąd podczas wgrywania plików.')
 		} finally {
 			setUploadingMemberFile(null)
 		}
