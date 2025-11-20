@@ -168,11 +168,12 @@ export default function SubmissionsTable({
 										<StatusDropdown submission={submission} onStatusChange={handleStatusChange} />
 									</td>
 									<td className='px-6 py-4 whitespace-nowrap'>{getFormTypeName(submission.formType)}</td>
-									<td className='px-6 py-4 font-medium text-gray-900 whitespace-nowrap'>
+									<td className='px-6 py-4 font-medium text-gray-900 max-w-xs' title={submission.companyName}>
 										<div className='flex items-center gap-2'>
-											<span>{submission.companyName || 'Brak nazwy'}</span>
+											<span className='truncate block'>{submission.companyName || 'Brak nazwy'}</span>
+
 											{submission.createdByAdmin && (
-												<span title='Dodane ręcznie przez administratora'>
+												<span title='Dodane ręcznie przez administratora' className='flex-shrink-0'>
 													<PencilSquareIcon className='h-5 w-5 text-gray-400' />
 												</span>
 											)}
