@@ -3,13 +3,14 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
 export default function MemberLoginPage() {
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
 	const [error, setError] = useState('')
 	const [message, setMessage] = useState('')
+	const [showPassword, setShowPassword] = useState(false)
 	const router = useRouter()
 
 	const handleSubmit = async e => {
@@ -30,11 +31,17 @@ export default function MemberLoginPage() {
 	}
 
 	const handleForgotPassword = async () => {
+		setError('')
+		setMessage('')
 		if (!email) {
 			setError('Wpisz adres e-mail, aby zresetować hasło.')
 			return
 		}
-		setError('')
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+		if (!emailRegex.test(email)) {
+			setError('Wpisz poprawny format adresu e-mail.')
+			return
+		}
 		setMessage('Przetwarzanie...')
 
 		try {
@@ -72,13 +79,21 @@ export default function MemberLoginPage() {
 					</div>
 					<div>
 						<label className='block text-sm font-medium text-gray-700'>Hasło</label>
-						<input
-							type='password'
-							value={password}
-							onChange={e => setPassword(e.target.value)}
-							required
-							className='mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-600'
-						/>
+						<div className='relative mt-1'>
+							<input
+								type={showPassword ? 'text' : 'password'}
+								value={password}
+								onChange={e => setPassword(e.target.value)}
+								required
+								className='mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-600 pr-10'
+							/>
+							<button
+								type='button'
+								onClick={() => setShowPassword(!showPassword)}
+								className='absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600'>
+								{showPassword ? <EyeSlashIcon className='h-5 w-5' /> : <EyeIcon className='h-5 w-5' />}
+							</button>
+						</div>
 					</div>
 					{error && <p className='text-red-500 text-sm text-center'>{error}</p>}
 					{message && <p className='text-green-600 text-sm text-center'>{message}</p>}

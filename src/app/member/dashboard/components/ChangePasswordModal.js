@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
 export default function ChangePasswordModal({ isOpen, onClose }) {
 	const [currentPassword, setCurrentPassword] = useState('')
@@ -9,6 +10,10 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
 	const [error, setError] = useState('')
 	const [successMessage, setSuccessMessage] = useState('')
 	const [isSubmitting, setIsSubmitting] = useState(false)
+
+	const [showCurrent, setShowCurrent] = useState(false)
+	const [showNew, setShowNew] = useState(false)
+	const [showConfirm, setShowConfirm] = useState(false)
 
 	if (!isOpen) return null
 
@@ -68,33 +73,57 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
 					<form onSubmit={handleSubmit} className='space-y-4'>
 						<div>
 							<label className='block text-sm font-medium text-gray-700'>Obecne hasło</label>
-							<input
-								type='password'
-								value={currentPassword}
-								onChange={e => setCurrentPassword(e.target.value)}
-								required
-								className='mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-gray-600'
-							/>
+							<div className='relative mt-1'>
+								<input
+									type={showCurrent ? 'text' : 'password'}
+									value={currentPassword}
+									onChange={e => setCurrentPassword(e.target.value)}
+									required
+									className='mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-gray-600 pr-10'
+								/>
+								<button
+									type='button'
+									onClick={() => setShowCurrent(!showCurrent)}
+									className='absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600'>
+									{showCurrent ? <EyeSlashIcon className='h-5 w-5' /> : <EyeIcon className='h-5 w-5' />}
+								</button>
+							</div>
 						</div>
 						<div>
 							<label className='block text-sm font-medium text-gray-700'>Nowe hasło</label>
-							<input
-								type='password'
-								value={newPassword}
-								onChange={e => setNewPassword(e.target.value)}
-								required
-								className='mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-gray-600'
-							/>
+							<div className='relative mt-1'>
+								<input
+									type={showNew ? 'text' : 'password'}
+									value={newPassword}
+									onChange={e => setNewPassword(e.target.value)}
+									required
+									className='mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-gray-600 pr-10'
+								/>
+								<button
+									type='button'
+									onClick={() => setShowNew(!showNew)}
+									className='absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600'>
+									{showNew ? <EyeSlashIcon className='h-5 w-5' /> : <EyeIcon className='h-5 w-5' />}
+								</button>
+							</div>
 						</div>
 						<div>
 							<label className='block text-sm font-medium text-gray-700'>Powtórz nowe hasło</label>
-							<input
-								type='password'
-								value={confirmPassword}
-								onChange={e => setConfirmPassword(e.target.value)}
-								required
-								className='mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-gray-600'
-							/>
+							<div className='relative mt-1'>
+								<input
+									type={showConfirm ? 'text' : 'password'}
+									value={confirmPassword}
+									onChange={e => setConfirmPassword(e.target.value)}
+									required
+									className='mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-gray-600 pr-10'
+								/>
+								<button
+									type='button'
+									onClick={() => setShowConfirm(!showConfirm)}
+									className='absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600'>
+									{showConfirm ? <EyeSlashIcon className='h-5 w-5' /> : <EyeIcon className='h-5 w-5' />}
+								</button>
+							</div>
 						</div>
 
 						{/* Lista wymagań (dla przypomnienia) */}
@@ -110,7 +139,15 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
 						<div className='flex justify-end gap-3 pt-2'>
 							<button
 								type='button'
-								onClick={onClose}
+								onClick={() => {
+									setCurrentPassword('')
+									setNewPassword('')
+									setConfirmPassword('')
+									setShowCurrent(false)
+									setShowNew(false)
+									setShowConfirm(false)
+									onClose()
+								}}
 								className='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50'>
 								Anuluj
 							</button>

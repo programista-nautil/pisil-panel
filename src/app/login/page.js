@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
 export default function LoginPage() {
 	const [username, setUsername] = useState('')
 	const [password, setPassword] = useState('')
+	const [showPassword, setShowPassword] = useState(false)
 	const [error, setError] = useState('')
 	const router = useRouter()
 
@@ -44,13 +46,21 @@ export default function LoginPage() {
 					</div>
 					<div>
 						<label className='block text-sm font-medium text-gray-700'>Hasło</label>
-						<input
-							type='password'
-							value={password}
-							onChange={e => setPassword(e.target.value)}
-							required
-							className='mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-600'
-						/>
+						<div className='relative mt-1'>
+							<input
+								type={showPassword ? 'text' : 'password'}
+								value={password}
+								onChange={e => setPassword(e.target.value)}
+								required
+								className='mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-600 pr-10'
+							/>
+							<button
+								type='button'
+								onClick={() => setShowPassword(!showPassword)}
+								className='absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600'>
+								{showPassword ? <EyeSlashIcon className='h-5 w-5' /> : <EyeIcon className='h-5 w-5' />}
+							</button>
+						</div>
 					</div>
 					{error && <p className='text-red-500 text-sm text-center'>{error}</p>}
 					<div>
