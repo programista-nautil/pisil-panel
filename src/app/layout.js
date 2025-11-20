@@ -3,6 +3,7 @@ import './globals.css'
 import { SessionProvider } from 'next-auth/react'
 import { auth } from '@/auth'
 import GlobalHeader from '@/components/GlobalHeader'
+import AutoLogout from '@/components/AutoLogout'
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -25,6 +26,7 @@ export default async function RootLayout({ children }) {
 		<html lang='en'>
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning={true}>
 				<SessionProvider session={session}>
+					<AutoLogout />
 					<div className='flex flex-col h-full'>
 						<GlobalHeader initialSession={session} />
 						<main className='flex-1 bg-gray-50'>{children}</main>

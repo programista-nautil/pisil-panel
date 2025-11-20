@@ -80,5 +80,9 @@ export const {
 			},
 		}),
 	],
+	session: {
+		strategy: 'jwt',
+		maxAge: 30 * 60,
+	},
 	secret: process.env.NEXTAUTH_SECRET,
 })
