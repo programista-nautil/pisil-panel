@@ -20,12 +20,7 @@ export async function POST(request, { params }) {
 		const attachmentPromises = files.map(async file => {
 			const bytes = await file.arrayBuffer()
 			const buffer = Buffer.from(bytes)
-			const now = new Date()
-			const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(
-				2,
-				'0'
-			)}-${now.getFullYear()}`
-			const filename = `${formattedDate}_${sanitizeFilename(file.name)}`
+			const filename = `${sanitizeFilename(file.name)}`
 
 			const gcsPath = await uploadFileToGCS(buffer, filename)
 
