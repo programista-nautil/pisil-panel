@@ -67,8 +67,22 @@ export async function processAcceptance(submission, acceptanceDate) {
 			if (submission.acceptanceNumber) {
 				docNumber = submission.acceptanceNumber
 			} else {
-				const maxResult = await prisma.submission.aggregate({ _max: { acceptanceNumber: true } })
-				docNumber = (maxResult._max.acceptanceNumber || 0) + 1
+				// --- ZMIANA LOGIKI OBLICZANIA NUMERU ---
+
+				// A. Sprawdź max w Zgłoszeniach
+				const maxSubmissionResult = await prisma.submission.aggregate({
+					_max: { acceptanceNumber: true },
+				})
+				const maxSubmissionNum = maxSubmissionResult._max.acceptanceNumber || 0
+
+				// B. Sprawdź max w Członkach (bo mogli dojść z seeda/importu)
+				const maxMemberResult = await prisma.member.aggregate({
+					_max: { memberNumber: true },
+				})
+				const maxMemberNum = maxMemberResult._max.memberNumber || 0
+
+				// C. Weź większą z tych dwóch liczb i dodaj 1
+				docNumber = Math.max(maxSubmissionNum, maxMemberNum) + 1
 			}
 
 			// 2. Znajdź lub stwórz członka
