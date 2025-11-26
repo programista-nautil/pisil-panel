@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 
 // Ikony, które umieścimy bezpośrednio w komponencie
 const MenuIcon = () => (
-	<svg className='h-6 w-6' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+	<svg className='h-6 w-6 text-[#005698]' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
 		<path
 			strokeLinecap='round'
 			strokeLinejoin='round'
@@ -56,8 +56,8 @@ function HeaderContent() {
 	}, [menuRef]) // Zależność jest poprawna
 
 	return (
-		<header className='w-full h-25 bg-white border-b border-gray-200 shadow-sm flex-shrink-0'>
-			<nav className='px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between'>
+		<header className='w-full h-25 bg-white border-b shadow-sm flex-shrink-0 border-t-4 border-t-[#005698]'>
+			<nav className='px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between py-4'>
 				{/* Lewa strona: Logo */}
 				<div className='flex-shrink-0'>
 					<Link href='/' className='flex items-center '>
@@ -69,13 +69,13 @@ function HeaderContent() {
 				<div className='relative' ref={menuRef}>
 					<button
 						onClick={() => setIsMenuOpen(!isMenuOpen)}
-						className='p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500'>
+						className='p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#005698]'>
 						<MenuIcon />
 					</button>
 
 					{/* Rozwijane menu */}
 					{isMenuOpen && (
-						<div className='absolute right-0 mt-2 w-56 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50'>
+						<div className='absolute right-0 mt-2 w-56 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-[#005698] ring-opacity-5 z-50'>
 							<div className='py-1' role='menu' aria-orientation='vertical'>
 								<Link
 									href='/logowanie-admin'

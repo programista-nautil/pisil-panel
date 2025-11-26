@@ -65,7 +65,7 @@ export default function MemberLoginPage() {
 	return (
 		<div className='h-full bg-gray-50 flex items-center justify-center'>
 			<div className='max-w-md w-full bg-white p-8 rounded-lg shadow-md'>
-				<h2 className='text-2xl font-bold text-center text-gray-900 mb-6'>Logowanie do Panelu Członka</h2>
+				<h2 className='text-2xl font-bold text-center text-[#005698] mb-6'>Logowanie do Panelu Członka</h2>
 				<form onSubmit={handleSubmit} className='space-y-6'>
 					<div>
 						<label className='block text-sm font-medium text-gray-700'>Adres e-mail</label>
@@ -100,7 +100,7 @@ export default function MemberLoginPage() {
 					<div>
 						<button
 							type='submit'
-							className='w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700'>
+							className='w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#005698] hover:bg-[#00447a]'>
 							Zaloguj się
 						</button>
 					</div>
@@ -109,7 +109,7 @@ export default function MemberLoginPage() {
 					<button
 						type='button'
 						onClick={handleForgotPassword}
-						className='text-sm font-medium text-blue-600 hover:text-blue-500'>
+						className='text-sm font-medium text-[#005698] hover:text-[#00447a]'>
 						Nie pamiętasz hasła?
 					</button>
 				</div>

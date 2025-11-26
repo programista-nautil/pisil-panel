@@ -116,27 +116,27 @@ export default function MemberDashboard() {
 			<div className='max-w-7xl mx-auto p-4 sm:p-6 lg:p-8'>
 				<header className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4'>
 					<div>
-						<h1 className='text-3xl font-bold text-gray-900 tracking-tight'>Panel Członka PISiL</h1>
+						<h1 className='text-3xl font-bold text-[#005698] tracking-tight'>Panel Członka PISiL</h1>
 						<p className='text-gray-600 mt-1'>Witaj w strefie dla członków.</p>
 					</div>
 					<div className='flex flex-wrap items-center gap-4'>
 						{session?.user && (
 							<span className='text-sm text-gray-700 hidden sm:block'>
-								Zalogowano jako: <strong>{session.user.name || session.user.email}</strong>
+								Zalogowano jako: <strong className='text-[#005698]'>{session.user.name || session.user.email}</strong>
 							</span>
 						)}
 						<button
 							onClick={() => setIsPasswordModalOpen(true)}
 							className='inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors shadow-sm'>
-							<KeyIcon className='h-4 w-4' />
-							<span>Zmień hasło</span>
+							<KeyIcon className='h-4 w-4 text-[#005698]' />
+							<span className='text-[#005698]'>Zmień hasło</span>
 						</button>
 						<button
 							onClick={() => signOut({ callbackUrl: '/logowanie-czlonka' })}
 							className='inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors shadow-sm'>
 							<svg
 								xmlns='http://www.w3.org/2000/svg'
-								className='h-4 w-4'
+								className='h-4 w-4 text-[#005698]'
 								fill='none'
 								viewBox='0 0 24 24'
 								stroke='currentColor'
@@ -147,7 +147,7 @@ export default function MemberDashboard() {
 									d='M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1'
 								/>
 							</svg>
-							<span>Wyloguj się</span>
+							<span className='text-[#005698]'>Wyloguj się</span>
 						</button>
 					</div>
 				</header>
@@ -159,8 +159,8 @@ export default function MemberDashboard() {
 						<>
 							<section className='mb-8'>
 								<div className='flex items-center gap-3 mb-4 p-4 bg-gray-50 border rounded-lg'>
-									<UserCircleIcon className='h-6 w-6 text-gray-500' />
-									<h2 className='text-lg font-semibold text-gray-800'>Pliki Indywidualne</h2>
+									<UserCircleIcon className='h-6 w-6 text-[#005698]' />
+									<h2 className='text-lg font-semibold text-[#005698]'>Pliki Indywidualne</h2>
 								</div>
 
 								<div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
@@ -203,8 +203,8 @@ export default function MemberDashboard() {
 							<section>
 								{/* Główny nagłówek sekcji */}
 								<div className='flex items-center gap-3 mb-4 p-4 bg-gray-50 border rounded-lg'>
-									<FolderIcon className='h-6 w-6 text-gray-500' />
-									<h2 className='text-lg font-semibold text-gray-800'>Pliki Ogólne</h2>
+									<FolderIcon className='h-6 w-6 text-[#005698]' />
+									<h2 className='text-lg font-semibold text-[#005698]'>Pliki Ogólne</h2>
 								</div>
 
 								{/* Kontener dla zawartości sekcji */}

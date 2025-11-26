@@ -4,9 +4,9 @@ export default function HomePage() {
 	return (
 		<div className='h-full bg-gradient-to-b from-gray-50 to-white flex flex-col items-center justify-center p-6'>
 			<div className='mx-auto w-full max-w-7xl'>
-				<header className='mb-10 text-center'>
+				<header className='mb-12 text-center'>
 					<h1 className='text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900'>
-						Platforma Formularzy PISiL
+						Platforma Formularzy <span className='text-[#005698]'>PISiL</span>
 					</h1>
 					<p className='mt-3 text-base md:text-lg text-gray-600'>
 						Wybierz dokument, który chcesz wypełnić i złożyć online.
@@ -15,22 +15,27 @@ export default function HomePage() {
 
 				<main>
 					<div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6'>
-						{/* Deklaracja członkowska */}
+						{/* --- Deklaracja członkowska --- */}
 						<Link
 							href='/formularz/deklaracja-czlonkowska'
-							className='group relative block focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 rounded-2xl'>
-							<div className='h-full rounded-2xl border border-gray-200 bg-white/90 p-6 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md'>
+							className='group relative block focus:outline-none focus-visible:ring-4 focus-visible:ring-[#005698]/50 rounded-2xl'>
+							<div className='h-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lg hover:border-[#005698]/30'>
 								<div className='mb-4 flex items-center gap-2'>
-									<span className='inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700'>
+									{/* Używamy opacity /10 dla tła, aby idealnie pasowało do koloru marki */}
+									<span className='inline-flex items-center rounded-full bg-[#005698]/10 px-2.5 py-0.5 text-xs font-medium text-[#005698]'>
 										Formularz
 									</span>
 								</div>
-								<h2 className='text-xl font-semibold text-gray-900 truncate'>Deklaracja Członkowska</h2>
-								<p className='mt-2 text-sm text-gray-600'>Dla firm ubiegających się o członkostwo w PISiL.</p>
-								<div className='mt-6 inline-flex items-center text-blue-700 font-medium'>
+								<h2 className='text-xl font-bold text-gray-900 truncate group-hover:text-[#005698] transition-colors'>
+									Deklaracja Członkowska
+								</h2>
+								<p className='mt-2 text-sm text-gray-600 leading-relaxed'>
+									Dla firm ubiegających się o członkostwo w PISiL.
+								</p>
+								<div className='mt-6 inline-flex items-center text-[#005698] font-semibold text-sm'>
 									Przejdź do formularza
 									<svg
-										className='ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5'
+										className='ml-1 h-4 w-4 transition-transform group-hover:translate-x-1'
 										viewBox='0 0 20 20'
 										fill='currentColor'>
 										<path
@@ -43,22 +48,26 @@ export default function HomePage() {
 							</div>
 						</Link>
 
-						{/* Patronat */}
+						{/* --- Patronat --- */}
 						<Link
 							href='/formularz/patronat'
-							className='group relative block focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 rounded-2xl'>
-							<div className='h-full rounded-2xl border border-gray-200 bg-white/90 p-6 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md'>
+							className='group relative block focus:outline-none focus-visible:ring-4 focus-visible:ring-[#005698]/50 rounded-2xl'>
+							<div className='h-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lg hover:border-[#005698]/30'>
 								<div className='mb-4 flex items-center gap-2'>
-									<span className='inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700'>
+									<span className='inline-flex items-center rounded-full bg-[#005698]/10 px-2.5 py-0.5 text-xs font-medium text-[#005698]'>
 										Formularz
 									</span>
 								</div>
-								<h2 className='text-xl font-semibold text-gray-900 truncate'>Uzyskaj Patronat</h2>
-								<p className='mt-2 text-sm text-gray-600'>Wniosek o patronat, udział w wydarzeniu lub wystąpienie.</p>
-								<div className='mt-6 inline-flex items-center text-blue-700 font-medium'>
+								<h2 className='text-xl font-bold text-gray-900 truncate group-hover:text-[#005698] transition-colors'>
+									Uzyskaj Patronat
+								</h2>
+								<p className='mt-2 text-sm text-gray-600 leading-relaxed'>
+									Wniosek o patronat, udział w wydarzeniu lub wystąpienie.
+								</p>
+								<div className='mt-6 inline-flex items-center text-[#005698] font-semibold text-sm'>
 									Przejdź do formularza
 									<svg
-										className='ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5'
+										className='ml-1 h-4 w-4 transition-transform group-hover:translate-x-1'
 										viewBox='0 0 20 20'
 										fill='currentColor'>
 										<path
@@ -71,22 +80,26 @@ export default function HomePage() {
 							</div>
 						</Link>
 
-						{/* Ankieta Spedytor Roku */}
+						{/* --- Ankieta Spedytor Roku --- */}
 						<Link
 							href='/formularz/ankieta-spedytor-roku'
-							className='group relative block focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 rounded-2xl'>
-							<div className='h-full rounded-2xl border border-gray-200 bg-white/90 p-6 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md'>
+							className='group relative block focus:outline-none focus-visible:ring-4 focus-visible:ring-[#005698]/50 rounded-2xl'>
+							<div className='h-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lg hover:border-emerald-500/30'>
 								<div className='mb-4 flex items-center gap-2'>
-									<span className='inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700'>
+									{/* Tutaj zostawiamy Emerald dla rozróżnienia typu dokumentu */}
+									<span className='inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700'>
 										Ankieta
 									</span>
 								</div>
-								<h2 className='text-xl font-semibold text-gray-900 truncate'>Ankieta Spedytor Roku</h2>
-								<p className='mt-2 text-sm text-gray-600'>Weź udział i wypełnij ankietę konkursową.</p>
-								<div className='mt-6 inline-flex items-center text-blue-700 font-medium'>
+								<h2 className='text-xl font-bold text-gray-900 truncate group-hover:text-[#005698] transition-colors'>
+									Ankieta Spedytor Roku
+								</h2>
+								<p className='mt-2 text-sm text-gray-600 leading-relaxed'>Weź udział i wypełnij ankietę konkursową.</p>
+								{/* Ale link akcji dajemy w kolorze firmowym dla spójności */}
+								<div className='mt-6 inline-flex items-center text-[#005698] font-semibold text-sm'>
 									Przejdź do formularza
 									<svg
-										className='ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5'
+										className='ml-1 h-4 w-4 transition-transform group-hover:translate-x-1'
 										viewBox='0 0 20 20'
 										fill='currentColor'>
 										<path
@@ -99,22 +112,26 @@ export default function HomePage() {
 							</div>
 						</Link>
 
-						{/* Młody Spedytor Roku */}
+						{/* --- Młody Spedytor Roku --- */}
 						<Link
 							href='/formularz/mlody-spedytor-roku'
-							className='group relative block focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 rounded-2xl'>
-							<div className='h-full rounded-2xl border border-gray-200 bg-white/90 p-6 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md'>
+							className='group relative block focus:outline-none focus-visible:ring-4 focus-visible:ring-[#005698]/50 rounded-2xl'>
+							<div className='h-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lg hover:border-emerald-500/30'>
 								<div className='mb-4 flex items-center gap-2'>
-									<span className='inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700'>
+									<span className='inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700'>
 										Ankieta
 									</span>
 								</div>
-								<h2 className='text-xl font-semibold text-gray-900 truncate'>Młody Spedytor Roku</h2>
-								<p className='mt-2 text-sm text-gray-600'>Zgłoś kandydata do konkursu „Młody Spedytor Roku”.</p>
-								<div className='mt-6 inline-flex items-center text-blue-700 font-medium'>
+								<h2 className='text-xl font-bold text-gray-900 truncate group-hover:text-[#005698] transition-colors'>
+									Młody Spedytor Roku
+								</h2>
+								<p className='mt-2 text-sm text-gray-600 leading-relaxed'>
+									Zgłoś kandydata do konkursu „Młody Spedytor Roku”.
+								</p>
+								<div className='mt-6 inline-flex items-center text-[#005698] font-semibold text-sm'>
 									Przejdź do formularza
 									<svg
-										className='ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5'
+										className='ml-1 h-4 w-4 transition-transform group-hover:translate-x-1'
 										viewBox='0 0 20 20'
 										fill='currentColor'>
 										<path

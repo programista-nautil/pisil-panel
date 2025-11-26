@@ -142,7 +142,7 @@ export default function MultiStepForm({ formConfig }) {
 				</div>
 				<div className='w-full bg-gray-200 rounded-full h-2'>
 					<div
-						className='bg-blue-600 h-2 rounded-full transition-all duration-300'
+						className='bg-[#005698] h-2 rounded-full transition-all duration-300'
 						style={{ width: `${(currentStep / totalSteps) * 100}%` }}></div>
 				</div>
 			</div>
@@ -189,7 +189,7 @@ export default function MultiStepForm({ formConfig }) {
 						onClick={nextStep}
 						disabled={!isValid}
 						className={`px-6 py-2 rounded-md font-medium ${
-							!isValid ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'bg-blue-600 text-white hover:bg-blue-700'
+							!isValid ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'bg-[#005698] text-white hover:bg-[#00447a]'
 						}`}>
 						Dalej
 					</button>

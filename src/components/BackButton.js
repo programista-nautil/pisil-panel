@@ -11,7 +11,7 @@ export default function BackButton() {
 			className='inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mt-4 ml-4 font-medium cursor-pointer'>
 			<svg
 				xmlns='http://www.w3.org/2000/svg'
-				className='h-5 w-5'
+				className='h-5 w-5 text-[#005698]'
 				viewBox='0 0 20 20'
 				fill='currentColor'
 				aria-hidden='true'>
@@ -21,7 +21,7 @@ export default function BackButton() {
 					clipRule='evenodd'
 				/>
 			</svg>
-			<span>Powrót</span>
+			<span className='text-[#005698]'>Powrót</span>
 		</button>
 	)
 }
