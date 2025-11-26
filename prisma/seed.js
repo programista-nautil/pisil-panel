@@ -1,147 +1,101 @@
 const { PrismaClient } = require('@prisma/client')
 const bcrypt = require('bcrypt')
+
 const prisma = new PrismaClient()
 
-// Definiujemy "siłę" hashowania
-const SALT_ROUNDS = 10
+const MEMBERS_DATA = [
+	{
+		company: 'Allcom Sp. z o.o.',
+		name: 'Łukasz Pielesiek',
+		email: 'l.pielesiek@allcom.gdynia.pl',
+		phones: null, // "Brak numeru"
+	},
+	{
+		company: 'ECS Eurocargo Sp.  z o.o.',
+		name: 'Aleksander Kita',
+		email: 'aleksander.kita@ecs-eurocargo.pl',
+		phones: '509283461',
+	},
+	{
+		company: 'FM Polska Sp. z o.o.',
+		name: 'Alexandre Amine Soufiani',
+		email: 'llasa@fmlogistic.com',
+		phones: '468570260, 516010355',
+	},
+	{
+		company: 'Mandersloot Polska Transport Sp. z o.o.',
+		name: 'Ronald Mandersloot',
+		email: 'infopl@mandersloot.eu',
+		phones: '61 8100900',
+	},
+	{
+		company: 'Poltrans Sochaczew Sp. z o.o.',
+		name: 'Sebastian Przybylski',
+		email: 'transport@poltrans.net',
+		phones: '888110177',
+	},
+]
 
 async function main() {
-	console.log('Rozpoczynam seedowanie danych członków...')
+	console.log('🌱 Rozpoczynam seedowanie bazy danych...')
 
-	// 1. Haszujemy jedno wspólne hasło dla wszystkich testowych kont
-	// (W prawdziwym świecie każde hasło byłoby inne)
-	const testPassword = 'password123'
-	const hashedPassword = await bcrypt.hash(testPassword, SALT_ROUNDS)
+	// 1. Ustawiamy hasło tymczasowe dla wszystkich importowanych członków
+	// Użytkownik będzie mógł je zresetować przez "Zapomniałem hasła"
+	const TEMPORARY_PASSWORD = 'PisilMember2025!'
+	const hashedPassword = await bcrypt.hash(TEMPORARY_PASSWORD, 10)
 
-	console.log(`Hasło dla wszystkich kont testowych: ${testPassword}`)
+	// 2. Znajdujemy najwyższy dotychczasowy numer członkowski, żeby zachować ciągłość
+	const maxMemberResult = await prisma.member.aggregate({
+		_max: {
+			memberNumber: true,
+		},
+	})
+	let currentMaxNumber = maxMemberResult._max.memberNumber || 0
 
-	// 2. Definiujemy 5 przykładowych członków
-	const membersData = [
-		{
-			email: 'firma.a@example.com',
-			company: 'Firma Testowa A Sp. z o.o.',
-			name: 'Jan Kowalski',
-		},
-		{
-			email: 'logistics.plus@example.com',
-			company: 'Logistics Plus',
-			name: 'Anna Nowak',
-		},
-		{
-			email: 'spedycja.b@example.com',
-			company: 'Spedycja B S.A.',
-			name: 'Piotr Wiśniewski',
-		},
-		{
-			email: 'transport.c@example.com',
-			company: 'Transport Ciężki C',
-			name: 'Maria Dąbrowska',
-		},
-		{
-			email: 'global.log@example.com',
-			company: 'Global E-Logistyka',
-			name: 'Krzysztof Zieliński',
-		},
-		{
-			email: 'trans.express@example.com',
-			company: 'Trans Express Sp. z o.o.',
-			name: 'Tomasz Lewandowski',
-		},
-		{
-			email: 'cargo.fast@example.com',
-			company: 'Cargo Fast International',
-			name: 'Katarzyna Wójcik',
-		},
-		{
-			email: 'euro.transport@example.com',
-			company: 'Euro Transport Poland',
-			name: 'Marek Kamiński',
-		},
-		{
-			email: 'speedy.logistics@example.com',
-			company: 'Speedy Logistics S.A.',
-			name: 'Magdalena Krawczyk',
-		},
-		{
-			email: 'rapid.cargo@example.com',
-			company: 'Rapid Cargo Solutions',
-			name: 'Andrzej Kaczmarek',
-		},
-		{
-			email: 'mega.trans@example.com',
-			company: 'Mega Trans Group',
-			name: 'Joanna Piotrowski',
-		},
-		{
-			email: 'inter.freight@example.com',
-			company: 'Inter Freight Sp. z o.o.',
-			name: 'Paweł Grabowski',
-		},
-		{
-			email: 'pro.logistics@example.com',
-			company: 'Pro Logistics Poland',
-			name: 'Beata Zalewski',
-		},
-		{
-			email: 'smart.cargo@example.com',
-			company: 'Smart Cargo Systems',
-			name: 'Rafał Adamczyk',
-		},
-		{
-			email: 'premium.transport@example.com',
-			company: 'Premium Transport S.A.',
-			name: 'Ewa Jaworska',
-		},
-		{
-			email: 'quick.delivery@example.com',
-			company: 'Quick Delivery Services',
-			name: 'Grzegorz Pawlak',
-		},
-		{
-			email: 'total.logistics@example.com',
-			company: 'Total Logistics Sp. z o.o.',
-			name: 'Monika Michalska',
-		},
-		{
-			email: 'safe.transport@example.com',
-			company: 'Safe Transport Poland',
-			name: 'Jacek Wróbel',
-		},
-		{
-			email: 'blue.logistics@example.com',
-			company: 'Blue Logistics Network',
-			name: 'Agnieszka Mazur',
-		},
-		{
-			email: 'first.cargo@example.com',
-			company: 'First Cargo Sp. z o.o.',
-			name: 'Łukasz Jankowski',
-		},
-	]
+	console.log(`📈 Obecny najwyższy numer członkowski: ${currentMaxNumber}`)
 
-	// 3. Wstawiamy dane do bazy
-	// Używamy `upsert`, aby skrypt można było bezpiecznie uruchamiać wielokrotnie
-	// bez tworzenia duplikatów (na podstawie unikalnego pola 'email').
-	for (const member of membersData) {
-		const upsertedMember = await prisma.member.upsert({
-			where: { email: member.email },
-			update: {}, // Jeśli członek już istnieje, nic nie rób
-			create: {
-				...member,
-				password: hashedPassword,
-			},
+	for (const memberData of MEMBERS_DATA) {
+		// Sprawdzamy, czy członek już istnieje
+		const existingMember = await prisma.member.findUnique({
+			where: { email: memberData.email },
 		})
-		console.log(`Stworzono lub zaktualizowano członka: ${upsertedMember.email}`)
+
+		if (existingMember) {
+			console.log(`🔄 Aktualizacja istniejącego członka: ${memberData.company}`)
+			await prisma.member.update({
+				where: { email: memberData.email },
+				data: {
+					company: memberData.company,
+					name: memberData.name,
+					phones: memberData.phones,
+					// Nie aktualizujemy hasła ani numeru, jeśli już istnieje
+				},
+			})
+		} else {
+			currentMaxNumber++
+			console.log(`➕ Dodawanie nowego członka: ${memberData.company} (Nr: ${currentMaxNumber})`)
+			await prisma.member.create({
+				data: {
+					email: memberData.email,
+					password: hashedPassword,
+					company: memberData.company,
+					name: memberData.name,
+					phones: memberData.phones,
+					memberNumber: currentMaxNumber,
+				},
+			})
+		}
 	}
 
-	console.log('Seedowanie zakończone.')
+	console.log('✅ Seedowanie zakończone sukcesem.')
 }
 
 main()
-	.catch(e => {
-		console.error(e)
-		process.exit(1)
-	})
-	.finally(async () => {
+	.then(async () => {
 		await prisma.$disconnect()
+	})
+	.catch(async e => {
+		console.error(e)
+		await prisma.$disconnect()
+		process.exit(1)
 	})
