@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
 import { sanitizeFilename } from '@/lib/utils'
 import path from 'path'
+import crypto from 'crypto'
 
 // POBIERANIE listy plików ogólnych
 export async function GET(request) {
@@ -40,27 +41,31 @@ export async function POST(request) {
 			return NextResponse.json({ message: 'Nie przesłano żadnych plików.' }, { status: 400 })
 		}
 
-		const createdFiles = []
-
-		for (const file of files) {
-			// Przetwarzanie i wysyłka do GCS
+		const uploadPromises = files.map(async file => {
 			const buffer = Buffer.from(await file.arrayBuffer())
 			const originalFilename = sanitizeFilename(file.name)
 			const fileExtension = path.extname(originalFilename)
 			const fileNameWithoutExt = path.basename(originalFilename, fileExtension)
 
-			const gcsFilename = `general/${fileNameWithoutExt}_${Date.now()}${fileExtension}`
+			// 3. ZMIANA KLUCZOWA: Używamy UUID zamiast Date.now()
+			// Date.now() może zwrócić ten sam czas dla małych plików przetwarzanych w pętli,
+			// co powoduje konflikt nazw. UUID jest zawsze unikalne.
+			const uniqueId = crypto.randomUUID()
+			const gcsFilename = `general/${fileNameWithoutExt}_${uniqueId}${fileExtension}`
+
 			const gcsPath = await uploadFileToGCS(buffer, gcsFilename)
 
 			// Zapis w bazie danych
-			const newFile = await prisma.generalFile.create({
+			return prisma.generalFile.create({
 				data: {
 					fileName: originalFilename,
 					filePath: gcsPath,
 				},
 			})
-			createdFiles.push(newFile) // Dodajemy do tablicy wyników
-		}
+		})
+
+		// Czekamy, aż WSZYSTKIE pliki się wyślą i zapiszą
+		const createdFiles = await Promise.all(uploadPromises)
 
 		return NextResponse.json(createdFiles, { status: 201 })
 	} catch (error) {

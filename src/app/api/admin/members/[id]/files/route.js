@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
 import { sanitizeFilename } from '@/lib/utils'
 import path from 'path'
+import crypto from 'crypto'
 
 // GET - Pobiera pliki dla konkretnego członka
 export async function GET(request, { params }) {
@@ -49,7 +50,8 @@ export async function POST(request, { params }) {
 			const fileExtension = path.extname(originalFilename)
 			const fileNameWithoutExt = path.basename(originalFilename, fileExtension)
 
-			const gcsFilename = `member_files/${memberId}/${fileNameWithoutExt}_${Date.now()}${fileExtension}`
+			const uniqueId = crypto.randomUUID()
+			const gcsFilename = `member_files/${memberId}/${fileNameWithoutExt}_${uniqueId}${fileExtension}`
 			const gcsPath = await uploadFileToGCS(buffer, gcsFilename)
 
 			const newFile = await prisma.memberFile.create({

@@ -5,6 +5,7 @@ import { uploadFileToGCS } from '@/lib/gcs'
 import { sanitizeFilename } from '@/lib/utils'
 import nodemailer from 'nodemailer'
 import path from 'path'
+import crypto from 'crypto'
 
 export async function GET() {
 	const session = await auth()
@@ -84,7 +85,9 @@ export async function POST(request) {
 					const bytes = await file.arrayBuffer()
 					const buffer = Buffer.from(bytes)
 					const filename = `${sanitizeFilename(file.name)}`
-					const gcsPath = await uploadFileToGCS(buffer, filename)
+					const uniqueId = crypto.randomUUID()
+					const gcsFilename = `${uniqueId}_${filename}`
+					const gcsPath = await uploadFileToGCS(buffer, gcsFilename)
 
 					await tx.attachment.create({
 						data: {

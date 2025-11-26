@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
 import { sanitizeFilename } from '@/lib/utils'
+import crypto from 'crypto'
 
 export async function POST(request, { params }) {
 	const submissionId = params.id
@@ -21,8 +22,9 @@ export async function POST(request, { params }) {
 			const bytes = await file.arrayBuffer()
 			const buffer = Buffer.from(bytes)
 			const filename = `${sanitizeFilename(file.name)}`
-
-			const gcsPath = await uploadFileToGCS(buffer, filename)
+			const uniqueId = crypto.randomUUID()
+			const gcsFilename = `attachments/${submissionId}/${uniqueId}_${filename}`
+			const gcsPath = await uploadFileToGCS(buffer, gcsFilename)
 
 			return prisma.attachment.create({
 				data: {
