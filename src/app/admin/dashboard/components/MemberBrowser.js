@@ -1,12 +1,20 @@
 'use client'
 
 import { useState, useEffect, useRef, Fragment } from 'react'
-import { UserGroupIcon, TrashIcon, MagnifyingGlassIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import {
+	UserGroupIcon,
+	TrashIcon,
+	MagnifyingGlassIcon,
+	ChevronRightIcon,
+	PencilSquareIcon,
+} from '@heroicons/react/24/outline'
 import MemberFileEditor from './MemberFileEditor'
+import EditMemberModal from './EditMemberModal'
 import toast from 'react-hot-toast'
 
 function useDebounce(value, delay) {
 	const [debouncedValue, setDebouncedValue] = useState(value)
+
 	useEffect(() => {
 		const handler = setTimeout(() => {
 			setDebouncedValue(value)
@@ -26,6 +34,7 @@ export default function MemberBrowser() {
 	const [totalPages, setTotalPages] = useState(1)
 	const [totalMembers, setTotalMembers] = useState(0)
 	const [expanded, setExpanded] = useState({})
+	const [editingMember, setEditingMember] = useState(null)
 
 	const [searchQuery, setSearchQuery] = useState('')
 	const debouncedSearchQuery = useDebounce(searchQuery, 300)
@@ -35,7 +44,7 @@ export default function MemberBrowser() {
 	const fetchMembers = async (page = 1, query = '') => {
 		setIsLoading(true)
 		try {
-			const response = await fetch(`/api/admin/members?page=${page}&limit=10&search=${encodeURIComponent(query)}`)
+			const response = await fetch(`/api/admin/members?page=${page}&limit=50&search=${encodeURIComponent(query)}`)
 			if (!response.ok) throw new Error('Nie udało się pobrać listy członków.')
 			const data = await response.json()
 			setMembers(data.members)
@@ -88,6 +97,10 @@ export default function MemberBrowser() {
 				setDeletingId(null)
 			}
 		}
+	}
+
+	const handleEditSuccess = () => {
+		fetchMembers(currentPage, debouncedSearchQuery)
 	}
 
 	return (
@@ -147,7 +160,7 @@ export default function MemberBrowser() {
 										<ChevronRightIcon
 											className={`h-5 w-5 transform transition-transform ${
 												expanded[member.id] ? 'rotate-90' : ''
-											}text-gray-500`}
+											} text-gray-500`}
 										/>
 									</button>
 									<span className='text-sm font-semibold text-gray-500 w-10 text-center'>#{member.memberNumber}</span>
@@ -159,14 +172,20 @@ export default function MemberBrowser() {
 										<p className='text-sm text-gray-500'>{member.phones || 'Brak telefonu'}</p>
 									</div>
 								</div>
-								<div className='flex items-center gap-4'>
+								<div className='flex items-center gap-2'>
 									{/* DODANE POLE: Data dodania */}
-									<div className='text-right hidden sm:block'>
+									<div className='text-right hidden sm:block mr-2'>
 										<p className='text-xs text-gray-500'>Dodano:</p>
 										<p className='text-sm font-medium text-gray-700'>
 											{new Date(member.createdAt).toLocaleDateString('pl-PL')}
 										</p>
 									</div>
+									<button
+										onClick={() => setEditingMember(member)}
+										className='p-2 text-blue-600 hover:bg-blue-100 rounded-md'
+										title='Edytuj dane kontaktowe'>
+										<PencilSquareIcon className='h-5 w-5' />
+									</button>
 									<button
 										onClick={() => handleDeleteMember(member.id)}
 										disabled={deletingId === member.id || isLoading}
@@ -220,6 +239,13 @@ export default function MemberBrowser() {
 					</button>
 				</div>
 			</div>
+
+			<EditMemberModal
+				isOpen={!!editingMember}
+				onClose={() => setEditingMember(null)}
+				member={editingMember}
+				onSuccess={handleEditSuccess}
+			/>
 		</div>
 	)
 }
