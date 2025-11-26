@@ -30,7 +30,7 @@ const InfoModal = ({ title, message, onClose }) => (
 				<button
 					type='button'
 					onClick={onClose}
-					className='w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:text-sm'>
+					className='w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#005698] text-base font-medium text-white hover:bg-[#005698]/80 sm:text-sm'>
 					Zamknij
 				</button>
 			</div>
