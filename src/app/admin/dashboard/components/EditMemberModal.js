@@ -49,7 +49,7 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 	return (
 		<div className='fixed inset-0 bg-black/50 z-50 flex justify-center items-center p-4' onClick={onClose}>
 			<div className='bg-white rounded-lg shadow-xl p-6 w-full max-w-md' onClick={e => e.stopPropagation()}>
-				<h3 className='text-lg font-bold text-gray-900 mb-4'>Edytuj dane kontaktowe</h3>
+				<h3 className='text-lg font-bold text-[#005698] mb-4'>Edytuj dane kontaktowe</h3>
 				<p className='text-sm text-gray-500 mb-4'>
 					Edytujesz dane dla: <span className='font-medium text-gray-700'>{member.company}</span>
 				</p>
@@ -88,7 +88,7 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 						<button
 							type='submit'
 							disabled={isSubmitting}
-							className='px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-400'>
+							className='px-4 py-2 text-sm font-medium text-white bg-[#005698] rounded-md hover:bg-[#005698]/80 disabled:bg-[#005698]/80'>
 							{isSubmitting ? 'Zapisywanie...' : 'Zapisz zmiany'}
 						</button>
 					</div>

@@ -187,7 +187,7 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 						<button
 							type='submit'
 							disabled={isSubmitting}
-							className='px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:bg-blue-300'>
+							className='px-4 py-2 text-sm font-medium text-white bg-[#005698] border border-transparent rounded-md hover:bg-[#005698]/80 disabled:bg-[#005698]/80'>
 							{isSubmitting ? (
 								<>
 									<svg className='animate-spin -ml-1 mr-2 h-4 w-4 text-white' fill='none' viewBox='0 0 24 24'>

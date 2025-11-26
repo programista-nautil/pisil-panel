@@ -15,9 +15,9 @@ const StatCard = ({ title, value, isLoading }) => (
 	<div className='bg-white p-3 rounded-lg shadow'>
 		<h3 className='text-sm font-medium text-gray-500'>{title}</h3>
 		{isLoading ? (
-			<p className='mt-2 text-3xl font-bold text-gray-900'>...</p>
+			<p className='mt-2 text-3xl font-bold text-[#005698]'>...</p>
 		) : (
-			<p className='mt-2 text-3xl font-bold text-gray-900'>{value}</p>
+			<p className='mt-2 text-3xl font-bold text-[#005698]'>{value}</p>
 		)}
 	</div>
 )
@@ -297,19 +297,19 @@ export default function AdminDashboard() {
 			<div className='max-w-7xl mx-auto p-4 sm:p-6 lg:p-8'>
 				<header className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4'>
 					<div>
-						<h1 className='text-3xl font-bold text-gray-900 tracking-tight'>Panel Administracyjny</h1>
+						<h1 className='text-3xl font-bold text-[#005698] tracking-tight'>Panel Administracyjny</h1>
 						<p className='text-gray-600 mt-1'>Przeglądaj i zarządzaj złożonymi deklaracjami.</p>
 					</div>
 					<div className='flex items-center gap-4'>
 						<span className='text-sm text-gray-700 hidden sm:block'>
-							Witaj, <strong>{session?.user?.name || 'Admin'}</strong>
+							Witaj, <strong className='text-[#005698]'>{session?.user?.name || 'Admin'}</strong>
 						</span>
 						<button
 							onClick={() => signOut({ callbackUrl: '/logowanie-admin' })}
 							className='inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors shadow-sm'>
 							<svg
 								xmlns='http://www.w3.org/2000/svg'
-								className='h-4 w-4'
+								className='h-4 w-4 text-[#005698]'
 								fill='none'
 								viewBox='0 0 24 24'
 								stroke='currentColor'
@@ -320,7 +320,7 @@ export default function AdminDashboard() {
 									d='M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1'
 								/>
 							</svg>
-							<span>Wyloguj się</span>
+							<span className='text-[#005698]'>Wyloguj się</span>
 						</button>
 					</div>
 				</header>
@@ -333,7 +333,7 @@ export default function AdminDashboard() {
 					<div className='flex items-center justify-center md:col-start-4'>
 						<button
 							onClick={() => setIsAddModalOpen(true)}
-							className='w-full h-half inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors'>
+							className='w-full h-half inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#005698] text-white font-semibold rounded-lg shadow hover:bg-[#005698]/80 transition-colors'>
 							<svg className='h-5 w-5' viewBox='0 0 20 20' fill='currentColor'>
 								<path d='M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z' />
 							</svg>
@@ -348,7 +348,7 @@ export default function AdminDashboard() {
 							onClick={() => setActiveTab('declarations')}
 							className={`${
 								activeTab === 'declarations'
-									? 'border-blue-500 text-blue-600'
+									? 'border-[#005698] text-[#005698]'
 									: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
 							} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>
 							Deklaracje i Wnioski ({declarations.length})
@@ -357,7 +357,7 @@ export default function AdminDashboard() {
 							onClick={() => setActiveTab('surveys')}
 							className={`${
 								activeTab === 'surveys'
-									? 'border-blue-500 text-blue-600'
+									? 'border-[#005698] text-[#005698]'
 									: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
 							} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>
 							Ankiety ({activeSurveys.length})
@@ -366,7 +366,7 @@ export default function AdminDashboard() {
 							onClick={() => setActiveTab('management')}
 							className={`${
 								activeTab === 'management'
-									? 'border-blue-500 text-blue-600'
+									? 'border-[#005698] text-[#005698]'
 									: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
 							} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>
 							Zarządzanie Strefą Członka
@@ -398,8 +398,8 @@ export default function AdminDashboard() {
 								<div className='space-y-8'>
 									<section>
 										<div className='flex items-center gap-3 mb-4 p-4 bg-gray-50 border rounded-lg'>
-											<DocumentDuplicateIcon className='h-6 w-6 text-gray-500' />
-											<h2 className='text-lg font-semibold text-gray-800'>Aktywne ankiety</h2>
+											<DocumentDuplicateIcon className='h-6 w-6 text-[#005698]' />
+											<h2 className='text-lg font-semibold text-[#005698]'>Aktywne ankiety</h2>
 										</div>
 										<div className='bg-white rounded-lg shadow'>
 											<SubmissionsTable
@@ -417,8 +417,8 @@ export default function AdminDashboard() {
 									</section>
 									<section>
 										<div className='flex items-center gap-3 mb-4 p-4 bg-gray-50 border rounded-lg'>
-											<ArchiveBoxIcon className='h-6 w-6 text-gray-500' />
-											<h2 className='text-lg font-semibold text-gray-800'>Archiwum ankiet</h2>
+											<ArchiveBoxIcon className='h-6 w-6 text-[#005698]' />
+											<h2 className='text-lg font-semibold text-[#005698]'>Archiwum ankiet</h2>
 										</div>
 										<div className='bg-white rounded-lg shadow'>
 											<SubmissionsTable

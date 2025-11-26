@@ -103,9 +103,9 @@ export default function MemberFileEditor({ memberId }) {
 									d='m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
 							</svg>
 						) : (
-							<CloudArrowUpIcon className='h-4 w-4' />
+							<CloudArrowUpIcon className='h-4 w-4 text-[#005698]' />
 						)}
-						<span>{isUploading ? 'Przesyłanie...' : 'Wgraj nowe pliki'}</span>
+						<span className='text-[#005698]'>{isUploading ? 'Przesyłanie...' : 'Wgraj nowe pliki'}</span>
 					</div>
 				</label>
 			</div>
@@ -130,7 +130,7 @@ export default function MemberFileEditor({ memberId }) {
 									download
 									className='p-2 text-blue-600 hover:bg-blue-100 rounded-md'
 									title='Pobierz plik'>
-									<ArrowDownTrayIcon className='h-5 w-5' />
+									<ArrowDownTrayIcon className='h-5 w-5 text-[#005698]' />
 								</Link>
 								<button
 									onClick={() => handleDelete(file.id)}

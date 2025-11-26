@@ -107,11 +107,11 @@ export default function MemberBrowser() {
 		<div className='p-2'>
 			<div className='flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 p-4 bg-gray-50 border rounded-lg'>
 				<div className='flex items-center gap-3'>
-					<UserGroupIcon className='h-6 w-6 text-gray-500' />
-					<h2 className='text-lg font-semibold text-gray-800'>Lista Członków ({totalMembers})</h2>
+					<UserGroupIcon className='h-6 w-6 text-[#005698]' />
+					<h2 className='text-lg font-semibold text-[#005698]'>Lista Członków ({totalMembers})</h2>
 					{isLoading && (
 						<svg
-							className='animate-spin h-5 w-5 text-blue-600'
+							className='animate-spin h-5 w-5 text-[#005698]'
 							xmlns='http://www.w3.org/2000/svg'
 							fill='none'
 							viewBox='0 0 24 24'>
@@ -184,7 +184,7 @@ export default function MemberBrowser() {
 										onClick={() => setEditingMember(member)}
 										className='p-2 text-blue-600 hover:bg-blue-100 rounded-md'
 										title='Edytuj dane kontaktowe'>
-										<PencilSquareIcon className='h-5 w-5' />
+										<PencilSquareIcon className='h-5 w-5 text-[#005698]' />
 									</button>
 									<button
 										onClick={() => handleDeleteMember(member.id)}

@@ -27,7 +27,7 @@ const AttachmentList = ({ title, icon: Icon, files, submissionId, onDownload, on
 					<li key={att.id} className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 group'>
 						<div className='flex items-start sm:items-center gap-3 min-w-0'>
 							<div className='mt-0.5 flex-shrink-0 rounded-md bg-blue-50 p-1.5 text-blue-600 border border-blue-100'>
-								<svg className='h-4 w-4' viewBox='0 0 20 20' fill='currentColor'>
+								<svg className='h-4 w-4 text-[#005698]' viewBox='0 0 20 20' fill='currentColor'>
 									<path d='M4 2a2 2 0 00-2 2v1a1 1 0 001 1v8a2 2 0 002 2h2.1a1 1 0 01.948.684l.3.9a1 1 0 00.948.684h1.508a1 1 0 00.948-.684l.3-.9A1 1 0 0114.9 16H17a2 2 0 002-2V5a1 1 0 001-1V4a2 2 0 00-2-2H4z' />
 								</svg>
 							</div>
@@ -44,14 +44,14 @@ const AttachmentList = ({ title, icon: Icon, files, submissionId, onDownload, on
 								type='button'
 								onClick={() => onDownload(submissionId, att.id)}
 								className='inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500'>
-								<svg className='h-4 w-4' viewBox='0 0 20 20' fill='currentColor'>
+								<svg className='h-4 w-4 text-[#005698]' viewBox='0 0 20 20' fill='currentColor'>
 									<path
 										fillRule='evenodd'
 										d='M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z'
 										clipRule='evenodd'
 									/>
 								</svg>
-								<span>Pobierz</span>
+								<span className='text-[#005698]'>Pobierz</span>
 							</button>
 							<button
 								type='button'
@@ -202,7 +202,7 @@ export default function SubmissionsTable({
 											)}
 											<Link
 												href={`/api/admin/submissions/${submission.id}/download`}
-												className='p-2 text-blue-600 hover:bg-blue-100 rounded-md'
+												className='p-2 text-[#005698] hover:bg-[#005698]/80 rounded-md'
 												title='Pobierz PDF'>
 												<svg className='h-5 w-5' viewBox='0 0 20 20' fill='currentColor'>
 													<path

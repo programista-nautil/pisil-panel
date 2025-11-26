@@ -83,8 +83,8 @@ export default function GeneralFileManager() {
 	return (
 		<div className='p-2'>
 			<div className='flex items-center gap-3 mb-4 p-4 bg-gray-50 border rounded-lg'>
-				<DocumentDuplicateIcon className='h-6 w-6 text-gray-500' />
-				<h2 className='text-lg font-semibold text-gray-800'>Pliki Ogólne dla Członków</h2>
+				<DocumentDuplicateIcon className='h-6 w-6 text-[#005698]' />
+				<h2 className='text-lg font-semibold text-[#005698]'>Pliki Ogólne dla Członków</h2>
 			</div>
 			<div className='bg-white rounded-lg shadow'>
 				{/* Formularz dodawania */}
@@ -95,12 +95,12 @@ export default function GeneralFileManager() {
 							ref={fileInputRef}
 							type='file'
 							multiple
-							className='block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100'
+							className='block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#005698] file:text-white hover:file:bg-[#005698]/80'
 						/>
 						<button
 							onClick={handleUpload}
 							disabled={isUploading}
-							className='inline-flex justify-center items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-blue-700 disabled:bg-gray-300'>
+							className='inline-flex justify-center items-center gap-2 px-4 py-2 bg-[#005698] text-white text-sm font-medium rounded-md shadow-sm hover:bg-[#005698]/80 disabled:bg-gray-300'>
 							<ArrowUpOnSquareIcon className='h-4 w-4' />
 							<span>{isUploading ? 'Wgrywanie...' : 'Wgraj'}</span>
 						</button>
@@ -125,7 +125,7 @@ export default function GeneralFileManager() {
 										download
 										className='p-2 text-blue-600 hover:bg-blue-100 rounded-md'
 										title='Pobierz plik'>
-										<ArrowDownTrayIcon className='h-5 w-5' />
+										<ArrowDownTrayIcon className='h-5 w-5 text-blue-600' />
 									</Link>
 									<button
 										onClick={() => handleDeleteFile(file.id)}
