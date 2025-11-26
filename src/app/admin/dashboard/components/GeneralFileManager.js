@@ -125,7 +125,7 @@ export default function GeneralFileManager() {
 										download
 										className='p-2 text-blue-600 hover:bg-blue-100 rounded-md'
 										title='Pobierz plik'>
-										<ArrowDownTrayIcon className='h-5 w-5 text-blue-600' />
+										<ArrowDownTrayIcon className='h-5 w-5 text-[#005698]' />
 									</Link>
 									<button
 										onClick={() => handleDeleteFile(file.id)}

@@ -16,9 +16,9 @@ export default function StepsIndicator({ steps, current = 1 }) {
 								<div
 									className={
 										status === 'complete'
-											? 'flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white'
+											? 'flex h-8 w-8 items-center justify-center rounded-full bg-[#005698] text-white'
 											: status === 'current'
-											? 'flex h-8 w-8 items-center justify-center rounded-full border-2 border-blue-600 text-blue-700'
+											? 'flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#005698] text-[#005698]'
 											: 'flex h-8 w-8 items-center justify-center rounded-full border-2 border-gray-300 text-gray-500'
 									}
 									aria-current={status === 'current' ? 'step' : undefined}>
@@ -36,7 +36,7 @@ export default function StepsIndicator({ steps, current = 1 }) {
 									)}
 								</div>
 								<span
-									className={`ml-3 text-sm ${status === 'current' ? 'font-semibold text-blue-700' : 'text-gray-700'}`}>
+									className={`ml-3 text-sm ${status === 'current' ? 'font-semibold text-[#005698]' : 'text-gray-700'}`}>
 									{label}
 								</span>
 							</div>
@@ -44,7 +44,7 @@ export default function StepsIndicator({ steps, current = 1 }) {
 							{/* Separator */}
 							{idx !== steps.length - 1 && (
 								<div className='flex-1 mx-4'>
-									<div className={status === 'complete' ? 'h-0.5 bg-blue-600' : 'h-0.5 bg-gray-200'} />
+									<div className={status === 'complete' ? 'h-0.5 bg-[#005698]' : 'h-0.5 bg-gray-200'} />
 								</div>
 							)}
 						</li>

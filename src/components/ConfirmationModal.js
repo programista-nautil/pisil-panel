@@ -54,7 +54,7 @@ export default function ConfirmationModal({
 						<div className='flex items-start gap-4'>
 							<div className='mx-auto flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 sm:mx-0'>
 								<svg
-									className='h-6 w-6 text-blue-600'
+									className='h-6 w-6 text-[#005698]'
 									xmlns='http://www.w3.org/2000/svg'
 									fill='none'
 									viewBox='0 0 24 24'
@@ -82,7 +82,7 @@ export default function ConfirmationModal({
 								type='button'
 								onClick={onConfirm}
 								disabled={isLoading || isConfirmDisabled}
-								className='w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed sm:w-auto sm:text-sm'>
+								className='w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#005698] text-base font-medium text-white hover:bg-[#005698]/80 disabled:bg-[#005698]/80 disabled:cursor-not-allowed sm:w-auto sm:text-sm'>
 								{isLoading && (
 									<svg
 										className='animate-spin -ml-1 mr-3 h-5 w-5 text-white'

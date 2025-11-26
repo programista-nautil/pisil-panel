@@ -96,7 +96,7 @@ const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(
 				{isUploading ? (
 					<div className='flex flex-col items-center justify-center space-y-4'>
 						<svg
-							className='animate-spin h-10 w-10 text-blue-600'
+							className='animate-spin h-10 w-10 text-[#005698]'
 							xmlns='http://www.w3.org/2000/svg'
 							fill='none'
 							viewBox='0 0 24 24'>
@@ -184,7 +184,7 @@ const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(
 									onChange={onInputChange}
 									className='sr-only'
 								/>
-								<span className='text-blue-700 hover:text-blue-800 text-sm font-medium'>Dodaj kolejne pliki</span>
+								<span className='text-[#005698] hover:text-[#005698]/80 text-sm font-medium'>Dodaj kolejne pliki</span>
 							</label>
 						</div>
 					</div>
@@ -204,7 +204,7 @@ const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(
 					className={`px-6 py-2 rounded-md font-medium transition-colors ${
 						isUploading || files.length === 0
 							? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-							: 'bg-blue-600 text-white hover:bg-blue-700'
+							: 'bg-[#005698] text-white hover:bg-[#005698]/80'
 					}`}>
 					{isUploading ? 'Przesyłanie...' : 'Prześlij dodatkowe dokumenty'}
 				</button>

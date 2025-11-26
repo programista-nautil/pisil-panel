@@ -46,8 +46,8 @@ export default async function RootLayout({ children }) {
 							// Konfiguracja dla sukcesu (tylko ikona jest zielona)
 							success: {
 								iconTheme: {
-									primary: '#10B981', // Emerald-500
-									secondary: '#ECFDF5', // Emerald-50 (tło ikony)
+									primary: '#005698',
+									secondary: '#F3F4F6',
 								},
 							},
 							// Konfiguracja dla błędu (tylko ikona jest czerwona)
