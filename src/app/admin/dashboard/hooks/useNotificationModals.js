@@ -127,14 +127,6 @@ export function useNotificationModals(submissions, setSubmissions) {
 		setIsSubmitting(false)
 	}
 
-	const onAcceptanceFilesChange = e => {
-		setAcceptanceAttachments(prevFiles => [...prevFiles, ...Array.from(e.target.files)])
-	}
-
-	const onAcceptanceFileRemove = index => {
-		setAcceptanceAttachments(prevFiles => prevFiles.filter((_, i) => i !== index))
-	}
-
 	const confirmAndSendAcceptanceEmail = async () => {
 		if (!submissionToAccept) return
 		setIsSubmitting(true)

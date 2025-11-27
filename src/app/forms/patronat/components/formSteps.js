@@ -17,7 +17,10 @@ export const Step1 = ({ register, errors }) => (
 			</label>
 			<input
 				type='email'
-				{...register('email', { required: 'Email jest wymagany' })}
+				{...register('email', {
+					required: 'To pole jest wymagane.',
+					pattern: { value: /^\S+@\S+$/i, message: 'Nieprawidłowy format e-mail.' },
+				})}
 				className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
 			/>
 			{errors.email && <p className='text-red-500 text-xs mt-1'>{errors.email.message}</p>}

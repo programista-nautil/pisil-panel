@@ -21,7 +21,7 @@ export default function MultiStepForm({ formConfig }) {
 		getValues,
 		setValue,
 	} = useForm({
-		mode: 'onChange',
+		mode: 'onBlur',
 		defaultValues,
 	})
 
