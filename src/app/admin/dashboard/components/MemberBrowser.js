@@ -166,7 +166,7 @@ export default function MemberBrowser() {
 									<span className='text-sm font-semibold text-gray-500 w-10 text-center'>#{member.memberNumber}</span>
 									<div className='h-10 border-l border-gray-200'></div>
 									<div>
-										<p className='text-sm font-medium text-gray-900'>{member.company || 'Brak nazwy firmy'}</p>
+										<p className='text-sm font-semibold text-gray-700'>{member.company || 'Brak nazwy firmy'}</p>
 										<p className='text-sm text-gray-700'>{member.name || 'Brak imienia i nazwiska'}</p>
 										<p className='text-sm text-gray-500'>{member.email}</p>
 										<p className='text-sm text-gray-500'>{member.phones || 'Brak telefonu'}</p>
