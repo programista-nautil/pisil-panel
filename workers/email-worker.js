@@ -45,7 +45,8 @@ const worker = new Worker(
 					port: 587,
 					secure: false,
 					pool: true, // WAŻNE: Poolowanie połączeń
-					maxConnections: 3, // Ostrożnie na devie
+					maxConnections: 5,
+					maxMessages: 100,
 					auth: {
 						user: process.env.SMTP_USER,
 						pass: process.env.SMTP_PASS,
@@ -53,7 +54,7 @@ const worker = new Worker(
 				})
 
 				// 2. Konfiguracja "bąbelkowania" (małe partie dla testu)
-				const BATCH_SIZE = 5 // Na devie wyślijmy po 5 maili
+				const BATCH_SIZE = 20 // Na devie wyślijmy po 5 maili
 				const DELAY_MS = 2000 // 2 sekundy przerwy
 
 				let sentCount = 0
