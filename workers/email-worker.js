@@ -3,6 +3,7 @@ const IORedis = require('ioredis')
 const nodemailer = require('nodemailer')
 const { PrismaClient } = require('@prisma/client')
 const path = require('path')
+const fs = require('fs')
 
 // Ładujemy zmienne środowiskowe z pliku .env w głównym katalogu
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
@@ -27,25 +28,30 @@ const worker = new Worker(
 			console.log(`🚀 [Job ${job.id}] Rozpoczynam kampanię mailową dla: ${companyName}`)
 
 			try {
-				// 1. Pobierz maile członków (tylko te istniejące)
-				const members = await prisma.member.findMany({
-					where: {
-						NOT: {
-							email: { startsWith: 'brak_maila_' },
-						},
-					},
-					select: { email: true },
-				})
-				console.log(`📧 Znaleziono ${members.length} adresatów.`)
+				const listPath = path.join(__dirname, '../src/config/mailingList.json')
 
-				if (members.length === 0) return
+				if (!fs.existsSync(listPath)) {
+					throw new Error(`Nie znaleziono pliku listy mailingowej: ${listPath}`)
+				}
+
+				const rawData = fs.readFileSync(listPath, 'utf-8')
+				const emails = JSON.parse(rawData)
+
+				const recipients = emails.filter(email => email && email.includes('@'))
+
+				console.log(`📧 Wczytano listę z pliku JSON. Znaleziono ${recipients.length} adresatów.`)
+
+				if (recipients.length === 0) {
+					console.log('⚠️ Lista adresatów jest pusta. Kończę zadanie.')
+					return
+				}
 
 				const transporter = nodemailer.createTransport({
 					host: 'smtp.gmail.com',
 					port: 587,
 					secure: false,
 					pool: true, // WAŻNE: Poolowanie połączeń
-					maxConnections: 5,
+					maxConnections: 3,
 					maxMessages: 100,
 					auth: {
 						user: process.env.SMTP_USER,
@@ -54,25 +60,30 @@ const worker = new Worker(
 				})
 
 				// 2. Konfiguracja "bąbelkowania" (małe partie dla testu)
-				const BATCH_SIZE = 20 // Na devie wyślijmy po 5 maili
-				const DELAY_MS = 2000 // 2 sekundy przerwy
+				const BATCH_SIZE = 10 // Wyślij po 10 maili
+				const DELAY_MS = 3000 // 3 sekundy przerwy
 
 				let sentCount = 0
 
-				for (let i = 0; i < 3; i += BATCH_SIZE) {
-					const batch = members.slice(i, i + BATCH_SIZE)
+				for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+					const batch = recipients.slice(i, i + BATCH_SIZE)
 
 					console.log(`📦 Wysyłam partię ${Math.floor(i / BATCH_SIZE) + 1} (${batch.length} maili)...`)
 
 					await Promise.all(
-						batch.map(async member => {
+						batch.map(async emailAddress => {
 							try {
 								await transporter.sendMail({
 									from: process.env.SMTP_USER,
-									//to: member.email, // <--- NA PRODUKCJI
+									// to: emailAddress, // <--- NA PRODUKCJI
 									to: 'programista@nautil.pl', // <--- NA DEVIE (DLA BEZPIECZEŃSTWA)
-									subject: `[TEST] Nowy kandydat: ${companyName}`,
-									html: `<p>Informacja o kandydacie: ${companyName}</p>`,
+									subject: `Nowy kandydat na członka PISiL: ${companyName}`,
+									html: `
+										<p>Szanowni Państwo,</p>
+										<p>Informujemy, że wpłynęła deklaracja członkowska od firmy: <strong>${companyName}</strong>.</p>
+										<p>Zgłoszenie zostało wstępnie zweryfikowane przez Biuro PISiL.</p>
+										<p>Pozdrawiamy,<br>Biuro PISiL</p>
+									`,
 								})
 
 								await sleep(100)
@@ -90,7 +101,7 @@ const worker = new Worker(
 					}
 				}
 
-				console.log(`✅ Zakończono zadanie. Wysłano ${sentCount} maili.`)
+				console.log(`✅ Zakończono zadanie. Wysłano ${sentCount} z ${recipients.length} maili.`)
 			} catch (error) {
 				console.error('Błąd krytyczny w workerze:', error)
 				throw error // Rzuć błąd, żeby BullMQ wiedział, że zadanie się nie udało
