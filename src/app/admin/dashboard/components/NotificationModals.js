@@ -36,7 +36,11 @@ export default function NotificationModals({
 						: confirmAndSendVerificationEmail
 				}
 				title={successMessage ? 'Operacja zakończona' : 'Potwierdź weryfikację'}
-				message={`Czy na pewno chcesz kontynuować dla zgłoszenia od: ${submissionToVerify?.companyName}?`}
+				message={
+					submissionToVerify?.formType === 'PATRONAT'
+						? `Czy na pewno chcesz zatwierdzić wniosek o patronat dla: ${submissionToVerify?.companyName}?`
+						: `Potwierdzenie weryfikacji dla firmy "${submissionToVerify?.companyName}" spowoduje:\n\n1. Wygenerowanie oficjalnego Komunikatu.\n2. Wysłanie powiadomienia do kandydata.\n3. Rozpoczęcie masowej wysyłki maili do wszystkich członków Izby (proces w tle).\n\nCzy chcesz kontynuować?`
+				}
 				confirmButtonText='Potwierdź i wyślij'
 				isLoading={isSubmitting}
 				successMessage={successMessage}

@@ -74,6 +74,7 @@ export async function POST(request) {
 				ceoName: userData.ceoName,
 				address: userData.address,
 				phones: userData.phones,
+				recommendations: userData.rekomendacje || userData.recommendations || null,
 			},
 		})
 

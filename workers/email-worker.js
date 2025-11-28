@@ -4,9 +4,15 @@ const nodemailer = require('nodemailer')
 const { PrismaClient } = require('@prisma/client')
 const path = require('path')
 const fs = require('fs')
+const { Storage } = require('@google-cloud/storage')
 
 // Ładujemy zmienne środowiskowe z pliku .env w głównym katalogu
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
+
+const storage = new Storage({
+	credentials: JSON.parse(process.env.GCS_CREDENTIALS),
+})
+const bucketName = process.env.GCS_BUCKET_NAME
 
 const prisma = new PrismaClient()
 
@@ -24,10 +30,20 @@ const worker = new Worker(
 	'email-queue',
 	async job => {
 		if (job.name === 'notify-members') {
-			const { companyName } = job.data
+			const { companyName, attachmentGcsPath, attachmentFileName } = job.data
 			console.log(`🚀 [Job ${job.id}] Rozpoczynam kampanię mailową dla: ${companyName}`)
 
 			try {
+				let attachmentBuffer = null
+				if (attachmentGcsPath) {
+					console.log(`📥 Pobieram załącznik z GCS: ${attachmentGcsPath}`)
+					const cleanPath = attachmentGcsPath.replace(`https://storage.googleapis.com/${bucketName}/`, '')
+
+					const [fileBuffer] = await storage.bucket(bucketName).file(cleanPath).download()
+					attachmentBuffer = fileBuffer
+					console.log('✅ Załącznik pobrany do pamięci.')
+				}
+
 				const listPath = path.join(__dirname, '../src/config/mailingList.json')
 
 				if (!fs.existsSync(listPath)) {
@@ -82,9 +98,18 @@ const worker = new Worker(
 									html: `
 										<p>Szanowni Państwo,</p>
 										<p>Informujemy, że wpłynęła deklaracja członkowska od firmy: <strong>${companyName}</strong>.</p>
-										<p>Zgłoszenie zostało wstępnie zweryfikowane przez Biuro PISiL.</p>
+										<p>W załączniku przesyłamy komunikat ze szczegółami zgłoszenia.</p>
 										<p>Pozdrawiamy,<br>Biuro PISiL</p>
 									`,
+									attachments: attachmentBuffer
+										? [
+												{
+													filename: attachmentFileName,
+													content: attachmentBuffer,
+													contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+												},
+										  ]
+										: [],
 								})
 
 								await sleep(100)

@@ -4,6 +4,8 @@ import prisma from '@/lib/prisma'
 import { emailQueue } from '@/lib/queue'
 import nodemailer from 'nodemailer'
 import { FormType } from '@prisma/client'
+import { generateCommunicationDoc } from '@/lib/services/communicationService' // Import serwisu
+import { uploadFileToGCS } from '@/lib/gcs'
 
 export async function POST(request, { params }) {
 	const session = await auth()
@@ -25,6 +27,20 @@ export async function POST(request, { params }) {
 		if (submission.formType !== FormType.DEKLARACJA_CZLONKOWSKA) {
 			return NextResponse.json({ message: 'Nieprawidłowy typ formularza' }, { status: 400 })
 		}
+
+		let commNumber = submission.communicationNumber
+		if (!commNumber) {
+			const maxResult = await prisma.submission.aggregate({ _max: { communicationNumber: true } })
+			commNumber = (maxResult._max.communicationNumber || 0) + 1
+			await prisma.submission.update({
+				where: { id },
+				data: { communicationNumber: commNumber },
+			})
+		}
+
+		const { buffer, fileName } = await generateCommunicationDoc(submission, commNumber)
+
+		const gcsPath = await uploadFileToGCS(buffer, `communications/${fileName}`)
 
 		const transporter = nodemailer.createTransport({
 			host: 'smtp.gmail.com',
@@ -55,6 +71,8 @@ export async function POST(request, { params }) {
 			{
 				submissionId: submission.id,
 				companyName: submission.companyName,
+				attachmentGcsPath: gcsPath,
+				attachmentFileName: fileName,
 			},
 			{
 				attempts: 3,
@@ -66,7 +84,7 @@ export async function POST(request, { params }) {
 		)
 
 		return NextResponse.json(
-			{ message: 'Email weryfikacyjny został wysłany i rozpoczęto wysyłkę powiadomień do członków w tle.' },
+			{ message: `Zgłoszenie zweryfikowane. Wygenerowano ${fileName} i rozpoczęto wysyłkę.` },
 			{ status: 200 }
 		)
 	} catch (error) {
