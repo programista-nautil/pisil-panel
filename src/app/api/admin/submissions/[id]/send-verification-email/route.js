@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
+import { emailQueue } from '@/lib/queue'
 import nodemailer from 'nodemailer'
 import { FormType } from '@prisma/client'
 
@@ -49,7 +50,25 @@ export async function POST(request, { params }) {
 
 		await transporter.sendMail(mailOptions)
 
-		return NextResponse.json({ message: 'Email weryfikacyjny został wysłany' }, { status: 200 })
+		await emailQueue.add(
+			'notify-members',
+			{
+				submissionId: submission.id,
+				companyName: submission.companyName,
+			},
+			{
+				attempts: 3,
+				backoff: {
+					type: 'exponential',
+					delay: 5000,
+				},
+			}
+		)
+
+		return NextResponse.json(
+			{ message: 'Email weryfikacyjny został wysłany i rozpoczęto wysyłkę powiadomień do członków w tle.' },
+			{ status: 200 }
+		)
 	} catch (error) {
 		console.error('Błąd podczas wysyłania emaila weryfikacyjnego:', error)
 		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })
