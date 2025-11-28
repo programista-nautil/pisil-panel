@@ -95,7 +95,7 @@ const worker = new Worker(
 					)
 
 					// Czekaj przed następną partią
-					if (i + BATCH_SIZE < members.length) {
+					if (i + BATCH_SIZE < recipients.length) {
 						console.log(`⏳ Czekam ${DELAY_MS}ms...`)
 						await sleep(DELAY_MS)
 					}
