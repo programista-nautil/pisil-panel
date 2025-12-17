@@ -5,7 +5,16 @@ import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
 import { sanitizeFilename } from '@/lib/utils'
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'programista@nautil.pl'
+const EMAILS = {
+	// Pani Teresa (Deklaracje Członkowskie)
+	DEKLARACJE: 'programista@nautil.pl', // DOCELOWO: 'teresa@pisil.pl'
+
+	// Pan Czesław (Patronaty)
+	PATRONATY: 'programista@nautil.pl', // DOCELOWO: 'c.ciesielski@pisil.pl'
+
+	// Domyślny (Ankiety i inne)
+	DEFAULT: process.env.ADMIN_EMAIL || 'programista@nautil.pl',
+}
 
 export async function POST(request) {
 	try {
@@ -90,7 +99,7 @@ export async function POST(request) {
 
 		const adminMailOptions = {
 			from: process.env.SMTP_USER || 'programista@nautil.pl',
-			to: ADMIN_EMAIL,
+			to: isDeclaration ? EMAILS.DEKLARACJE : formType === 'PATRONAT' ? EMAILS.PATRONATY : EMAILS.DEFAULT,
 			subject: isDeclaration
 				? `Nowa deklaracja członkowska - ${displayCompanyOrOrg}`
 				: formType === 'PATRONAT'
