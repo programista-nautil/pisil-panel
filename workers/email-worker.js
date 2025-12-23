@@ -31,6 +31,9 @@ const worker = new Worker(
 			const { companyName, attachmentGcsPath, attachmentFileName, adminEmail } = job.data
 			console.log(`🚀 [Job ${job.id}] Kampania dla: ${companyName}. Raport trafi do: ${adminEmail}`)
 
+			let sentCount = 0
+			let totalRecipients = 0
+
 			try {
 				let attachmentBuffer = null
 				if (attachmentGcsPath) {
@@ -53,9 +56,11 @@ const worker = new Worker(
 
 				const recipients = emails.filter(email => email && email.includes('@'))
 
-				console.log(`📧 Wczytano listę z pliku JSON. Znaleziono ${recipients.length} adresatów.`)
+				totalRecipients = recipients.length
 
-				if (recipients.length === 0) {
+				console.log(`📧 Wczytano listę z pliku JSON. Znaleziono ${totalRecipients} adresatów.`)
+
+				if (totalRecipients === 0) {
 					console.log('⚠️ Lista adresatów jest pusta. Kończę zadanie.')
 					return
 				}
@@ -78,9 +83,7 @@ const worker = new Worker(
 				const BATCH_SIZE = 20 // Wyślij po 10 maili
 				const DELAY_MS = 5000 // 3 sekundy przerwy
 
-				let sentCount = 0
-
-				for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+				for (let i = 0; i < totalRecipients; i += BATCH_SIZE) {
 					const batch = recipients.slice(i, i + BATCH_SIZE)
 
 					console.log(`📦 Wysyłam partię ${Math.floor(i / BATCH_SIZE) + 1} (${batch.length} maili)...`)
@@ -119,13 +122,13 @@ const worker = new Worker(
 					)
 
 					// Czekaj przed następną partią
-					if (i + BATCH_SIZE < recipients.length) {
+					if (i + BATCH_SIZE < totalRecipients) {
 						console.log(`⏳ Czekam ${DELAY_MS}ms...`)
 						await sleep(DELAY_MS)
 					}
 				}
 
-				console.log(`✅ Zakończono zadanie. Wysłano ${sentCount} z ${recipients.length} maili.`)
+				console.log(`✅ Zakończono zadanie. Wysłano ${sentCount} z ${totalRecipients} maili.`)
 
 				if (adminEmail) {
 					try {
@@ -137,7 +140,7 @@ const worker = new Worker(
                                 <h3>Raport z wysyłki masowej</h3>
                                 <p>Zadanie wysyłki komunikatu dotyczącego firmy <strong>${companyName}</strong> zostało zakończone.</p>
                                 <ul>
-                                    <li>Liczba odbiorców w bazie: <strong>${recipients.length}</strong></li>
+                                    <li>Liczba odbiorców w bazie: <strong>${totalRecipients}</strong></li>
                                     <li>Pomyślnie wysłano: <strong>${sentCount}</strong></li>
                                 </ul>
                                 <p>System PISiL</p>
@@ -150,7 +153,41 @@ const worker = new Worker(
 				}
 			} catch (error) {
 				console.error('Błąd krytyczny w workerze:', error)
-				throw error // Rzuć błąd, żeby BullMQ wiedział, że zadanie się nie udało
+
+				if (adminEmail) {
+					try {
+						// Tworzymy transporter tutaj awaryjnie, bo błąd mógł wystąpić ZANIM zdefiniowaliśmy go w bloku try
+						const emergencyTransporter = nodemailer.createTransport({
+							host: 'smtp.gmail.com',
+							port: 587,
+							secure: false,
+							auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+						})
+
+						await emergencyTransporter.sendMail({
+							from: process.env.SMTP_USER,
+							to: adminEmail,
+							subject: `[BŁĄD KRYTYCZNY] Niepowodzenie wysyłki komunikatów: ${companyName}`,
+							html: `
+                                <h3 style="color: red;">Wystąpił błąd podczas wysyłki masowej</h3>
+                                <p>Proces został przerwany dla firmy: <strong>${companyName}</strong>.</p>
+                                <p><strong>Treść błędu:</strong> ${error.message}</p>
+                                <hr>
+                                <p>Status w momencie awarii:</p>
+                                <ul>
+                                    <li>Znaleziono odbiorców: <strong>${totalRecipients}</strong></li>
+                                    <li>Zdążono wysłać: <strong>${sentCount}</strong></li>
+                                </ul>
+                                <p>Skontaktuj się z administratorem IT.</p>
+                            `,
+						})
+						console.log(`📨 Wysłano raport o błędzie do: ${adminEmail}`)
+					} catch (emailError) {
+						console.error('Nie udało się nawet wysłać maila o błędzie:', emailError)
+					}
+				}
+
+				throw error
 			}
 		}
 	},
