@@ -14,8 +14,6 @@ const storage = new Storage({
 })
 const bucketName = process.env.GCS_BUCKET_NAME
 
-const prisma = new PrismaClient()
-
 const connection = new IORedis({
 	host: process.env.REDIS_HOST || '127.0.0.1',
 	port: process.env.REDIS_PORT || 6379,
@@ -30,8 +28,8 @@ const worker = new Worker(
 	'email-queue',
 	async job => {
 		if (job.name === 'notify-members') {
-			const { companyName, attachmentGcsPath, attachmentFileName } = job.data
-			console.log(`🚀 [Job ${job.id}] Rozpoczynam kampanię mailową dla: ${companyName}`)
+			const { companyName, attachmentGcsPath, attachmentFileName, adminEmail } = job.data
+			console.log(`🚀 [Job ${job.id}] Kampania dla: ${companyName}. Raport trafi do: ${adminEmail}`)
 
 			try {
 				let attachmentBuffer = null
@@ -66,7 +64,7 @@ const worker = new Worker(
 					host: 'smtp.gmail.com',
 					port: 587,
 					secure: false,
-					pool: true, // WAŻNE: Poolowanie połączeń
+					pool: true,
 					maxConnections: 5,
 					maxMessages: 50,
 					rateLimit: 2,
@@ -128,6 +126,28 @@ const worker = new Worker(
 				}
 
 				console.log(`✅ Zakończono zadanie. Wysłano ${sentCount} z ${recipients.length} maili.`)
+
+				if (adminEmail) {
+					try {
+						await transporter.sendMail({
+							from: process.env.SMTP_USER,
+							to: adminEmail,
+							subject: `[RAPORT] Zakończono wysyłkę komunikatu: ${companyName}`,
+							html: `
+                                <h3>Raport z wysyłki masowej</h3>
+                                <p>Zadanie wysyłki komunikatu dotyczącego firmy <strong>${companyName}</strong> zostało zakończone.</p>
+                                <ul>
+                                    <li>Liczba odbiorców w bazie: <strong>${recipients.length}</strong></li>
+                                    <li>Pomyślnie wysłano: <strong>${sentCount}</strong></li>
+                                </ul>
+                                <p>System PISiL</p>
+                            `,
+						})
+						console.log(`📨 Wysłano raport do admina: ${adminEmail}`)
+					} catch (reportError) {
+						console.error('Błąd wysyłania raportu do admina:', reportError)
+					}
+				}
 			} catch (error) {
 				console.error('Błąd krytyczny w workerze:', error)
 				throw error // Rzuć błąd, żeby BullMQ wiedział, że zadanie się nie udało

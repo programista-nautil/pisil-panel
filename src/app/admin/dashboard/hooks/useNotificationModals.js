@@ -107,10 +107,15 @@ export function useNotificationModals(submissions, setSubmissions) {
 			const response = await fetch(`/api/admin/submissions/${submissionToVerify.id}/send-verification-email`, {
 				method: 'POST',
 			})
-			if (!response.ok) throw new Error('Nie udało się wysłać e-maila.')
+			if (!response.ok) {
+				const errorData = await response.json()
+				throw new Error(errorData.message || 'Nie udało się wysłać e-maila.')
+			}
 
 			// 3. Ustaw komunikat o sukcesie
-			setSuccessMessage('Powiadomienie e-mail zostało wysłane pomyślnie!')
+			setSuccessMessage(
+				'Proces rozpoczęty! Możesz bezpiecznie zamknąć to okno. Raport otrzymasz mailem po zakończeniu.'
+			)
 		} catch (error) {
 			console.error(error)
 			toast.error('Wystąpił błąd podczas wysyłania e-maila.')

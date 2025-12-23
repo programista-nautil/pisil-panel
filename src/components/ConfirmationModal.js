@@ -70,7 +70,7 @@ export default function ConfirmationModal({
 							<div className='text-left flex-1'>
 								<h3 className='text-lg leading-6 font-semibold text-gray-900'>{title}</h3>
 								<div className='mt-2'>
-									<p className='text-sm text-gray-600'>{message}</p>
+									<p className='text-sm text-gray-600 whitespace-pre-line'>{message}</p>
 								</div>
 							</div>
 						</div>

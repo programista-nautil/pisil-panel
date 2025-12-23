@@ -73,6 +73,7 @@ export async function POST(request, { params }) {
 				companyName: submission.companyName,
 				attachmentGcsPath: gcsPath,
 				attachmentFileName: fileName,
+				adminEmail: process.env.ADMIN_EMAIL,
 			},
 			{
 				attempts: 3,
@@ -84,7 +85,9 @@ export async function POST(request, { params }) {
 		)
 
 		return NextResponse.json(
-			{ message: `Zgłoszenie zweryfikowane. Wygenerowano ${fileName} i rozpoczęto wysyłkę.` },
+			{
+				message: `Zgłoszenie zweryfikowane. Wygenerowano ${fileName} i rozpoczęto wysyłkę w tle. Raport otrzymasz na maila po zakończeniu.`,
+			},
 			{ status: 200 }
 		)
 	} catch (error) {
