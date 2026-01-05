@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-	// Dodajemy nową konfigurację rewrites
+	basePath: '/strefa-czlonka',
 	async rewrites() {
 		return [
 			{
