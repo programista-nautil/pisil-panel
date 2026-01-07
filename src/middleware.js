@@ -7,6 +7,7 @@ export default auth
 
 export const config = {
 	matcher: [
+		'/',
 		// Oryginalne ścieżki
 		'/admin/:path*',
 		// '/member/:path*', // To zastąpimy bardziej precyzyjnym matcherem poniżej, aby wykluczyć api

@@ -19,7 +19,17 @@ export const authConfig = {
 			const isMemberResetPage = pathname.startsWith('/member/reset-password') || pathname.startsWith('/zmiana-hasla')
 
 			const isPublicAuthRoute = isLoginPage || isMemberLoginPage || isMemberResetPage
-			const isPublicRoute = isPublicAuthRoute || pathname === '/unauthorized' || pathname === '/'
+			const isPublicRoute = isPublicAuthRoute || pathname === '/unauthorized'
+
+			if (pathname === '/') {
+				if (isLoggedIn) {
+					// Jeśli zalogowany, przekieruj do odpowiedniego panelu
+					const redirectUrl = userRole === 'admin' ? '/panel-admina' : '/panel-czlonka'
+					return Response.redirect(new URL(redirectUrl, nextUrl))
+				}
+				// Jeśli nie jest zalogowany, pozwól wejść na stronę główną
+				return true
+			}
 
 			// --- NOWA, BARDZIEJ CZYTELNA LOGIKA ---
 

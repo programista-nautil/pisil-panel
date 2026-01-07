@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-	basePath: '/strefa-czlonka',
 	async rewrites() {
 		return [
 			{
