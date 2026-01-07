@@ -47,7 +47,7 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 	}
 
 	return (
-		<div className='fixed inset-0 bg-black/50 z-50 flex justify-center items-center p-4' onClick={onClose}>
+		<div className='fixed inset-0 bg-black/50 z-50 flex justify-center items-center p-4'>
 			<div className='bg-white rounded-lg shadow-xl p-6 w-full max-w-md' onClick={e => e.stopPropagation()}>
 				<h3 className='text-lg font-bold text-[#005698] mb-4'>Edytuj dane kontaktowe</h3>
 				<p className='text-sm text-gray-500 mb-4'>
