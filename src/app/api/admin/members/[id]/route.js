@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
+import { syncMailingList } from '@/lib/mailingListUtils'
 
 export async function DELETE(request, { params }) {
 	const session = await auth()
@@ -29,14 +30,22 @@ export async function PATCH(request, { params }) {
 
 	const { id } = params
 	try {
-		const { email, phones, company, name, address } = await request.json()
+		const { email, phones, company, name, address, invoiceEmail, notificationEmails } = await request.json()
 
-		const existingMember = await prisma.member.findUnique({
-			where: { email },
-		})
+		if (email) {
+			const existingMember = await prisma.member.findUnique({
+				where: { email },
+			})
 
-		if (existingMember && existingMember.id !== id) {
-			return NextResponse.json({ message: 'Ten adres e-mail jest już zajęty.' }, { status: 400 })
+			if (existingMember && existingMember.id !== id) {
+				return NextResponse.json({ message: 'Ten adres e-mail jest już zajęty.' }, { status: 400 })
+			}
+		}
+
+		const oldMember = await prisma.member.findUnique({ where: { id } })
+
+		if (oldMember) {
+			await syncMailingList(oldMember.notificationEmails, notificationEmails)
 		}
 
 		const updatedMember = await prisma.member.update({
@@ -47,6 +56,8 @@ export async function PATCH(request, { params }) {
 				company,
 				name,
 				address,
+				invoiceEmail,
+				notificationEmails,
 			},
 		})
 

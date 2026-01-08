@@ -98,6 +98,9 @@ model Submission {
   filePath  String   // ścieżka do podpisanego PDF
   fileName  String   // Oryginalna nazwa pliku
 
+  invoiceEmail       String?  @default("")
+  notificationEmails String?  @default("")
+
   attachments Attachment[]
 
   acceptanceNumber Int?     @unique
@@ -136,12 +139,15 @@ model Member {
   name      String?  
   company   String? 
   address   String?
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   memberNumber Int?     @unique
   phones       String?
+
+  invoiceEmail       String?
+  notificationEmails String?
 
   passwordResetToken   String?   @unique 
   passwordResetExpires DateTime?

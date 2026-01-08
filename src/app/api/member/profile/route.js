@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
+import { syncMailingList } from '@/lib/mailingListUtils'
 
 // 1. Pobieranie danych profilu
 export async function GET(request) {
@@ -19,6 +20,8 @@ export async function GET(request) {
 				name: true,
 				address: true,
 				phones: true,
+				invoiceEmail: true,
+				notificationEmails: true,
 			},
 		})
 
@@ -41,7 +44,7 @@ export async function PATCH(request) {
 
 	try {
 		const body = await request.json()
-		const { company, name, address, email, phones } = body
+		const { company, name, address, email, phones, invoiceEmail, notificationEmails } = body
 
 		if (email) {
 			const existingUser = await prisma.member.findFirst({
@@ -55,6 +58,12 @@ export async function PATCH(request) {
 			}
 		}
 
+		const oldMember = await prisma.member.findUnique({ where: { id: session.user.id } })
+
+		if (oldMember) {
+			await syncMailingList(oldMember.notificationEmails, notificationEmails)
+		}
+
 		const updatedMember = await prisma.member.update({
 			where: { id: session.user.id },
 			data: {
@@ -63,6 +72,8 @@ export async function PATCH(request) {
 				address,
 				email,
 				phones,
+				invoiceEmail,
+				notificationEmails,
 			},
 		})
 

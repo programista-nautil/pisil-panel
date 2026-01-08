@@ -7,10 +7,10 @@ import { sanitizeFilename } from '@/lib/utils'
 
 const EMAILS = {
 	// Pani Teresa (Deklaracje Członkowskie)
-	DEKLARACJE: process.env.DEKLARACJE_EMAIL || 'programista@nautil.pl', // DOCELOWO: 'teresa@pisil.pl'
+	DEKLARACJE: process.env.DEKLARACJE_EMAIL || 'programista@nautil.pl',
 
 	// Pan Czesław (Patronaty)
-	PATRONATY: process.env.PATRONATY_EMAIL || 'programista@nautil.pl', // DOCELOWO: 'c.ciesielski@pisil.pl'
+	PATRONATY: process.env.PATRONATY_EMAIL || 'programista@nautil.pl',
 
 	// Domyślny (Ankiety i inne)
 	DEFAULT: process.env.ADMIN_EMAIL || 'programista@nautil.pl',
@@ -77,7 +77,9 @@ export async function POST(request) {
 			data: {
 				companyName: userData.companyName || userData.organizerName || userData.eventName || undefined,
 				email: userData.email,
-				filePath: gcsFilePath, // Zapisujemy ścieżkę z GCS
+				invoiceEmail: userData.invoiceEmail,
+				notificationEmails: userData.email,
+				filePath: gcsFilePath,
 				fileName: filename,
 				formType: userData.formType,
 				ceoName: userData.ceoName,

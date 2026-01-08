@@ -22,6 +22,8 @@ export default function MyDataModal({ isOpen, onClose }) {
 		address: '',
 		email: '',
 		phones: '',
+		invoiceEmail: '',
+		notificationEmails: '',
 	})
 	const [isLoading, setIsLoading] = useState(true)
 	const [isSaving, setIsSaving] = useState(false)
@@ -45,6 +47,8 @@ export default function MyDataModal({ isOpen, onClose }) {
 				address: data.address || '',
 				email: data.email || '',
 				phones: data.phones || '',
+				invoiceEmail: data.invoiceEmail || '',
+				notificationEmails: data.notificationEmails || '',
 			})
 		} catch (error) {
 			toast.error('Nie udało się załadować danych profilu.')
@@ -202,6 +206,37 @@ export default function MyDataModal({ isOpen, onClose }) {
 												className='pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#005698] focus:ring-[#005698] sm:text-sm p-2.5 border text-gray-600 '
 											/>
 										</div>
+									</div>
+
+									<div className='md:col-span-2'>
+										<label className='block text-sm font-medium text-gray-700 mb-1'>Email do faktur</label>
+										<div className='relative'>
+											<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+												<EnvelopeIcon className='h-5 w-5 text-gray-400' />
+											</div>
+											<input
+												type='email'
+												name='invoiceEmail'
+												value={formData.invoiceEmail}
+												onChange={handleChange}
+												className='pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#005698] focus:ring-[#005698] sm:text-sm p-2.5 border text-gray-600'
+											/>
+										</div>
+									</div>
+
+									<div className='md:col-span-2'>
+										<label className='block text-sm font-medium text-gray-700 mb-1'>Adresy do komunikatów</label>
+										<textarea
+											name='notificationEmails'
+											value={formData.notificationEmails}
+											onChange={handleChange}
+											rows={2}
+											className='block w-full rounded-md border-gray-300 shadow-sm focus:border-[#005698] focus:ring-[#005698] sm:text-sm p-2.5 border text-gray-600'
+											placeholder='jan@firma.pl, anna@firma.pl'
+										/>
+										<p className='text-xs text-gray-500 mt-1'>
+											Na te adresy będą wysyłane komunikaty PISiL. Oddziel je przecinkami.
+										</p>
 									</div>
 
 									<div>

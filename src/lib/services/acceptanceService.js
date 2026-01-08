@@ -9,6 +9,7 @@ import JSZip from 'jszip'
 import { uploadFileToGCS } from '@/lib/gcs'
 import bcrypt from 'bcrypt'
 import { STATIC_ACCEPTANCE_DOCUMENTS } from '@/lib/staticDocuments'
+import { syncMailingList } from '@/lib/mailingListUtils'
 
 const SALT_ROUNDS = 10
 
@@ -90,6 +91,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 
 			if (existingMember) {
 				memberId = existingMember.id
+				await syncMailingList(existingMember.notificationEmails, submission.notificationEmails)
 				await prisma.member.update({
 					where: { id: memberId },
 					data: {
@@ -98,11 +100,14 @@ export async function processAcceptance(submission, acceptanceDate) {
 						address: submission.address,
 						memberNumber: docNumber,
 						phones: submission.phones,
+						invoiceEmail: submission.invoiceEmail,
+						notificationEmails: submission.notificationEmails,
 					},
 				})
 			} else {
 				plainPassword = generateRandomPassword()
 				const hashedPassword = await bcrypt.hash(plainPassword, SALT_ROUNDS)
+				await syncMailingList(null, submission.notificationEmails)
 				const newMember = await prisma.member.create({
 					data: {
 						email: submission.email,
@@ -112,6 +117,8 @@ export async function processAcceptance(submission, acceptanceDate) {
 						address: submission.address,
 						memberNumber: docNumber,
 						phones: submission.phones,
+						invoiceEmail: submission.invoiceEmail,
+						notificationEmails: submission.notificationEmails,
 					},
 				})
 				memberId = newMember.id

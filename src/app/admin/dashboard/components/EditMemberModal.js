@@ -9,6 +9,8 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 	const [company, setCompany] = useState('')
 	const [name, setName] = useState('')
 	const [address, setAddress] = useState('')
+	const [invoiceEmail, setInvoiceEmail] = useState('')
+	const [notificationEmails, setNotificationEmails] = useState('')
 	const [isSubmitting, setIsSubmitting] = useState(false)
 
 	useEffect(() => {
@@ -18,6 +20,8 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 			setCompany(member.company || '')
 			setName(member.name || '')
 			setAddress(member.address || '')
+			setInvoiceEmail(member.invoiceEmail || '')
+			setNotificationEmails(member.notificationEmails || '')
 		}
 	}, [member])
 
@@ -38,6 +42,8 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 					company,
 					name,
 					address,
+					invoiceEmail,
+					notificationEmails,
 				}),
 			})
 
@@ -119,6 +125,27 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 							placeholder='+48 123 456 789, +48 987...'
 						/>
 						<p className='text-xs text-gray-500 mt-1'>Możesz podać kilka numerów oddzielonych przecinkami.</p>
+					</div>
+
+					<div>
+						<label className='block text-sm font-medium text-gray-700'>Email do faktur</label>
+						<input
+							type='email'
+							value={invoiceEmail}
+							onChange={e => setInvoiceEmail(e.target.value)}
+							className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm text-gray-600'
+						/>
+					</div>
+					<div>
+						<label className='block text-sm font-medium text-gray-700'>Adresy do komunikatów (Newsletter)</label>
+						<textarea
+							value={notificationEmails}
+							onChange={e => setNotificationEmails(e.target.value)}
+							rows={2}
+							className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm text-gray-600'
+							placeholder='jan@firma.pl, anna@firma.pl'
+						/>
+						<p className='text-xs text-gray-500 mt-1'>Oddziel adresy przecinkami.</p>
 					</div>
 
 					<div className='mt-6 flex justify-end gap-3'>
