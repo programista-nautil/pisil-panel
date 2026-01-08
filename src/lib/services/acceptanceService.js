@@ -95,6 +95,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 					data: {
 						company: submission.companyName,
 						name: submission.ceoName,
+						address: submission.address,
 						memberNumber: docNumber,
 						phones: submission.phones,
 					},
@@ -108,6 +109,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 						password: hashedPassword,
 						company: submission.companyName,
 						name: submission.ceoName,
+						address: submission.address,
 						memberNumber: docNumber,
 						phones: submission.phones,
 					},

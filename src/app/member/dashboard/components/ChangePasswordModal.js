@@ -154,7 +154,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
 							<button
 								type='submit'
 								disabled={isSubmitting}
-								className='px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:bg-blue-400'>
+								className='px-6 py-2 text-sm font-medium text-white bg-[#005698] rounded-md hover:bg-[#005698]/90 disabled:bg-[#005698]/70 shadow-sm transition-all'>
 								{isSubmitting ? 'Zapisywanie...' : 'Zmień hasło'}
 							</button>
 						</div>

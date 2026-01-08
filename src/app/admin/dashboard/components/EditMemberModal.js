@@ -6,13 +6,18 @@ import toast from 'react-hot-toast'
 export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) {
 	const [email, setEmail] = useState('')
 	const [phones, setPhones] = useState('')
+	const [company, setCompany] = useState('')
+	const [name, setName] = useState('')
+	const [address, setAddress] = useState('')
 	const [isSubmitting, setIsSubmitting] = useState(false)
 
-	// Wypełnij formularz danymi członka przy otwarciu
 	useEffect(() => {
 		if (member) {
 			setEmail(member.email || '')
 			setPhones(member.phones || '')
+			setCompany(member.company || '')
+			setName(member.name || '')
+			setAddress(member.address || '')
 		}
 	}, [member])
 
@@ -27,7 +32,13 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 			const response = await fetch(`/api/admin/members/${member.id}`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email, phones }),
+				body: JSON.stringify({
+					email,
+					phones,
+					company,
+					name,
+					address,
+				}),
 			})
 
 			const data = await response.json()
@@ -37,8 +48,8 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 			}
 
 			toast.success('Dane członka zaktualizowane!', { id: loadingToast })
-			onSuccess() // Odśwież listę w rodzicu
-			onClose() // Zamknij modal
+			onSuccess()
+			onClose()
 		} catch (error) {
 			toast.error(error.message, { id: loadingToast })
 		} finally {
@@ -56,6 +67,27 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 
 				<form onSubmit={handleSubmit} className='space-y-4'>
 					<div>
+						<label className='block text-sm font-medium text-gray-700'>Nazwa firmy</label>
+						<input
+							type='text'
+							value={company}
+							onChange={e => setCompany(e.target.value)}
+							required
+							className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-600'
+						/>
+					</div>
+
+					<div>
+						<label className='block text-sm font-medium text-gray-700'>Reprezentant (Prezes/CEO)</label>
+						<input
+							type='text'
+							value={name}
+							onChange={e => setName(e.target.value)}
+							className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-600'
+						/>
+					</div>
+
+					<div>
 						<label className='block text-sm font-medium text-gray-700'>Email</label>
 						<input
 							type='email'
@@ -65,6 +97,18 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 							className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-600'
 						/>
 					</div>
+
+					<div>
+						<label className='block text-sm font-medium text-gray-700'>Adres firmy</label>
+						<textarea
+							value={address}
+							onChange={e => setAddress(e.target.value)}
+							rows={2}
+							className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-600'
+							placeholder='Ulica, Kod Miasto'
+						/>
+					</div>
+
 					<div>
 						<label className='block text-sm font-medium text-gray-700'>Telefony</label>
 						<input

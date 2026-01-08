@@ -3,17 +3,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import toast from 'react-hot-toast'
-import {
-	DocumentTextIcon,
-	UserCircleIcon,
-	ArrowDownTrayIcon,
-	ChevronDownIcon,
-	FolderIcon,
-	KeyIcon,
-} from '@heroicons/react/24/outline'
-import ChangePasswordModal from './components/ChangePasswordModal'
+import { DocumentTextIcon, UserCircleIcon, ArrowDownTrayIcon, FolderIcon, UserIcon } from '@heroicons/react/24/outline'
+import MyDataModal from './components/MyDataModal'
 import { CollapsibleFileCategory } from './components/CollapsibleFileCategory'
 import NewslettersSection from './components/NewslettersSection'
+import WelcomeBanner from './components/WelcomeBanner'
 
 export default function MemberDashboard() {
 	const { data: session } = useSession()
@@ -23,7 +17,7 @@ export default function MemberDashboard() {
 		generatedAcceptanceDocs: [],
 	})
 	const [isLoading, setIsLoading] = useState(true)
-	const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+	const [isMyDataModalOpen, setIsMyDataModalOpen] = useState(false)
 
 	useEffect(() => {
 		const fetchFiles = async () => {
@@ -78,10 +72,10 @@ export default function MemberDashboard() {
 							</span>
 						)}
 						<button
-							onClick={() => setIsPasswordModalOpen(true)}
+							onClick={() => setIsMyDataModalOpen(true)}
 							className='inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors shadow-sm'>
-							<KeyIcon className='h-4 w-4 text-[#005698]' />
-							<span className='text-[#005698]'>Zmień hasło</span>
+							<UserIcon className='h-4 w-4 text-[#005698]' />
+							<span className='text-[#005698]'>Moje Dane</span>
 						</button>
 						<button
 							onClick={() => signOut({ callbackUrl: '/logowanie-czlonka' })}
@@ -109,6 +103,7 @@ export default function MemberDashboard() {
 						<p className='text-center text-gray-500'>Ładowanie plików...</p>
 					) : (
 						<>
+							<WelcomeBanner onOpenProfile={() => setIsMyDataModalOpen(true)} />
 							<section className='mb-8'>
 								<div className='flex items-center gap-3 mb-4 p-4 bg-gray-50 border rounded-lg'>
 									<UserCircleIcon className='h-6 w-6 text-[#005698]' />
@@ -198,7 +193,7 @@ export default function MemberDashboard() {
 						</>
 					)}
 				</main>
-				<ChangePasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} />
+				<MyDataModal isOpen={isMyDataModalOpen} onClose={() => setIsMyDataModalOpen(false)} />
 			</div>
 		</div>
 	)

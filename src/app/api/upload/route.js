@@ -7,10 +7,10 @@ import { sanitizeFilename } from '@/lib/utils'
 
 const EMAILS = {
 	// Pani Teresa (Deklaracje Członkowskie)
-	DEKLARACJE: 'programista@nautil.pl', // DOCELOWO: 'teresa@pisil.pl'
+	DEKLARACJE: process.env.DEKLARACJE_EMAIL || 'programista@nautil.pl', // DOCELOWO: 'teresa@pisil.pl'
 
 	// Pan Czesław (Patronaty)
-	PATRONATY: 'programista@nautil.pl', // DOCELOWO: 'c.ciesielski@pisil.pl'
+	PATRONATY: process.env.PATRONATY_EMAIL || 'programista@nautil.pl', // DOCELOWO: 'c.ciesielski@pisil.pl'
 
 	// Domyślny (Ankiety i inne)
 	DEFAULT: process.env.ADMIN_EMAIL || 'programista@nautil.pl',
