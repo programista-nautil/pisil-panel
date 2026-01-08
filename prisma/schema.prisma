@@ -151,6 +151,7 @@ model Member {
 
   passwordResetToken   String?   @unique 
   passwordResetExpires DateTime?
+  mustChangePassword Boolean @default(false)
 
   submissions Submission[]
   files       MemberFile[]

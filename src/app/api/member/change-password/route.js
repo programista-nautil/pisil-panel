@@ -15,8 +15,8 @@ export async function POST(request) {
 	try {
 		const { currentPassword, newPassword } = await request.json()
 
-		if (!currentPassword || !newPassword) {
-			return NextResponse.json({ message: 'Wypełnij wszystkie pola.' }, { status: 400 })
+		if (!newPassword) {
+			return NextResponse.json({ message: 'Podaj nowe hasło.' }, { status: 400 })
 		}
 
 		if (!PASSWORD_REGEX.test(newPassword)) {
@@ -37,19 +37,23 @@ export async function POST(request) {
 			return NextResponse.json({ message: 'Nie znaleziono użytkownika.' }, { status: 404 })
 		}
 
-		// 2. Sprawdź, czy OBECNE hasło jest poprawne
-		const isMatch = await bcrypt.compare(currentPassword, member.password)
-		if (!isMatch) {
-			return NextResponse.json({ message: 'Obecne hasło jest nieprawidłowe.' }, { status: 400 })
+		if (!member.mustChangePassword) {
+			if (!currentPassword) {
+				return NextResponse.json({ message: 'Podaj obecne hasło.' }, { status: 400 })
+			}
+			const isMatch = await bcrypt.compare(currentPassword, member.password)
+			if (!isMatch) {
+				return NextResponse.json({ message: 'Obecne hasło jest nieprawidłowe.' }, { status: 400 })
+			}
 		}
 
-		// 3. Zahaszuj i zapisz NOWE hasło
 		const newHashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS)
 
 		await prisma.member.update({
 			where: { id: memberId },
 			data: {
 				password: newHashedPassword,
+				mustChangePassword: false,
 			},
 		})
 

@@ -74,10 +74,15 @@ export const authConfig = {
 			if (user) {
 				token.role = user.role
 				token.id = user.id
+				token.mustChangePassword = user.mustChangePassword
 			}
 			if (trigger === 'update' && session?.user) {
 				token.name = session.user.name
 				token.email = session.user.email
+
+				if (session.user.mustChangePassword !== undefined) {
+					token.mustChangePassword = session.user.mustChangePassword
+				}
 			}
 			return token
 		},
@@ -85,6 +90,7 @@ export const authConfig = {
 			if (session.user) {
 				session.user.role = token.role
 				session.user.id = token.id
+				session.user.mustChangePassword = token.mustChangePassword
 			}
 			return session
 		},

@@ -67,7 +67,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
 
 				{successMessage ? (
 					<div className='text-center py-4'>
-						<p className='text-green-600 font-medium'>{successMessage}</p>
+						<p className='text-[#005698] font-medium'>{successMessage}</p>
 					</div>
 				) : (
 					<form onSubmit={handleSubmit} className='space-y-4'>

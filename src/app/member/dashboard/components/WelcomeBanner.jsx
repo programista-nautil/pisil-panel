@@ -26,8 +26,7 @@ export default function WelcomeBanner({ onOpenProfile }) {
 					<div>
 						<h3 className='text-sm font-bold text-[#005698]'>Witaj w nowym panelu członka!</h3>
 						<p className='mt-2 text-sm text-blue-800'>
-							Prosimy o zweryfikowanie poprawności danych Twojej firmy oraz
-							<strong> zmianę hasła na własne</strong> dla bezpieczeństwa konta. Obie czynności wykonasz w zakładce
+							Prosimy o zweryfikowanie poprawności danych Twojej firmy, Możesz to zrobić w zakładce
 							<strong> Moje Dane</strong>.
 						</p>
 					</div>

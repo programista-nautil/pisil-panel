@@ -8,6 +8,7 @@ import MyDataModal from './components/MyDataModal'
 import { CollapsibleFileCategory } from './components/CollapsibleFileCategory'
 import NewslettersSection from './components/NewslettersSection'
 import WelcomeBanner from './components/WelcomeBanner'
+import ForceChangePasswordModal from './components/ForceChangePasswordModal'
 
 export default function MemberDashboard() {
 	const { data: session } = useSession()
@@ -59,6 +60,7 @@ export default function MemberDashboard() {
 
 	return (
 		<div className='min-h-screen bg-gray-100'>
+			{session?.user?.mustChangePassword && <ForceChangePasswordModal />}
 			<div className='max-w-7xl mx-auto p-4 sm:p-6 lg:p-8'>
 				<header className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4'>
 					<div>

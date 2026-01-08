@@ -72,6 +72,7 @@ export const {
 						name: member.name || member.email,
 						email: member.email,
 						role: 'member',
+						mustChangePassword: member.mustChangePassword,
 					}
 				} catch (error) {
 					console.error('[Auth] Error during authorization:', error) // LOG 5: Złap inne błędy
