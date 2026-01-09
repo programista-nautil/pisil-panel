@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import toast from 'react-hot-toast'
-import { LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+import { LockClosedIcon, EyeIcon, EyeSlashIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
 
 export default function ForceChangePasswordModal() {
 	const { data: session, update } = useSession()
@@ -16,25 +15,27 @@ export default function ForceChangePasswordModal() {
 	const [showNewPassword, setShowNewPassword] = useState(false)
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
+	const [error, setError] = useState('')
+
 	const [isSubmitting, setIsSubmitting] = useState(false)
 
 	if (!session?.user?.mustChangePassword) return null
 
 	const handleSubmit = async e => {
 		e.preventDefault()
+		setError('')
 
 		if (passwords.newPassword !== passwords.confirmPassword) {
-			toast.error('Nowe hasła nie są identyczne')
+			setError('Nowe hasła nie są identyczne')
 			return
 		}
 
 		if (passwords.newPassword.length < 8) {
-			toast.error('Hasło musi mieć min. 8 znaków')
+			setError('Hasło musi mieć min. 8 znaków')
 			return
 		}
 
 		setIsSubmitting(true)
-		const loadingToast = toast.loading('Zmienianie hasła...')
 
 		try {
 			const res = await fetch('/api/member/change-password', {
@@ -49,8 +50,6 @@ export default function ForceChangePasswordModal() {
 
 			if (!res.ok) throw new Error(data.message || 'Błąd zmiany hasła')
 
-			toast.success('Hasło zmienione pomyślnie!', { id: loadingToast })
-
 			await update({
 				...session,
 				user: {
@@ -59,7 +58,7 @@ export default function ForceChangePasswordModal() {
 				},
 			})
 		} catch (error) {
-			toast.error(error.message, { id: loadingToast })
+			setError(error.message)
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -78,6 +77,19 @@ export default function ForceChangePasswordModal() {
 						panelu.
 					</p>
 				</div>
+
+				{error && (
+					<div className='mb-4 bg-red-50 border-l-4 border-red-500 p-4'>
+						<div className='flex'>
+							<div className='flex-shrink-0'>
+								<ExclamationCircleIcon className='h-5 w-5 text-red-400' aria-hidden='true' />
+							</div>
+							<div className='ml-3'>
+								<p className='text-sm text-red-700'>{error}</p>
+							</div>
+						</div>
+					</div>
+				)}
 
 				<form onSubmit={handleSubmit} className='space-y-4'>
 					<div>
