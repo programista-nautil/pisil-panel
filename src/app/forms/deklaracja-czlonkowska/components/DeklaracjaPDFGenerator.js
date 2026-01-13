@@ -432,7 +432,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 			const pageHeight = pdf.internal.pageSize.getHeight()
 			pdf.setFontSize(8)
 			pdf.setFont('Roboto', 'normal')
-			pdf.text('Deklaracja członkowska - Polska Izba Specjalistów IT i Logistyki', pageWidth / 2, pageHeight - 15, {
+			pdf.text('Deklaracja członkowska - Polska Izba Spedycji i Logistyki', pageWidth / 2, pageHeight - 15, {
 				align: 'center',
 			})
 

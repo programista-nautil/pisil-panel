@@ -9,6 +9,8 @@ export default function NotificationModals({
 	confirmAndSendVerificationEmail,
 	isSubmitting,
 	successMessage,
+	shouldSendEmails,
+	setShouldSendEmails,
 	patronageVerificationBody,
 	setPatronageVerificationBody,
 	isAcceptanceModalOpen,
@@ -39,12 +41,41 @@ export default function NotificationModals({
 				message={
 					submissionToVerify?.formType === 'PATRONAT'
 						? `Czy na pewno chcesz zatwierdzić wniosek o patronat dla: ${submissionToVerify?.companyName}?`
-						: `Potwierdzenie weryfikacji dla firmy "${submissionToVerify?.companyName}" spowoduje:\n\n1. Wygenerowanie oficjalnego Komunikatu.\n2. Wysłanie powiadomienia do kandydata.\n3. Rozpoczęcie masowej wysyłki maili do wszystkich członków Izby (proces w tle).\n\nCzy chcesz kontynuować?`
+						: successMessage
+						? successMessage
+						: shouldSendEmails
+						? `Potwierdzenie weryfikacji dla firmy "${submissionToVerify?.companyName}" spowoduje:\n\n1. Wygenerowanie oficjalnego Komunikatu.\n2. Wysłanie powiadomienia do kandydata.\n3. Rozpoczęcie masowej wysyłki maili do wszystkich członków Izby (proces w tle).\n\nCzy chcesz kontynuować?`
+						: `Potwierdzenie weryfikacji dla firmy "${submissionToVerify?.companyName}" spowoduje:\n\n1. Wygenerowanie oficjalnego Komunikatu (Tylko zapis w systemie).\n2. Zmianę statusu na Zweryfikowany.\n\nNIE zostaną wysłane żadne powiadomienia mailowe.`
 				}
 				confirmButtonText='Potwierdź i wyślij'
 				isLoading={isSubmitting}
 				successMessage={successMessage}
 				maxWidth={submissionToVerify?.formType === 'PATRONAT' ? 'max-w-3xl' : 'max-w-md'}>
+				{submissionToVerify?.formType === 'DEKLARACJA_CZLONKOWSKA' && !successMessage && (
+					<div className='mt-4 p-4 bg-gray-50 rounded-md border border-gray-200'>
+						<div className='flex items-start'>
+							<div className='flex items-center h-5'>
+								<input
+									id='shouldSendEmails'
+									name='shouldSendEmails'
+									type='checkbox'
+									checked={shouldSendEmails}
+									onChange={e => setShouldSendEmails(e.target.checked)}
+									className='focus:ring-[#005698] h-4 w-4 text-[#005698] border-gray-300 rounded cursor-pointer'
+								/>
+							</div>
+							<div className='ml-3 text-sm'>
+								<label htmlFor='shouldSendEmails' className='font-medium text-gray-700 cursor-pointer'>
+									Wyślij powiadomienia e-mail
+								</label>
+								<p className='text-gray-500 text-xs mt-1'>
+									Jeśli odznaczone: tylko generuje dokument i zmienia status (bez wysyłki do kandydata i członków).
+								</p>
+							</div>
+						</div>
+					</div>
+				)}
+
 				{/* Warunkowo renderujemy zawartość wewnątrz modala */}
 				{submissionToVerify?.formType === 'PATRONAT' && (
 					<div className='text-left'>

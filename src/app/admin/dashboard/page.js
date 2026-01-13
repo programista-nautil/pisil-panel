@@ -117,11 +117,19 @@ export default function AdminDashboard() {
 		}
 	}
 
-	const handleAddSubmission = async (data, mainPdf, additionalFiles) => {
+	const handleAddSubmission = async (
+		data,
+		mainPdf,
+		additionalFiles,
+		initialStatus,
+		shouldSendEmails,
+		acceptanceDate
+	) => {
 		const formData = new FormData()
 		formData.append('formType', data.formType)
 		formData.append('companyName', data.companyName)
 		formData.append('email', data.email)
+
 		formData.append('mainPdf', mainPdf)
 		if (data.ceoName) {
 			formData.append('ceoName', data.ceoName)
@@ -132,9 +140,22 @@ export default function AdminDashboard() {
 		if (data.phones) {
 			formData.append('phones', data.phones)
 		}
+		if (data.invoiceEmail) {
+			formData.append('invoiceEmail', data.invoiceEmail)
+		}
+		if (data.notificationEmails) {
+			formData.append('notificationEmails', data.notificationEmails)
+		}
 		additionalFiles.forEach(file => {
 			formData.append('additionalFiles[]', file)
 		})
+
+		formData.append('initialStatus', initialStatus)
+		formData.append('shouldSendEmails', shouldSendEmails)
+
+		if (acceptanceDate) {
+			formData.append('acceptanceDate', acceptanceDate)
+		}
 
 		try {
 			const response = await fetch('/api/admin/submissions', {

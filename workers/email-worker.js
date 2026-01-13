@@ -143,8 +143,18 @@ const worker = new Worker(
                                     <li>Liczba odbiorców w bazie: <strong>${totalRecipients}</strong></li>
                                     <li>Pomyślnie wysłano: <strong>${sentCount}</strong></li>
                                 </ul>
+								<p>W załączniku znajduje się kopia wysłanego komunikatu.</p>
                                 <p>System PISiL</p>
                             `,
+							attachments: attachmentBuffer
+								? [
+										{
+											filename: attachmentFileName,
+											content: attachmentBuffer,
+											contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+										},
+								  ]
+								: [],
 						})
 						console.log(`📨 Wysłano raport do admina: ${adminEmail}`)
 					} catch (reportError) {

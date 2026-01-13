@@ -25,12 +25,6 @@ export default function MultiStepForm({ formConfig }) {
 		defaultValues,
 	})
 
-	const fillTestData = () => {
-		if (testData) {
-			reset(testData)
-		}
-	}
-
 	const [currentStep, setCurrentStep] = useState(1)
 	const [pdfGenerated, setPdfGenerated] = useState(false)
 	const [pdfUploaded, setPdfUploaded] = useState(false)
@@ -146,22 +140,6 @@ export default function MultiStepForm({ formConfig }) {
 						style={{ width: `${(currentStep / totalSteps) * 100}%` }}></div>
 				</div>
 			</div>
-
-			{testData && (
-				<div className='mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg'>
-					<div className='flex items-center justify-between'>
-						<div>
-							<h3 className='text-sm font-medium text-yellow-800'>Tryb deweloperski</h3>
-							<p className='text-sm text-yellow-700'>Wypełnij formularz testowymi danymi</p>
-						</div>
-						<button
-							onClick={fillTestData}
-							className='px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700'>
-							Wypełnij testowe dane
-						</button>
-					</div>
-				</div>
-			)}
 
 			<div className='min-h-[400px]'>
 				<CurrentStepComponent register={register} errors={errors} watch={watch} setValue={setValue} />

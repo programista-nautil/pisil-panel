@@ -36,6 +36,8 @@ export function useNotificationModals(submissions, setSubmissions) {
 	const [patronageVerificationBody, setPatronageVerificationBody] = useState(DEFAULT_PATRONAGE_VERIFICATION_BODY)
 	const [patronageAcceptanceBody, setPatronageAcceptanceBody] = useState(DEFAULT_PATRONAGE_ACCEPTANCE_BODY)
 
+	const [shouldSendEmails, setShouldSendEmails] = useState(true)
+
 	const updateStatus = async (submissionId, newStatus) => {
 		const originalSubmissions = submissions
 		setSubmissions(current => current.map(sub => (sub.id === submissionId ? { ...sub, status: newStatus } : sub)))
@@ -60,6 +62,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 		if (submission.formType === 'DEKLARACJA_CZLONKOWSKA') {
 			if (newStatus === 'APPROVED') {
 				setSubmissionToVerify({ ...submission, status: newStatus })
+				setShouldSendEmails(true)
 				setIsVerificationModalOpen(true)
 			} else if (newStatus === 'ACCEPTED') {
 				setSubmissionToAccept({ ...submission, status: newStatus })
@@ -106,15 +109,20 @@ export function useNotificationModals(submissions, setSubmissions) {
 			// 2. Wyślij e-mail
 			const response = await fetch(`/api/admin/submissions/${submissionToVerify.id}/send-verification-email`, {
 				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ shouldSendEmails }),
 			})
+
 			if (!response.ok) {
 				const errorData = await response.json()
 				throw new Error(errorData.message || 'Nie udało się wysłać e-maila.')
 			}
 
+			const data = await response.json()
+
 			// 3. Ustaw komunikat o sukcesie
 			setSuccessMessage(
-				'Proces rozpoczęty! Możesz bezpiecznie zamknąć to okno. Raport otrzymasz mailem po zakończeniu.'
+				data.message || 'Proces rozpoczęty! Możesz bezpiecznie zamknąć to okno. Raport otrzymasz mailem po zakończeniu.'
 			)
 		} catch (error) {
 			console.error(error)
@@ -267,6 +275,8 @@ export function useNotificationModals(submissions, setSubmissions) {
 			confirmAndSendVerificationEmail,
 			isSubmitting,
 			successMessage,
+			shouldSendEmails,
+			setShouldSendEmails,
 			patronageVerificationBody,
 			setPatronageVerificationBody,
 			isAcceptanceModalOpen,
