@@ -48,6 +48,7 @@ export async function POST(request) {
 		const phones = data.get('phones')
 		const invoiceEmail = data.get('invoiceEmail')
 		const notificationEmails = data.get('notificationEmails')
+		const recommendations = data.get('recommendations')
 
 		const acceptanceDate = data.get('acceptanceDate') || new Date().toISOString()
 
@@ -89,6 +90,7 @@ export async function POST(request) {
 					phones: phones || null,
 					invoiceEmail: invoiceEmail || null,
 					notificationEmails: notificationEmails || null,
+					recommendations: recommendations || null,
 				},
 			})
 
@@ -187,7 +189,17 @@ export async function POST(request) {
 
 			// 2. PRZYJĘTY (ACCEPTED)
 			else if (initialStatus === 'ACCEPTED') {
-				await processAcceptance(newSubmission, acceptanceDate)
+				const maxResult = await prisma.submission.aggregate({ _max: { communicationNumber: true } })
+				const commNumber = (maxResult._max.communicationNumber || 0) + 1
+
+				await prisma.submission.update({
+					where: { id: newSubmission.id },
+					data: { communicationNumber: commNumber },
+				})
+
+				const updatedSubmission = await prisma.submission.findUnique({ where: { id: newSubmission.id } })
+
+				await processAcceptance(updatedSubmission, acceptanceDate)
 			}
 
 			// 3. W TRAKCIE (PENDING)

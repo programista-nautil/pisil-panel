@@ -36,6 +36,7 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 				phones: '',
 				invoiceEmail: '',
 				notificationEmails: '',
+				recommendations: '',
 			})
 
 			setMainPdf(null)
@@ -144,7 +145,7 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 							<>
 								<div>
 									<label htmlFor='ceoName' className='block text-sm font-medium text-gray-700'>
-										Imię i nazwisko prezesa/CEO <span className='text-red-500'>*</span>
+										Imię i nazwisko prezesa/CEO
 									</label>
 									<input
 										type='text'
@@ -157,7 +158,7 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 
 								<div>
 									<label htmlFor='address' className='block text-sm font-medium text-gray-700'>
-										Dokładny adres <span className='text-red-500'>*</span>
+										Dokładny adres
 									</label>
 									<input
 										type='text'
@@ -192,6 +193,19 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 										placeholder='jan@firma.pl, anna@firma.pl'
 									/>
 									<p className='text-xs text-gray-500'>Możesz podać kilka adresów oddzielonych przecinkami.</p>
+								</div>
+								<div>
+									<label htmlFor='recommendations' className='block text-sm font-medium text-gray-700'>
+										Firmy-Członkowie Izby rekomendujący przystąpienie do PISiL
+									</label>
+									<textarea
+										id='recommendations'
+										{...register('recommendations')}
+										rows={2}
+										className='mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-gray-500'
+										placeholder='Firma A, Firma B'
+									/>
+									<p className='text-xs text-gray-500'>Ta informacja będzie widoczna w wygenerowanym komunikacie.</p>
 								</div>
 							</>
 						)}
@@ -325,7 +339,7 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 												className='block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-700'
 											/>
 										</div>
-										<p className='text-xs text-blue-500'>
+										<p className='text-xs text-blue-900'>
 											<strong>Uwaga:</strong> Zostanie utworzone konto członka (hasło: 2015pisil, wymuszona zmiana).
 											Zostaną wygenerowane dokumenty przyjęcia. Maile powitalne zostaną wysłane do Admina i nowego
 											Członka.

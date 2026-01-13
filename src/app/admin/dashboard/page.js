@@ -123,7 +123,8 @@ export default function AdminDashboard() {
 		additionalFiles,
 		initialStatus,
 		shouldSendEmails,
-		acceptanceDate
+		acceptanceDate,
+		recommendations
 	) => {
 		const formData = new FormData()
 		formData.append('formType', data.formType)
@@ -145,6 +146,9 @@ export default function AdminDashboard() {
 		}
 		if (data.notificationEmails) {
 			formData.append('notificationEmails', data.notificationEmails)
+		}
+		if (data.recommendations) {
+			formData.append('recommendations', data.recommendations || '')
 		}
 		additionalFiles.forEach(file => {
 			formData.append('additionalFiles[]', file)
