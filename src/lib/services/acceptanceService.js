@@ -255,6 +255,7 @@ export async function processAcceptance(submission, acceptanceDate) {
             <p>Szanowni Państwo,</p>
             <p>Z przyjemnością informujemy, że uchwałą Rady PISiL firma <strong>${submission.companyName}</strong> została przyjęta w poczet członków Polskiej Izby Spedycji i Logistyki.</p>
             <p>Prosimy o zapoznanie się z załączonymi dokumentami.</p>
+			<p>Do panelu członka mogą zalogować się Państwo wpisując swój email oraz hasło tymczasowe '2015pisil'. Po zalogowaniu zostaną Państwo poproszeni o zmianę hasła.</p>
             <p>Z poważaniem,<br>Biuro PISiL</p>
         `,
 		attachments: userNodemailerAttachments,
