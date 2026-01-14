@@ -107,7 +107,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 				})
 			} else {
 				//plainPassword = generateRandomPassword()
-				const plainPassword = '2015pisil'
+				plainPassword = '2015pisil'
 				const hashedPassword = await bcrypt.hash(plainPassword, SALT_ROUNDS)
 				await syncMailingList(null, submission.notificationEmails)
 				const newMember = await prisma.member.create({
