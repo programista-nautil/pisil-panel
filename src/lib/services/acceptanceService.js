@@ -10,6 +10,7 @@ import { uploadFileToGCS } from '@/lib/gcs'
 import bcrypt from 'bcrypt'
 import { STATIC_ACCEPTANCE_DOCUMENTS } from '@/lib/staticDocuments'
 import { syncMailingList } from '@/lib/mailingListUtils'
+import { convertDocxToPdf } from '@/lib/docxToPdfService'
 
 const SALT_ROUNDS = 10
 
@@ -162,11 +163,29 @@ export async function processAcceptance(submission, acceptanceDate) {
 			haslo: plainPassword ? plainPassword : '(Hasło pozostaje bez zmian)',
 		})
 
-		generatedDocsData.push({
-			filename: `pismo zaśw. przyjęcie_${docNumber}.docx`,
-			buffer: doc1.getZip().generate({ type: 'nodebuffer' }),
+		const docxBuffer1 = doc1.getZip().generate({ type: 'nodebuffer' })
+		const docxFilename1 = `pismo zaśw. przyjęcie_${docNumber}.docx`
+
+		let fileToSave1 = {
+			filename: docxFilename1,
+			buffer: docxBuffer1,
 			contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-		})
+		}
+
+		try {
+			if (process.env.NODE_ENV === 'production' || process.env.ENABLE_PDF_CONVERSION === 'true') {
+				const pdfResult = await convertDocxToPdf(docxBuffer1, docxFilename1)
+				fileToSave1 = {
+					filename: pdfResult.filename,
+					buffer: pdfResult.buffer,
+					contentType: 'application/pdf',
+				}
+			}
+		} catch (err) {
+			console.error('Nie udało się przekonwertować na PDF, wysyłam DOCX:', err)
+		}
+
+		generatedDocsData.push(fileToSave1)
 
 		const template2Path = path.join(process.cwd(), 'private', 'document-templates', 'pismo w sprawie składek.docx')
 		const template2Content = await fs.readFile(template2Path)
@@ -179,11 +198,29 @@ export async function processAcceptance(submission, acceptanceDate) {
 			adres_linia2: addressParts.line2 ? `\n${addressParts.line2}` : '',
 			mail: submission.email,
 		})
-		generatedDocsData.push({
-			filename: `pismo w sprawie składek_${docNumber}.docx`,
-			buffer: doc2.getZip().generate({ type: 'nodebuffer' }),
+		const docxBuffer2 = doc2.getZip().generate({ type: 'nodebuffer' })
+		const docxFilename2 = `pismo w sprawie składek_${docNumber}.docx`
+
+		let fileToSave2 = {
+			filename: docxFilename2,
+			buffer: docxBuffer2,
 			contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-		})
+		}
+
+		try {
+			if (process.env.NODE_ENV === 'production' || process.env.ENABLE_PDF_CONVERSION === 'true') {
+				const pdfResult = await convertDocxToPdf(docxBuffer2, docxFilename2)
+				fileToSave2 = {
+					filename: pdfResult.filename,
+					buffer: pdfResult.buffer,
+					contentType: 'application/pdf',
+				}
+			}
+		} catch (err) {
+			console.error('PDF error doc2:', err)
+		}
+
+		generatedDocsData.push(fileToSave2)
 
 		const template3Path = path.join(process.cwd(), 'private', 'document-templates', 'zasw.docx')
 		const template3Content = await fs.readFile(template3Path)
@@ -196,11 +233,29 @@ export async function processAcceptance(submission, acceptanceDate) {
 			adres_linia2: addressParts.line2 ? `\n${addressParts.line2}` : '',
 			data_uchwala: formattedDate,
 		})
-		generatedDocsData.push({
-			filename: `zasw_${docNumber}.docx`,
-			buffer: doc3.getZip().generate({ type: 'nodebuffer' }),
+		const docxBuffer3 = doc3.getZip().generate({ type: 'nodebuffer' })
+		const docxFilename3 = `zasw_${docNumber}.docx`
+
+		let fileToSave3 = {
+			filename: docxFilename3,
+			buffer: docxBuffer3,
 			contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-		})
+		}
+
+		try {
+			if (process.env.NODE_ENV === 'production' || process.env.ENABLE_PDF_CONVERSION === 'true') {
+				const pdfResult = await convertDocxToPdf(docxBuffer3, docxFilename3)
+				fileToSave3 = {
+					filename: pdfResult.filename,
+					buffer: pdfResult.buffer,
+					contentType: 'application/pdf',
+				}
+			}
+		} catch (err) {
+			console.error('PDF error doc3:', err)
+		}
+
+		generatedDocsData.push(fileToSave3)
 
 		await Promise.all(
 			generatedDocsData.map(async docData => {

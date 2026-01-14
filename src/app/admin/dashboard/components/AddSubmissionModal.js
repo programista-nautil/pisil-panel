@@ -150,7 +150,7 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 									<input
 										type='text'
 										id='ceoName'
-										{...register('ceoName', { required: 'To pole jest wymagane.' })}
+										{...register('ceoName')}
 										className='mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-gray-500'
 									/>
 									{errors.ceoName && <p className='text-red-500 text-xs mt-1'>{errors.ceoName.message}</p>}
@@ -163,7 +163,7 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 									<input
 										type='text'
 										id='address'
-										{...register('address', { required: 'To pole jest wymagane.' })}
+										{...register('address')}
 										className='mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-gray-500'
 									/>
 									{errors.address && <p className='text-red-500 text-xs mt-1'>{errors.address.message}</p>}
