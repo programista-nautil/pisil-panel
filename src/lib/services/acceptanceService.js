@@ -10,7 +10,7 @@ import { uploadFileToGCS } from '@/lib/gcs'
 import bcrypt from 'bcrypt'
 import { STATIC_ACCEPTANCE_DOCUMENTS } from '@/lib/staticDocuments'
 import { syncMailingList } from '@/lib/mailingListUtils'
-import { convertDocxToPdf } from '@/lib/docxToPdfService'
+import { convertDocxToPdf } from './docxToPdfService'
 
 const SALT_ROUNDS = 10
 
