@@ -93,8 +93,7 @@ const worker = new Worker(
 							try {
 								await transporter.sendMail({
 									from: process.env.SMTP_USER,
-									// to: emailAddress, // <--- NA PRODUKCJI
-									to: 'programista@nautil.pl', // <--- NA DEVIE (DLA BEZPIECZEŃSTWA)
+									to: emailAddress,
 									subject: `Nowy kandydat na członka PISiL: ${companyName}`,
 									html: `
 										<p>Szanowni Państwo,</p>
