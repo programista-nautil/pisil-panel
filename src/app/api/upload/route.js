@@ -57,16 +57,16 @@ export async function POST(request) {
 		const baseName = isDeclaration
 			? `deklaracja_${sanitizeFilename(userData.companyName) || sanitizeFilename(displayCompanyOrOrg)}`
 			: formType === 'PATRONAT'
-			? `patronat_${
-					sanitizeFilename(userData.eventName) ||
-					sanitizeFilename(userData.organizerName) ||
-					sanitizeFilename(displayCompanyOrOrg)
-			  }`
-			: `formularz_${sanitizeFilename(displayCompanyOrOrg)}`
+				? `patronat_${
+						sanitizeFilename(userData.eventName) ||
+						sanitizeFilename(userData.organizerName) ||
+						sanitizeFilename(displayCompanyOrOrg)
+					}`
+				: `formularz_${sanitizeFilename(displayCompanyOrOrg)}`
 		const now = new Date()
 		const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(
 			2,
-			'0'
+			'0',
 		)}-${now.getFullYear()}`
 		const filename = `${baseName}_${formattedDate}.pdf`
 
@@ -105,8 +105,8 @@ export async function POST(request) {
 			subject: isDeclaration
 				? `Nowa deklaracja członkowska - ${displayCompanyOrOrg}`
 				: formType === 'PATRONAT'
-				? `Nowy wniosek o patronat - ${displayCompanyOrOrg}`
-				: `Nowe zgłoszenie - ${displayCompanyOrOrg}`,
+					? `Nowy wniosek o patronat - ${displayCompanyOrOrg}`
+					: `Nowe zgłoszenie - ${displayCompanyOrOrg}`,
 			html: isDeclaration
 				? `
         <h2>Nowa deklaracja członkowska</h2>
@@ -147,15 +147,13 @@ export async function POST(request) {
 					<li><strong>Firma:</strong> ${displayCompanyOrOrg}</li>
 					<li><strong>Email:</strong> ${userData.email}</li>
 					<li><strong>Telefon:</strong> ${userData.phones || 'Nie podano'}</li>
-					<li><strong>Status podpisu:</strong> ${
-						hasSignature ? '✅ Potwierdzono obecność podpisu' : '❌ Brak wymaganego podpisu'
-					}</li>
+					${hasSignature ? '<li><strong>Status podpisu:</strong> ✅ Potwierdzono obecność podpisu</li>' : ''}
 					<li><strong>Data przesłania:</strong> ${new Date().toLocaleString('pl-PL')}</li>
 				</ul>
 				${
 					hasSignature
 						? '<p style="color: green;">Twoja deklaracja została przesłana pomyślnie i zostanie rozpatrzona przez administrację.</p>'
-						: '<p style="color: red;"><b>Uwaga:</b> W przesłanym pliku nie wykryto pola podpisu elektronicznego. Prosimy o ponowne przesłanie poprawnie podpisanego dokumentu.</p>'
+						: ''
 				}
 				<p>W razie pytań prosimy o kontakt.</p>
 				<p>Pozdrawiamy,<br>Zespół PISiL</p>
@@ -169,15 +167,13 @@ export async function POST(request) {
 					<li><strong>Organizator/Wydarzenie:</strong> ${displayCompanyOrOrg}</li>
 					<li><strong>Email:</strong> ${userData.email}</li>
 					<li><strong>Telefon:</strong> ${userData.phones || 'Nie podano'}</li>
-          <li><strong>Status podpisu:</strong> ${
-						hasSignature ? '✅ Potwierdzono obecność podpisu' : '❌ Brak wymaganego podpisu'
-					}</li>
+					${hasSignature ? '<li><strong>Status podpisu:</strong> ✅ Potwierdzono obecność podpisu</li>' : ''}
 					<li><strong>Data przesłania:</strong> ${new Date().toLocaleString('pl-PL')}</li>
 				</ul>
-        ${
+				${
 					hasSignature
 						? '<p style="color: green;">Wniosek został przesłany pomyślnie i zostanie rozpatrzony przez administrację.</p>'
-						: '<p style="color: red;"><b>Uwaga:</b> W przesłanym pliku nie wykryto pola podpisu elektronicznego. Prosimy o ponowne przesłanie poprawnie podpisanego dokumentu.</p>'
+						: ''
 				}
 				<p>W razie pytań prosimy o kontakt.</p>
 				<p>Pozdrawiamy,<br>Zespół PISiL</p>
@@ -197,7 +193,7 @@ export async function POST(request) {
 			console.error('Błąd podczas wysyłania emaila:', emailError)
 			return NextResponse.json(
 				{ message: 'Plik przesłano, ale wystąpił błąd przy wysyłaniu powiadomień.' },
-				{ status: 206 }
+				{ status: 206 },
 			)
 		}
 	} catch (error) {
