@@ -9,7 +9,7 @@ export async function DELETE(request, { params }) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 	}
 
-	const { id } = params
+	const { id } = await params
 	try {
 		await prisma.member.delete({
 			where: { id },
@@ -28,7 +28,7 @@ export async function PATCH(request, { params }) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 	}
 
-	const { id } = params
+	const { id } = await params
 	try {
 		const { email, phones, company, name, address, invoiceEmail, notificationEmails } = await request.json()
 
