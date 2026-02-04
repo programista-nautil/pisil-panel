@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { syncMailingList } from '@/lib/mailingListUtils'
+import { addToPublicList, removeFromPublicList } from '@/lib/publicListUtils'
 
 export async function DELETE(request, { params }) {
 	const session = await auth()
@@ -11,9 +12,13 @@ export async function DELETE(request, { params }) {
 
 	const { id } = await params
 	try {
-		await prisma.member.delete({
-			where: { id },
-		})
+		const memberToDelete = await prisma.member.findUnique({ where: { id } })
+
+		await prisma.member.delete({ where: { id } })
+
+		if (memberToDelete) {
+			await removeFromPublicList(memberToDelete.email)
+		}
 
 		return NextResponse.json({ message: 'Członek został pomyślnie usunięty.' }, { status: 200 })
 	} catch (error) {
@@ -46,6 +51,9 @@ export async function PATCH(request, { params }) {
 
 		if (oldMember) {
 			await syncMailingList(oldMember.notificationEmails, notificationEmails)
+			if (oldMember.email !== email) {
+				await removeFromPublicList(oldMember.email)
+			}
 		}
 
 		const updatedMember = await prisma.member.update({
@@ -59,6 +67,13 @@ export async function PATCH(request, { params }) {
 				invoiceEmail,
 				notificationEmails,
 			},
+		})
+
+		await addToPublicList({
+			companyName: company,
+			address: address,
+			email: email,
+			phones: phones,
 		})
 
 		return NextResponse.json(updatedMember, { status: 200 })

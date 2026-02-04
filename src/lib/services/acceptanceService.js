@@ -10,6 +10,7 @@ import { uploadFileToGCS } from '@/lib/gcs'
 import bcrypt from 'bcrypt'
 import { STATIC_ACCEPTANCE_DOCUMENTS } from '@/lib/staticDocuments'
 import { syncMailingList } from '@/lib/mailingListUtils'
+import { addToPublicList } from '@/lib/publicListUtils'
 import { convertDocxToPdf } from './docxToPdfService'
 
 const SALT_ROUNDS = 10
@@ -125,6 +126,12 @@ export async function processAcceptance(submission, acceptanceDate) {
 					},
 				})
 				memberId = newMember.id
+				await addToPublicList({
+					companyName: submission.companyName,
+					address: submission.address,
+					email: submission.email,
+					phones: submission.phones,
+				})
 			}
 
 			await prisma.submission.update({
@@ -268,7 +275,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 						source: 'GENERATED',
 					},
 				})
-			})
+			}),
 		)
 
 		generatedDocsData.forEach(doc => {
