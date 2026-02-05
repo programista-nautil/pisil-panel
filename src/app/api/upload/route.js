@@ -141,7 +141,7 @@ export async function POST(request) {
 				? `
 				<h2>Dziękujemy za przesłanie deklaracji członkowskiej</h2>
 				<p>Szanowni Państwo,</p>
-				<p>Otrzymaliśmy Państwa deklarację członkowską do Polskiej Izby Specjalistów IT i Logistyki.</p>
+				<p>Otrzymaliśmy Państwa deklarację członkowską do Polskiej Izby Spedycji i Logistyki.</p>
 				<h3>Podsumowanie:</h3>
 				<ul>
 					<li><strong>Firma:</strong> ${displayCompanyOrOrg}</li>

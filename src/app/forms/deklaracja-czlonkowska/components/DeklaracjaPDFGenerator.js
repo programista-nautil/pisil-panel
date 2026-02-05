@@ -74,7 +74,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 			pdf.text('DEKLARACJA CZŁONKOWSKA', pageWidth / 2, 25, { align: 'center' })
 
 			pdf.setFontSize(14)
-			pdf.text('Polskiej Izby Specjalistów IT i Logistyki', pageWidth / 2, 35, { align: 'center' })
+			pdf.text('Polskiej Izby Spedycji i Logistyki', pageWidth / 2, 35, { align: 'center' })
 
 			// Linia oddzielająca
 			pdf.setLineWidth(0.5)
@@ -96,7 +96,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Pełna nazwa firmy: ${formatText(formData.companyName)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -112,7 +112,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Adres do korespondencji: ${formatText(formData.correspondenceAddress)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 8
 
@@ -136,7 +136,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Adres e-mail do przesyłania faktur: ${formatText(formData.invoiceEmail)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -146,7 +146,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 					`Strona internetowa: ${formatText(formData.website)}`,
 					margin,
 					yPosition,
-					contentWidth
+					contentWidth,
 				)
 				yPosition += 3
 			}
@@ -166,7 +166,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Imię i nazwisko kierownika firmy: ${formatText(formData.ceoName)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -175,7 +175,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Osoby upoważnione do reprezentowania firmy wobec PISiL: ${formatText(formData.authorizedPersons)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 8
 
@@ -198,7 +198,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Data rejestracji firmy, sąd rejestrowy, nr rejestru: ${formatText(formData.registrationData)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -207,7 +207,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Forma własności: ${formatText(formData.ownershipForm)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -216,7 +216,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Wielkość zatrudnienia: ${formatText(formData.employmentSize)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -225,7 +225,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Licencja na pośrednictwo przy przewozie rzeczy: ${formatText(formData.transportLicense)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -234,7 +234,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Certyfikat ISO 9002: ${formatText(formData.iso9002Certificate)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -243,7 +243,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Ubezpieczenie o.c. spedytora: ${formatText(formData.insuranceOC)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -252,7 +252,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Opis prowadzonej działalności firmy: ${formatText(formData.businessDescription)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 8
 
@@ -286,7 +286,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Usługi transportowe: ${transportServices.length > 0 ? formatText(transportServices.join(', ')) : 'Brak'}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -302,7 +302,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -311,7 +311,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Organizacja przewozów drobnicy zbiorowe: ${formData.organizacjaPrzewozow ? 'Tak' : 'Nie'}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -320,7 +320,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Agencje celne: ${formData.agencjeCelne ? 'Tak' : 'Nie'}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -329,7 +329,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Sieć krajowa (ilość oddziałów): ${formatText(formData.krajowaSiec)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -338,7 +338,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Sieć zagraniczna (ilość firm własnych / ilość korespondentów): ${formatText(formData.zagranicznaSSiec)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -347,7 +347,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Inne formy współpracy: ${formatText(formData.inneFormy)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 8
 
@@ -365,7 +365,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Do jakich organizacji firma należy i od kiedy: ${formatText(formData.organizacje)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 3
 
@@ -374,7 +374,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				`Firmy-Członkowie Izby rekomendujący przystąpienie do PISiL: ${formatText(formData.rekomendacje)}`,
 				margin,
 				yPosition,
-				contentWidth
+				contentWidth,
 			)
 			yPosition += 8
 
