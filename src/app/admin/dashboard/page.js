@@ -9,6 +9,7 @@ import AddSubmissionModal from './components/AddSubmissionModal'
 import NotificationModals from './components/NotificationModals'
 import MemberManagement from './components/MemberManagement'
 import { DocumentDuplicateIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline'
+import AddAttachmentsModal from './components/AddAttachmentsModal'
 import toast from 'react-hot-toast'
 
 const StatCard = ({ title, value, isLoading }) => (
@@ -49,6 +50,9 @@ export default function AdminDashboard() {
 	const [deleteModalTitle, setDeleteModalTitle] = useState('Potwierdź usunięcie')
 	const [deleteModalMessage, setDeleteModalMessage] = useState('')
 	const [deleteModalButtonText, setDeleteModalButtonText] = useState('Usuń')
+
+	const [isAttachModalOpen, setIsAttachModalOpen] = useState(false)
+	const [submissionToAttach, setSubmissionToAttach] = useState(null)
 
 	useEffect(() => {
 		const fetchSubmissions = async () => {
@@ -124,7 +128,7 @@ export default function AdminDashboard() {
 		initialStatus,
 		shouldSendEmails,
 		acceptanceDate,
-		recommendations
+		recommendations,
 	) => {
 		const formData = new FormData()
 		formData.append('formType', data.formType)
@@ -188,14 +192,14 @@ export default function AdminDashboard() {
 			// Wariant: Archiwizacja
 			setDeleteModalTitle('Potwierdź archiwizację')
 			setDeleteModalMessage(
-				`To zgłoszenie posiada nadany numer członkowski (#${submission.acceptanceNumber}).\n\nAby zachować ciągłość numeracji, zgłoszenie nie zostanie usunięte fizycznie, lecz PRZENIESIONE DO ARCHIWUM.\n\nCzy chcesz kontynuować?`
+				`To zgłoszenie posiada nadany numer członkowski (#${submission.acceptanceNumber}).\n\nAby zachować ciągłość numeracji, zgłoszenie nie zostanie usunięte fizycznie, lecz PRZENIESIONE DO ARCHIWUM.\n\nCzy chcesz kontynuować?`,
 			)
 			setDeleteModalButtonText('Archiwizuj')
 		} else {
 			// Wariant: Trwałe usunięcie
 			setDeleteModalTitle('Potwierdź usunięcie')
 			setDeleteModalMessage(
-				`Czy na pewno chcesz trwale usunąć zgłoszenie firmy "${submission.companyName}"?\n\nTej operacji nie można cofnąć.`
+				`Czy na pewno chcesz trwale usunąć zgłoszenie firmy "${submission.companyName}"?\n\nTej operacji nie można cofnąć.`,
 			)
 			setDeleteModalButtonText('Usuń trwale')
 		}
@@ -306,7 +310,7 @@ export default function AdminDashboard() {
 						}
 					}
 					return sub
-				})
+				}),
 			)
 			toast.success('Pliki zostały wgrane pomyślnie.')
 		} catch (error) {
@@ -315,6 +319,23 @@ export default function AdminDashboard() {
 		} finally {
 			setUploadingMemberFile(null)
 		}
+	}
+
+	const openAttachModal = submission => {
+		setSubmissionToAttach(submission)
+		setIsAttachModalOpen(true)
+	}
+
+	const handleAttachmentSuccess = (submissionId, newAttachments) => {
+		setSubmissions(prev =>
+			prev.map(sub => {
+				if (sub.id === submissionId) {
+					const currentAttachments = sub.attachments || []
+					return { ...sub, attachments: [...currentAttachments, ...newAttachments] }
+				}
+				return sub
+			}),
+		)
 	}
 
 	return (
@@ -417,6 +438,7 @@ export default function AdminDashboard() {
 									onArchiveToggle={null}
 									onMemberFileUpload={handleMemberFileUpload}
 									uploadingMemberFileId={uploadingMemberFile}
+									openAttachModal={openAttachModal}
 								/>
 							)}
 							{activeTab === 'surveys' && (
@@ -490,6 +512,12 @@ export default function AdminDashboard() {
 				onConfirm={confirmDeleteAttachment}
 				itemName={attachmentModal.fileName}
 				context='attachment'
+			/>
+			<AddAttachmentsModal
+				isOpen={isAttachModalOpen}
+				onClose={() => setIsAttachModalOpen(false)}
+				submission={submissionToAttach}
+				onUploadSuccess={handleAttachmentSuccess}
 			/>
 			<NotificationModals {...modalStates} />
 		</div>

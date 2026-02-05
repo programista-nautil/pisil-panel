@@ -9,6 +9,7 @@ import {
 	UserIcon,
 	Cog8ToothIcon,
 	TrashIcon,
+	PaperClipIcon,
 } from '@heroicons/react/24/outline'
 import { getFormTypeName } from '../../../../utils/getFormTypeName'
 
@@ -103,8 +104,7 @@ export default function SubmissionsTable({
 	deletingAttachmentId,
 	openDeleteModal,
 	onArchiveToggle,
-	onMemberFileUpload,
-	uploadingMemberFileId,
+	openAttachModal,
 }) {
 	if (!submissions || submissions.length === 0) {
 		return <p className='p-6 text-center text-gray-500'>Brak zgłoszeń do wyświetlenia w tej kategorii.</p>
@@ -200,6 +200,7 @@ export default function SubmissionsTable({
 													)}
 												</button>
 											)}
+
 											<Link
 												href={`/api/admin/submissions/${submission.id}/download`}
 												className='p-2 text-blue-600 hover:bg-blue-100 rounded-md'
@@ -212,6 +213,12 @@ export default function SubmissionsTable({
 													/>
 												</svg>
 											</Link>
+											<button
+												onClick={() => openAttachModal(submission)}
+												className='p-2 text-gray-600 hover:bg-gray-100 rounded-md'
+												title='Dodaj dodatkowe dokumenty'>
+												<PaperClipIcon className='h-5 w-5' />
+											</button>
 											<button
 												onClick={() => openDeleteModal(submission)}
 												className='p-2 text-red-600 hover:bg-red-100 rounded-md'
