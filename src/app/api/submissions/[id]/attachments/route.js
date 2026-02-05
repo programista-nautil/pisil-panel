@@ -7,10 +7,6 @@ import crypto from 'crypto'
 export async function POST(request, { params }) {
 	const { id } = await params
 
-	if (!id) {
-		return NextResponse.json({ message: 'Brak ID zgłoszenia' }, { status: 400 })
-	}
-
 	const submissionId = id
 
 	const data = await request.formData()
