@@ -15,7 +15,7 @@ export async function GET(request, { params }) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 	}
 
-	const { id } = params
+	const { id } = await params
 	try {
 		const fileRecord = await prisma.generalFile.findUnique({
 			where: { id },

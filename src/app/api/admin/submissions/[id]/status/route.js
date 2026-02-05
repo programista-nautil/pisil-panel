@@ -9,7 +9,7 @@ export async function PATCH(request, { params }) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 	}
 
-	const { id } = params
+	const { id } = await params
 	const { status } = await request.json()
 
 	if (!Object.values(Status).includes(status)) {

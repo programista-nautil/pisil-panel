@@ -13,7 +13,8 @@ export async function GET(request, { params }) {
 	}
 
 	try {
-		const filename = params.filename.join('/')
+		let { filename } = await params
+		filename = filename.join('/')
 
 		// 2. SPRAWDZENIE BEZPIECZEŃSTWA: Upewnij się, że plik jest na liście dozwolonych
 		if (!STATIC_ACCEPTANCE_DOCUMENTS.includes(filename)) {

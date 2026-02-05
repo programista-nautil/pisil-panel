@@ -14,7 +14,7 @@ export async function GET(request, { params }) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 	}
 
-	const { attachmentId } = params
+	const { attachmentId } = await params
 	const memberId = session.user.id
 	console.log(memberId, 'próbuje pobrać załącznik o ID:', attachmentId)
 

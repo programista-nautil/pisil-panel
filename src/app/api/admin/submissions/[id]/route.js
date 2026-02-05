@@ -9,7 +9,7 @@ export async function DELETE(request, { params }) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 	}
 
-	const { id } = params
+	const { id } = await params
 
 	try {
 		const submission = await prisma.submission.findUnique({
@@ -32,7 +32,7 @@ export async function DELETE(request, { params }) {
 					message: 'Zgłoszenie zostało przeniesione do archiwum (ze względu na nadany numer członkowski).',
 					action: 'archived', // Zwracamy informację o akcji dla frontendu
 				},
-				{ status: 200 }
+				{ status: 200 },
 			)
 		} else {
 			if (submission.filePath) {
@@ -48,8 +48,8 @@ export async function DELETE(request, { params }) {
 			if (submission.attachments?.length) {
 				await Promise.allSettled(
 					submission.attachments.map(a =>
-						deleteFileFromGCS(a.filePath).catch(err => console.error('Attachment delete err', err))
-					)
+						deleteFileFromGCS(a.filePath).catch(err => console.error('Attachment delete err', err)),
+					),
 				)
 			}
 
@@ -60,7 +60,7 @@ export async function DELETE(request, { params }) {
 					message: 'Zgłoszenie zostało trwale usunięte.',
 					action: 'deleted',
 				},
-				{ status: 200 }
+				{ status: 200 },
 			)
 		}
 	} catch (error) {

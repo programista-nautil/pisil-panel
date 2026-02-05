@@ -9,7 +9,7 @@ export async function GET(request, { params }) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 	}
 
-	const { id: submissionId, attachmentId } = params
+	const { id: submissionId, attachmentId } = await params
 
 	try {
 		const attachment = await prisma.attachment.findFirst({

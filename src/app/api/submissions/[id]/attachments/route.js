@@ -5,10 +5,13 @@ import { sanitizeFilename } from '@/lib/utils'
 import crypto from 'crypto'
 
 export async function POST(request, { params }) {
-	const submissionId = params.id
-	if (!submissionId) {
+	const { id } = await params
+
+	if (!id) {
 		return NextResponse.json({ message: 'Brak ID zgłoszenia' }, { status: 400 })
 	}
+
+	const submissionId = id
 
 	const data = await request.formData()
 	const files = data.getAll('additionalFiles[]')

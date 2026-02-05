@@ -13,7 +13,7 @@ export async function GET(request, { params }) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 	}
 
-	const { id: memberId } = params
+	const { id: memberId } = await params
 	try {
 		const files = await prisma.memberFile.findMany({
 			where: { memberId },
@@ -33,7 +33,7 @@ export async function POST(request, { params }) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 	}
 
-	const { id: memberId } = params
+	const { id: memberId } = await params
 	const data = await request.formData()
 	const files = data.getAll('files[]')
 

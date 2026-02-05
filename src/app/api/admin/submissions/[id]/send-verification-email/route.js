@@ -13,7 +13,7 @@ export async function POST(request, { params }) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 	}
 
-	const { id } = params
+	const { id } = await params
 	let shouldSendEmails = true
 
 	try {
@@ -90,14 +90,14 @@ export async function POST(request, { params }) {
 						type: 'exponential',
 						delay: 5000,
 					},
-				}
+				},
 			)
 
 			return NextResponse.json(
 				{
 					message: `Zgłoszenie zweryfikowane. Wygenerowano ${fileName} i rozpoczęto wysyłkę w tle. Raport otrzymasz na maila po zakończeniu.`,
 				},
-				{ status: 200 }
+				{ status: 200 },
 			)
 		} else {
 			await transporter.sendMail({
@@ -123,7 +123,7 @@ export async function POST(request, { params }) {
 				{
 					message: `Zgłoszenie zweryfikowane i zarchiwizowane (bez wysyłki masowej). Wygenerowano ${fileName} i wysłano na maila administratora.`,
 				},
-				{ status: 200 }
+				{ status: 200 },
 			)
 		}
 	} catch (error) {

@@ -10,7 +10,7 @@ export async function GET(request, { params }) {
 		return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
 	}
 
-	const { filename } = params
+	const { filename } = await params
 
 	// Zabezpieczenie przed Directory Traversal (np. ../../)
 	const safeFilename = path.basename(filename)
