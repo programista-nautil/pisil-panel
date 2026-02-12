@@ -11,6 +11,7 @@ const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(
 	const inputRef = useRef(null)
 
 	const accept = '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg'
+	const MAX_TOTAL_SIZE_MB = 100
 
 	const onSelectFiles = fileList => {
 		if (!fileList || fileList.length === 0) return
@@ -44,13 +45,20 @@ const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(
 
 	const clearAll = () => setFiles([])
 
-	const totalSizeMB = (files.reduce((acc, f) => acc + (f.size || 0), 0) / (1024 * 1024)).toFixed(2)
+	const totalSizeBytes = files.reduce((acc, f) => acc + (f.size || 0), 0)
+	const totalSizeMB = (totalSizeBytes / (1024 * 1024)).toFixed(2)
 
 	const handleUpload = async () => {
 		if (files.length === 0) {
 			toast.error('Nie wybrano żadnych plików.')
 			return
 		}
+
+		if (parseFloat(totalSizeMB) > MAX_TOTAL_SIZE_MB) {
+			toast.error(`Łączny rozmiar plików (${totalSizeMB} MB) przekracza limit ${MAX_TOTAL_SIZE_MB} MB.`)
+			return
+		}
+
 		setIsUploading(true)
 		setStatus(null)
 
@@ -64,6 +72,9 @@ const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(
 			})
 
 			if (!response.ok) {
+				if (response.status === 413) {
+					throw new Error('Przekroczono limit rozmiaru plików.')
+				}
 				throw new Error('Wystąpił błąd podczas przesyłania załączników.')
 			}
 
@@ -83,7 +94,7 @@ const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(
 			<h3 className='text-lg font-medium text-gray-900'>Krok 3: Dodatkowe dokumenty (opcjonalnie)</h3>
 			<p className='text-sm text-gray-600'>
 				Możesz dodać załączniki wspierające wniosek (np. program, umowy, grafiki). Obsługiwane: PDF, DOC(X), XLS(X),
-				PNG, JPG. Łącznie sugerujemy ≤ 25MB.
+				PNG, JPG. Łącznie sugerujemy ≤ 100MB.
 			</p>
 
 			<div
