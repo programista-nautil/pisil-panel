@@ -69,7 +69,7 @@ export async function POST(request) {
 		const now = new Date()
 		const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(
 			2,
-			'0'
+			'0',
 		)}-${now.getFullYear()}`
 		const mainPdfFilename = `reczny_${fileNameWithoutExt}_${formattedDate}${fileExtension}`
 		const mainGcsPath = await uploadFileToGCS(mainPdfBuffer, mainPdfFilename)
@@ -137,23 +137,23 @@ export async function POST(request) {
 				// Generuj dokument komunikatu
 				const { buffer: commBuffer, fileName: commFileName } = await generateCommunicationDoc(
 					{ ...newSubmission, communicationNumber: commNumber },
-					commNumber
+					commNumber,
 				)
 				const commGcsPath = await uploadFileToGCS(commBuffer, `communications/${commFileName}`)
 
-				if (shouldSendEmails) {
-					await transporter.sendMail({
-						from: process.env.SMTP_USER,
-						to: newSubmission.email,
-						subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
-						html: `
+				await transporter.sendMail({
+					from: process.env.SMTP_USER,
+					to: newSubmission.email,
+					subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
+					html: `
                             <p>Szanowni Państwo,</p>
                             <p>Informujemy, że Państwa deklaracja członkowska dla firmy <strong>${companyName}</strong> została wstępnie zweryfikowana przez nasze biuro. Informacja o Państwa kandydaturze na członka Polskiej Izby Spedycji i Logistyki zostanie przekazana do wszystkich członków.</p>
                             <p>Kolejnym krokiem będzie przedstawienie Państwa kandydatury na najbliższym posiedzeniu Rady Izby. O decyzji Rady poinformujemy Państwa w osobnej wiadomości.</p>
                             <p>Z poważaniem,<br>Biuro PISiL</p>
                         `,
-					})
+				})
 
+				if (shouldSendEmails) {
 					await emailQueue.add(
 						'notify-members',
 						{
@@ -163,28 +163,31 @@ export async function POST(request) {
 							attachmentFileName: commFileName,
 							adminEmail: process.env.ADMIN_EMAIL,
 						},
-						{ attempts: 3, backoff: { type: 'exponential', delay: 5000 } }
+						{ attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
 					)
-				} else {
-					await transporter.sendMail({
-						from: process.env.SMTP_USER,
-						to: process.env.ADMIN_EMAIL,
-						subject: `[SYSTEM] Wygenerowano komunikat: ${companyName} (Bez wysyłki)`,
-						html: `
-                            <h3>Zgłoszenie zweryfikowane (Tryb cichy - dodawanie ręczne)</h3>
-                            <p>Dla firmy <strong>${companyName}</strong> został wygenerowany komunikat nr <strong>${commNumber}</strong>.</p>
-                            <p>Zgodnie z decyzją, <strong>NIE wysłano</strong> powiadomień do członków ani do kandydata.</p>
-                            <p>Wygenerowany plik znajduje się w załączniku.</p>
-                        `,
-						attachments: [
-							{
-								filename: commFileName,
-								content: commBuffer,
-								contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-							},
-						],
-					})
 				}
+				const adminStatusText = shouldSendEmails
+					? 'Wysłano powiadomienie do kandydata oraz URUCHOMIONO wysyłkę masową do członków (w tle).'
+					: 'Wysłano powiadomienie do kandydata, ale POMINIĘTO wysyłkę masową do członków.'
+
+				await transporter.sendMail({
+					from: process.env.SMTP_USER,
+					to: process.env.ADMIN_EMAIL,
+					subject: `[SYSTEM] Wygenerowano komunikat: ${companyName}`,
+					html: `
+                        <h3>Zgłoszenie zweryfikowane</h3>
+                        <p>Dla firmy <strong>${companyName}</strong> został wygenerowany komunikat nr <strong>${commNumber}</strong>.</p>
+                        <p><strong>Status wysyłki:</strong> ${adminStatusText}</p>
+                        <p>Wygenerowany plik znajduje się w załączniku.</p>
+                    `,
+					attachments: [
+						{
+							filename: commFileName,
+							content: commBuffer,
+							contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+						},
+					],
+				})
 			}
 
 			// 2. PRZYJĘTY (ACCEPTED)

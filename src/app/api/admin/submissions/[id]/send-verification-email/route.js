@@ -60,21 +60,21 @@ export async function POST(request, { params }) {
 			},
 		})
 
-		if (shouldSendEmails) {
-			const mailOptions = {
-				from: process.env.SMTP_USER,
-				to: submission.email,
-				subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
-				html: `
+		const mailOptions = {
+			from: process.env.SMTP_USER,
+			to: submission.email,
+			subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
+			html: `
                 <p>Szanowni Państwo,</p>
                 <p>Informujemy, że Państwa deklaracja członkowska dla firmy <strong>${submission.companyName}</strong> została wstępnie zweryfikowana przez nasze biuro. Informacja o Państwa kandydaturze na członka Polskiej Izby Spedycji i Logistyki zostanie przekazana do wszystkich członków.</p>
                 <p>Kolejnym krokiem będzie przedstawienie Państwa kandydatury na najbliższym posiedzeniu Rady Izby. O decyzji Rady poinformujemy Państwa w osobnej wiadomości.</p>
                 <p>Z poważaniem,<br>Biuro PISiL</p>
             `,
-			}
+		}
 
-			await transporter.sendMail(mailOptions)
+		await transporter.sendMail(mailOptions)
 
+		if (shouldSendEmails) {
 			await emailQueue.add(
 				'notify-members',
 				{
@@ -92,40 +92,37 @@ export async function POST(request, { params }) {
 					},
 				},
 			)
-
-			return NextResponse.json(
-				{
-					message: `Zgłoszenie zweryfikowane. Wygenerowano ${fileName} i rozpoczęto wysyłkę w tle. Raport otrzymasz na maila po zakończeniu.`,
-				},
-				{ status: 200 },
-			)
-		} else {
-			await transporter.sendMail({
-				from: process.env.SMTP_USER,
-				to: process.env.ADMIN_EMAIL,
-				subject: `[SYSTEM] Wygenerowano komunikat: ${submission.companyName} (Bez wysyłki)`,
-				html: `
-                    <h3>Zgłoszenie zweryfikowane</h3>
-                    <p>Dla firmy <strong>${submission.companyName}</strong> został wygenerowany komunikat nr <strong>${commNumber}</strong>.</p>
-                    <p>Zgodnie z decyzją, <strong>NIE wysłano</strong> powiadomień do członków ani do kandydata.</p>
-                    <p>Wygenerowany plik znajduje się w załączniku.</p>
-                `,
-				attachments: [
-					{
-						filename: fileName,
-						content: buffer,
-						contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-					},
-				],
-			})
-
-			return NextResponse.json(
-				{
-					message: `Zgłoszenie zweryfikowane i zarchiwizowane (bez wysyłki masowej). Wygenerowano ${fileName} i wysłano na maila administratora.`,
-				},
-				{ status: 200 },
-			)
 		}
+
+		const adminStatusText = shouldSendEmails
+			? 'Wysłano powiadomienie do kandydata oraz URUCHOMIONO wysyłkę masową do członków (w tle).'
+			: 'Wysłano powiadomienie do kandydata, ale POMINIĘTO wysyłkę masową do członków.'
+
+		await transporter.sendMail({
+			from: process.env.SMTP_USER,
+			to: process.env.ADMIN_EMAIL,
+			subject: `[SYSTEM] Wygenerowano komunikat: ${submission.companyName}`,
+			html: `
+                <h3>Zgłoszenie zweryfikowane</h3>
+                <p>Dla firmy <strong>${submission.companyName}</strong> został wygenerowany komunikat nr <strong>${commNumber}</strong>.</p>
+                <p><strong>Status wysyłki:</strong> ${adminStatusText}</p>
+                <p>Wygenerowany plik znajduje się w załączniku.</p>
+            `,
+			attachments: [
+				{
+					filename: fileName,
+					content: buffer,
+					contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+				},
+			],
+		})
+
+		// 4. ZWROT KOMUNIKATU DO FRONTENDU
+		const responseMessage = shouldSendEmails
+			? `Zgłoszenie zweryfikowane. Wygenerowano ${fileName} i rozpoczęto wysyłkę w tle. Raport na maila.`
+			: `Zgłoszenie zweryfikowane. Wygenerowano ${fileName}. Wysłano mail do kandydata i admina (Pominięto wysyłkę masową).`
+
+		return NextResponse.json({ message: responseMessage }, { status: 200 })
 	} catch (error) {
 		console.error('Błąd podczas wysyłania emaila weryfikacyjnego:', error)
 		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })
