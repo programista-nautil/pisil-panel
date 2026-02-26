@@ -45,7 +45,16 @@ export async function addToPublicList(memberData) {
 		const existingIndex = list.findIndex(item => item.Email === memberData.email)
 
 		if (existingIndex > -1) {
-			list[existingIndex] = newEntry
+			const oldEntry = list[existingIndex]
+			list[existingIndex] = {
+				...oldEntry, // Zachowujemy pola, których nie ma w panelu (np. Strona_www, Fax)
+				Nazwa: newEntry.Nazwa,
+				Ulica: newEntry.Ulica,
+				Kod: newEntry.Kod,
+				Miasto: newEntry.Miasto,
+				Tel: newEntry.Tel,
+				Email: newEntry.Email,
+			}
 			console.log(`🔄 Zaktualizowano wpis dla ${memberData.email} w liście publicznej.`)
 		} else {
 			list.push(newEntry)
