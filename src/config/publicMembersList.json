@@ -40,24 +40,14 @@
 		"Strona_www": "www.adecon.pl"
 	},
 	{
-		"Nazwa": "Adecon Sp. z o.o.",
-		"Ulica": "Dębe 47a",
-		"Kod": "62-817",
-		"Miasto": "Żelazków",
-		"Tel": "+48 625 977 725",
-		"Fax": "+48 625 977 723",
-		"Email": "biuro@adecon.pl",
-		"Strona_www": "www.adecon.pl"
-	},
-	{
-		"Nazwa": "Agroland Spedycja Międzynarodowa Sp. z o.o.,",
-		"Ulica": "",
-		"Kod": "",
-		"Miasto": "",
-		"Tel": "Brak numerów telefonu",
-		"Fax": "",
+		"Nazwa": "Agroland Spedycja Międzynarodowa Sp. z o.o.",
+		"Ulica": "Hutnicza 1",
+		"Kod": "81-212",
+		"Miasto": "Gdynia",
+		"Tel": "(58) 66 05 100",
+		"Fax": "(58) 66 05 189",
 		"Email": "agroland@agroland.com.pl",
-		"Strona_www": ""
+		"Strona_www": "www.agroland.com.pl"
 	},
 	{
 		"Nazwa": "Agroland-Cargo Spedycja Międzynarodowa Sp. z o.o.",
@@ -1911,13 +1901,13 @@
 	},
 	{
 		"Nazwa": "TS LOGISTICS Tomasz Sawicki",
-		"Ulica": "",
-		"Kod": "",
-		"Miasto": "",
+		"Ulica": "Warszawska 39",
+		"Kod": "61-028",
+		"Miasto": "Poznań",
 		"Tel": "Brak numerów telefonu",
 		"Fax": "",
 		"Email": "seafreight@tslogistic.com.pl",
-		"Strona_www": ""
+		"Strona_www": "www.tslogistic.com.pl"
 	},
 	{
 		"Nazwa": "TSL Silesia Sp. z o.o.",
