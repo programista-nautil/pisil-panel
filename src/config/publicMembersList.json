@@ -300,16 +300,6 @@
 		"Strona_www": "www.cargoshipping.pl"
 	},
 	{
-		"Nazwa": "Cargo-Partner Spedycja sp. z o.o.",
-		"Ulica": "Moszna Parcela 29/Bud C2",
-		"Kod": "05-840",
-		"Miasto": "Brwinów",
-		"Tel": "(22) 4331 880",
-		"Fax": "(22) 4331 810",
-		"Email": " plpzk@cargo-partner.com ",
-		"Strona_www": "www.cargo-partner.com"
-	},
-	{
 		"Nazwa": "Cargomind Poland Sp. z o.o.",
 		"Ulica": "1 Sierpnia 6/D",
 		"Kod": "02-134",
@@ -390,16 +380,6 @@
 		"Strona_www": "www.csl.eu"
 	},
 	{
-		"Nazwa": "CSL Sp. z o.o.",
-		"Ulica": "T.Wendy 14",
-		"Kod": "70-655",
-		"Miasto": "Szczecin",
-		"Tel": "(91) 434 40 33",
-		"Fax": "(91) 448 05 23",
-		"Email": "laura.holowacz@csl.com.pl",
-		"Strona_www": "www.csl.eu"
-	},
-	{
 		"Nazwa": "Dartom Sp. z o.o.",
 		"Ulica": "Bałtycka 50",
 		"Kod": "05-825",
@@ -417,16 +397,6 @@
 		"Tel": "58 785 61 00",
 		"Fax": "(58) 785 61 01",
 		"Email": "info@dbspolska.com.pl ",
-		"Strona_www": "www.dbs-group.eu"
-	},
-	{
-		"Nazwa": "DBS Polska Sp. z o.o.",
-		"Ulica": "Plac Kaszubski 8/210",
-		"Kod": "81-350",
-		"Miasto": "Gdynia",
-		"Tel": "58 785 61 00",
-		"Fax": "(58) 785 61 01",
-		"Email": "info@dbspolska.com.pl",
 		"Strona_www": "www.dbs-group.eu"
 	},
 	{
@@ -490,16 +460,6 @@
 		"Strona_www": "www.dorcel.pl"
 	},
 	{
-		"Nazwa": "Dor-Cel Sp. z o.o.",
-		"Ulica": "Wirażowa 35",
-		"Kod": "02-158",
-		"Miasto": "Warszawa",
-		"Tel": "(22) 3009150",
-		"Fax": "(22) 3009151",
-		"Email": "office@dorcel.pl",
-		"Strona_www": "www.dorcel.pl"
-	},
-	{
 		"Nazwa": "DSV Air&Sea, Sp. z o.o.",
 		"Ulica": "Taśmowa 10",
 		"Kod": "02-677",
@@ -520,16 +480,6 @@
 		"Strona_www": "www.dsv.com.pl"
 	},
 	{
-		"Nazwa": "DSV Road Sp. z o.o.",
-		"Ulica": "Ożrowska 40/42",
-		"Kod": "05-850",
-		"Miasto": "Ożarów Maz.",
-		"Tel": "+48 22 244 76 01",
-		"Fax": "+48 22 670 68 07",
-		"Email": "office@pl.dsv.com",
-		"Strona_www": "www.dsv.com.pl"
-	},
-	{
 		"Nazwa": "DTA Sp. z o.o.",
 		"Ulica": "Karmelkowa 29",
 		"Kod": "52-319",
@@ -537,16 +487,6 @@
 		"Tel": "58 621 32 93",
 		"Fax": "58 621 32 99",
 		"Email": "dta@dta.com.pl ",
-		"Strona_www": "www.dta.pl"
-	},
-	{
-		"Nazwa": "DTA Sp. z o.o.",
-		"Ulica": "Karmelkowa 29",
-		"Kod": "52-319",
-		"Miasto": "Wrocław",
-		"Tel": "58 621 32 93",
-		"Fax": "58 621 32 99",
-		"Email": "dta@dta.com.pl",
 		"Strona_www": "www.dta.pl"
 	},
 	{
@@ -657,16 +597,6 @@
 		"Tel": "058 621 68 12",
 		"Fax": "",
 		"Email": "dyrektor@expolco.com.pl ",
-		"Strona_www": "www.expolco.com.pl"
-	},
-	{
-		"Nazwa": "Expolco Transped Sp. z o.o.",
-		"Ulica": "Indyjska 13",
-		"Kod": "81-336",
-		"Miasto": "Gdynia",
-		"Tel": "058 621 68 12",
-		"Fax": "",
-		"Email": "dyrektor@expolco.com.pl",
 		"Strona_www": "www.expolco.com.pl"
 	},
 	{
@@ -878,16 +808,6 @@
 		"Fax": "",
 		"Email": "info-PL@hellmann.com.",
 		"Strona_www": "www.hellmann.com"
-	},
-	{
-		"Nazwa": "Hellmann Worldwide Logistics Polska Sp. z o.o.",
-		"Ulica": "Al. Krakowska 61",
-		"Kod": "02-183",
-		"Miasto": "Warszawa",
-		"Tel": "22 717 97 97",
-		"Fax": "",
-		"Email": "info-PL@hellmann.com",
-		"Strona_www": "www.hellmann.net"
 	},
 	{
 		"Nazwa": "Hermes Sp. z o.o.",
@@ -1600,16 +1520,6 @@
 		"Strona_www": "www.chg.pl"
 	},
 	{
-		"Nazwa": "RHENUS AIR & OCEAN POLAND SPÓŁKA AKCYJNA",
-		"Ulica": "Kielecka 2",
-		"Kod": "81-303",
-		"Miasto": "Gdynia",
-		"Tel": "(58) 515824712",
-		"Fax": "",
-		"Email": "chg@chg.pl",
-		"Strona_www": "www.chg.pl"
-	},
-	{
 		"Nazwa": "Rhenus Port Logistics Sp. z o.o.",
 		"Ulica": "Puławska 99",
 		"Kod": "02-595",
@@ -1627,16 +1537,6 @@
 		"Tel": "(22) 737 75 75",
 		"Fax": "(22) 737 75 00",
 		"Email": "office@suus.com ",
-		"Strona_www": "www.suus.com"
-	},
-	{
-		"Nazwa": "Rohlig Suus Logistics SA",
-		"Ulica": "Równoległa 4A",
-		"Kod": "02-235",
-		"Miasto": "Warszawa",
-		"Tel": "(22) 737 75 75",
-		"Fax": "(22) 737 75 00",
-		"Email": "office@suus.com",
 		"Strona_www": "www.suus.com"
 	},
 	{
@@ -1807,16 +1707,6 @@
 		"Tel": "(58)627 48 53",
 		"Fax": "",
 		"Email": "spedycja@terramar.pl ",
-		"Strona_www": "www.terramar.pl"
-	},
-	{
-		"Nazwa": "Terramar Sp. z o.o.",
-		"Ulica": "Rotterdamska 3",
-		"Kod": "81-337",
-		"Miasto": "Gdynia",
-		"Tel": "(58)627 48 53",
-		"Fax": "",
-		"Email": "spedycja@terramar.pl",
 		"Strona_www": "www.terramar.pl"
 	},
 	{
