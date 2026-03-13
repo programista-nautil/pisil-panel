@@ -30,33 +30,40 @@ export async function addToPublicList(memberData) {
 		let list = JSON.parse(content)
 
 		const { ulica, kod, miasto } = parseAddressToParts(memberData.address)
+		const companyName = memberData.companyName || memberData.company
 
-		const newEntry = {
-			Nazwa: memberData.companyName || memberData.company,
-			Ulica: ulica,
-			Kod: kod,
-			Miasto: miasto,
-			Tel: memberData.phones || '',
-			Fax: '',
-			Email: memberData.email,
-			Strona_www: '',
+		let existingIndex = list.findIndex(item => item.Email === memberData.email)
+
+		if (existingIndex === -1 && companyName) {
+			existingIndex = list.findIndex(item => item.Nazwa === companyName)
 		}
-
-		const existingIndex = list.findIndex(item => item.Email === memberData.email)
 
 		if (existingIndex > -1) {
 			const oldEntry = list[existingIndex]
+
 			list[existingIndex] = {
-				...oldEntry, // Zachowujemy pola, których nie ma w panelu (np. Strona_www, Fax)
-				Nazwa: newEntry.Nazwa,
-				Ulica: newEntry.Ulica,
-				Kod: newEntry.Kod,
-				Miasto: newEntry.Miasto,
-				Tel: newEntry.Tel,
-				Email: newEntry.Email,
+				...oldEntry,
+				Nazwa: companyName || oldEntry.Nazwa,
+				Ulica: ulica || oldEntry.Ulica,
+				Kod: kod || oldEntry.Kod,
+				Miasto: miasto || oldEntry.Miasto,
+				Tel: memberData.phones || oldEntry.Tel,
+				Email: memberData.email || oldEntry.Email,
+				Strona_www: oldEntry.Strona_www || '',
+				Fax: oldEntry.Fax || '',
 			}
 			console.log(`🔄 Zaktualizowano wpis dla ${memberData.email} w liście publicznej.`)
 		} else {
+			const newEntry = {
+				Nazwa: companyName,
+				Ulica: ulica,
+				Kod: kod,
+				Miasto: miasto,
+				Tel: memberData.phones || '',
+				Fax: '',
+				Email: memberData.email,
+				Strona_www: '',
+			}
 			list.push(newEntry)
 			console.log(`✅ Dodano ${memberData.email} do listy publicznej.`)
 		}
@@ -64,7 +71,6 @@ export async function addToPublicList(memberData) {
 		list.sort((a, b) => (a.Nazwa || '').localeCompare(b.Nazwa || '', 'pl'))
 
 		fs.writeFileSync(LIST_PATH, JSON.stringify(list, null, 2))
-		console.log(`✅ Dodano ${memberData.companyName} do listy publicznej.`)
 	} catch (error) {
 		console.error('Błąd dodawania do listy publicznej:', error)
 	}
