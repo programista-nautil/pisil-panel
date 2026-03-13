@@ -14,7 +14,7 @@ const parseAddressToParts = fullAddress => {
 		kod = zipMatch[0]
 		const zipIndex = zipMatch.index
 
-		ulica = fullAddress.substring(0, zipIndex).replace(/,$/, '').trim()
+		ulica = fullAddress.substring(0, zipIndex).trim().replace(/,$/, '')
 
 		miasto = fullAddress.substring(zipIndex + 6).trim()
 	}
