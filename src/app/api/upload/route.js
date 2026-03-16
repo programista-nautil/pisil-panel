@@ -99,9 +99,11 @@ export async function POST(request) {
 			},
 		})
 
+		const supportEmail = isDeclaration ? EMAILS.DEKLARACJE : formType === 'PATRONAT' ? EMAILS.PATRONATY : EMAILS.DEFAULT
+
 		const adminMailOptions = {
-			from: process.env.SMTP_USER || 'programista@nautil.pl',
-			to: isDeclaration ? EMAILS.DEKLARACJE : formType === 'PATRONAT' ? EMAILS.PATRONATY : EMAILS.DEFAULT,
+			from: `"System PISiL" <${process.env.SMTP_USER || 'programista@nautil.pl'}>`,
+			to: supportEmail,
 			subject: isDeclaration
 				? `Nowa deklaracja członkowska - ${displayCompanyOrOrg}`
 				: formType === 'PATRONAT'
@@ -132,8 +134,9 @@ export async function POST(request) {
 		}
 
 		const userMailOptions = {
-			from: process.env.SMTP_USER || 'programista@nautil.pl',
+			from: `"Polska Izba Spedycji i Logistyki" <${process.env.SMTP_USER || 'programista@nautil.pl'}>`,
 			to: userData.email,
+			replyTo: supportEmail,
 			subject: isDeclaration
 				? 'Potwierdzenie otrzymania deklaracji członkowskiej - PISiL'
 				: 'Potwierdzenie otrzymania wniosku o patronat - PISiL',
