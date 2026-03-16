@@ -92,8 +92,9 @@ const worker = new Worker(
 						batch.map(async emailAddress => {
 							try {
 								await transporter.sendMail({
-									from: process.env.SMTP_USER,
+									from: `"Polska Izba Spedycji i Logistyki" <${process.env.SMTP_USER}>`,
 									to: emailAddress,
+									replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
 									subject: `Nowy kandydat na członka PISiL: ${companyName}`,
 									html: `
 										<p>Szanowni Państwo,</p>
@@ -108,7 +109,7 @@ const worker = new Worker(
 													content: attachmentBuffer,
 													contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 												},
-										  ]
+											]
 										: [],
 								})
 
@@ -117,7 +118,7 @@ const worker = new Worker(
 							} catch (err) {
 								console.error(`❌ Błąd wysyłki do ${member.email}:`, err.message)
 							}
-						})
+						}),
 					)
 
 					// Czekaj przed następną partią
@@ -152,7 +153,7 @@ const worker = new Worker(
 											content: attachmentBuffer,
 											contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 										},
-								  ]
+									]
 								: [],
 						})
 						console.log(`📨 Wysłano raport do admina: ${adminEmail}`)
@@ -200,7 +201,7 @@ const worker = new Worker(
 			}
 		}
 	},
-	{ connection }
+	{ connection },
 )
 
 // Obsługa błędów workera

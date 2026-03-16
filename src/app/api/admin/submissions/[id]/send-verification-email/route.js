@@ -102,6 +102,8 @@ export async function POST(request, { params }) {
 			from: process.env.SMTP_USER,
 			to: process.env.ADMIN_EMAIL,
 			subject: `[SYSTEM] Wygenerowano komunikat: ${submission.companyName}`,
+			replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
+			bcc: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
 			html: `
                 <h3>Zgłoszenie zweryfikowane</h3>
                 <p>Dla firmy <strong>${submission.companyName}</strong> został wygenerowany komunikat nr <strong>${commNumber}</strong>.</p>

@@ -53,8 +53,16 @@ export async function POST(request, { params }) {
 		})
 
 		const mailOptions = {
-			from: process.env.SMTP_USER,
+			from: `"Polska Izba Spedycji i Logistyki" <${process.env.SMTP_USER}>`,
 			to: submission.email,
+			replyTo:
+				submission.formType === 'DEKLARACJA_CZLONKOWSKA'
+					? process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL
+					: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,
+			bcc:
+				submission.formType === 'DEKLARACJA_CZLONKOWSKA'
+					? process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL
+					: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,
 			subject: mailSubject,
 			html: mailHtml,
 		}

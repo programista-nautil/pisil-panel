@@ -313,6 +313,8 @@ export async function processAcceptance(submission, acceptanceDate) {
 		from: process.env.SMTP_USER,
 		to: submission.email,
 		subject: `Potwierdzenie członkostwa w Polskiej Izbie Spedycji i Logistyki`,
+		replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
+		bcc: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
 		html: `
             <p>Szanowni Państwo,</p>
             <p>Z przyjemnością informujemy, że uchwałą Rady PISiL firma <strong>${submission.companyName}</strong> została przyjęta w poczet członków Polskiej Izby Spedycji i Logistyki.</p>
@@ -326,7 +328,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 	await transporter.sendMail(userMailOptions)
 
 	const adminMailOptions = {
-		from: process.env.SMTP_USER,
+		from: `"System PISiL" <${process.env.SMTP_USER}>`,
 		to: ADMIN_EMAIL,
 		subject: `Potwierdzenie przyjęcia członka: ${submission.companyName}`,
 		html: `Wygenerowano i wysłano dokumenty powitalne dla <strong>${submission.companyName}</strong>. Zostały one również zapisane jako załączniki do zgłoszenia w panelu.`,

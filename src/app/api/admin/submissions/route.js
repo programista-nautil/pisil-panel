@@ -144,6 +144,8 @@ export async function POST(request) {
 				await transporter.sendMail({
 					from: process.env.SMTP_USER,
 					to: newSubmission.email,
+					replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
+					bcc: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
 					subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
 					html: `
                             <p>Szanowni Państwo,</p>
@@ -210,6 +212,8 @@ export async function POST(request) {
 				await transporter.sendMail({
 					from: process.env.SMTP_USER,
 					to: newSubmission.email,
+					replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
+					bcc: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
 					subject: 'Potwierdzenie otrzymania deklaracji członkowskiej - PISiL',
 					html: `
                         <p>Szanowni Państwo,</p>
@@ -231,6 +235,8 @@ export async function POST(request) {
 			await transporter.sendMail({
 				from: process.env.SMTP_USER,
 				to: newSubmission.email,
+				replyTo: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,
+				bcc: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,
 				subject: 'Potwierdzenie otrzymania wniosku o patronat - PISiL',
 				html: mailHtml,
 			})

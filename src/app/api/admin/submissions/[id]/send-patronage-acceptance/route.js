@@ -39,6 +39,8 @@ export async function POST(request, { params }) {
 		await transporter.sendMail({
 			from: process.env.SMTP_USER,
 			to: submission.email,
+			replyTo: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,
+			bcc: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,
 			subject: `Patronat PISiL został przyznany: ${submission.companyName}`,
 			html: textToHtml(emailBody),
 		})

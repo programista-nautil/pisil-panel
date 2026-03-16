@@ -45,12 +45,13 @@ export async function POST(request, { params }) {
 			from: process.env.SMTP_USER,
 			to: submission.email,
 			subject: `Patronat PISiL został przyznany: ${submission.companyName}`,
+			replyTo: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,
+			bcc: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,
 			html: textToHtml(emailBody),
 			attachments: [
 				{
 					filename: 'logo-pisil.png',
 					content: logoBuffer,
-					cid: 'pisil-logo',
 				},
 			],
 		})
