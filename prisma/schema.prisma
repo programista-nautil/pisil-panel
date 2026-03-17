@@ -108,6 +108,8 @@ model Submission {
   ceoName String?
   address String?
   phones  String?
+  fax     String?
+  website String?
 
   recommendations String?
   communicationNumber Int? @unique
@@ -152,6 +154,9 @@ model Member {
   passwordResetToken   String?   @unique 
   passwordResetExpires DateTime?
   mustChangePassword Boolean @default(false)
+
+  fax     String?
+  website String?
 
   submissions Submission[]
   files       MemberFile[]

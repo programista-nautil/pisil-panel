@@ -49,6 +49,8 @@ export async function POST(request) {
 		const invoiceEmail = data.get('invoiceEmail')
 		const notificationEmails = data.get('notificationEmails')
 		const recommendations = data.get('recommendations')
+		const fax = data.get('fax')
+		const website = data.get('website')
 
 		const acceptanceDate = data.get('acceptanceDate') || new Date().toISOString()
 
@@ -91,6 +93,8 @@ export async function POST(request) {
 					invoiceEmail: invoiceEmail || null,
 					notificationEmails: notificationEmails || null,
 					recommendations: recommendations || null,
+					fax: fax || null,
+					website: website || null,
 				},
 			})
 

@@ -6,6 +6,8 @@ import toast from 'react-hot-toast'
 export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) {
 	const [email, setEmail] = useState('')
 	const [phones, setPhones] = useState('')
+	const [fax, setFax] = useState('') // Nowe pole
+	const [website, setWebsite] = useState('') // Nowe pole
 	const [company, setCompany] = useState('')
 	const [name, setName] = useState('')
 	const [address, setAddress] = useState('')
@@ -17,6 +19,8 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 		if (member) {
 			setEmail(member.email || '')
 			setPhones(member.phones || '')
+			setFax(member.fax || '') // Inicjalizacja
+			setWebsite(member.website || '') // Inicjalizacja
 			setCompany(member.company || '')
 			setName(member.name || '')
 			setAddress(member.address || '')
@@ -39,6 +43,8 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 				body: JSON.stringify({
 					email,
 					phones,
+					fax, // Wysłanie do API
+					website, // Wysłanie do API
 					company,
 					name,
 					address,
@@ -65,7 +71,8 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 
 	return (
 		<div className='fixed inset-0 bg-black/50 z-50 flex justify-center items-center p-4'>
-			<div className='bg-white rounded-lg shadow-xl p-6 w-full max-w-md' onClick={e => e.stopPropagation()}>
+			{/* Lekko poszerzony modal (max-w-lg), żeby siatka dobrze wyglądała */}
+			<div className='bg-white rounded-lg shadow-xl p-6 w-full max-w-lg' onClick={e => e.stopPropagation()}>
 				<h3 className='text-lg font-bold text-[#005698] mb-4'>Edytuj dane kontaktowe</h3>
 				<p className='text-sm text-gray-500 mb-4'>
 					Edytujesz dane dla: <span className='font-medium text-gray-700'>{member.company}</span>
@@ -83,25 +90,26 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 						/>
 					</div>
 
-					<div>
-						<label className='block text-sm font-medium text-gray-700'>Reprezentant (Prezes/CEO)</label>
-						<input
-							type='text'
-							value={name}
-							onChange={e => setName(e.target.value)}
-							className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-600'
-						/>
-					</div>
-
-					<div>
-						<label className='block text-sm font-medium text-gray-700'>Email</label>
-						<input
-							type='email'
-							value={email}
-							onChange={e => setEmail(e.target.value)}
-							required
-							className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-600'
-						/>
+					<div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+						<div>
+							<label className='block text-sm font-medium text-gray-700'>Reprezentant (Prezes/CEO)</label>
+							<input
+								type='text'
+								value={name}
+								onChange={e => setName(e.target.value)}
+								className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-600'
+							/>
+						</div>
+						<div>
+							<label className='block text-sm font-medium text-gray-700'>Email główny</label>
+							<input
+								type='email'
+								value={email}
+								onChange={e => setEmail(e.target.value)}
+								required
+								className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-600'
+							/>
+						</div>
 					</div>
 
 					<div>
@@ -115,37 +123,60 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 						/>
 					</div>
 
-					<div>
-						<label className='block text-sm font-medium text-gray-700'>Telefony</label>
-						<input
-							type='text'
-							value={phones}
-							onChange={e => setPhones(e.target.value)}
-							className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-600'
-							placeholder='+48 123 456 789, +48 987...'
-						/>
-						<p className='text-xs text-gray-500 mt-1'>Możesz podać kilka numerów oddzielonych przecinkami.</p>
+					<div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+						<div>
+							<label className='block text-sm font-medium text-gray-700'>Telefony</label>
+							<input
+								type='text'
+								value={phones}
+								onChange={e => setPhones(e.target.value)}
+								className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-600'
+								placeholder='+48 123 456 789'
+							/>
+						</div>
+						<div>
+							<label className='block text-sm font-medium text-gray-700'>Fax</label>
+							<input
+								type='text'
+								value={fax}
+								onChange={e => setFax(e.target.value)}
+								className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-600'
+								placeholder='+48 123 456 789'
+							/>
+						</div>
 					</div>
 
 					<div>
-						<label className='block text-sm font-medium text-gray-700'>Email do faktur</label>
+						<label className='block text-sm font-medium text-gray-700'>Strona WWW</label>
 						<input
-							type='email'
-							value={invoiceEmail}
-							onChange={e => setInvoiceEmail(e.target.value)}
-							className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm text-gray-600'
+							type='text'
+							value={website}
+							onChange={e => setWebsite(e.target.value)}
+							className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-600'
+							placeholder='np. www.firma.pl'
 						/>
 					</div>
-					<div>
-						<label className='block text-sm font-medium text-gray-700'>Adresy do komunikatów (Newsletter)</label>
-						<textarea
-							value={notificationEmails}
-							onChange={e => setNotificationEmails(e.target.value)}
-							rows={2}
-							className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm text-gray-600'
-							placeholder='jan@firma.pl, anna@firma.pl'
-						/>
-						<p className='text-xs text-gray-500 mt-1'>Oddziel adresy przecinkami.</p>
+
+					<div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+						<div>
+							<label className='block text-sm font-medium text-gray-700'>Email do faktur</label>
+							<input
+								type='email'
+								value={invoiceEmail}
+								onChange={e => setInvoiceEmail(e.target.value)}
+								className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm text-gray-600'
+							/>
+						</div>
+						<div>
+							<label className='block text-sm font-medium text-gray-700'>Adresy do komunikatów</label>
+							<textarea
+								value={notificationEmails}
+								onChange={e => setNotificationEmails(e.target.value)}
+								rows={1}
+								className='mt-1 block w-full rounded-md border-gray-300 border p-2 shadow-sm text-gray-600'
+								placeholder='jan@firma.pl'
+							/>
+						</div>
 					</div>
 
 					<div className='mt-6 flex justify-end gap-3'>

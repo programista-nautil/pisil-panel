@@ -154,6 +154,9 @@ export default function AdminDashboard() {
 		if (data.recommendations) {
 			formData.append('recommendations', data.recommendations || '')
 		}
+		formData.append('fax', data.fax || '')
+		formData.append('website', data.website || '')
+
 		additionalFiles.forEach(file => {
 			formData.append('additionalFiles[]', file)
 		})

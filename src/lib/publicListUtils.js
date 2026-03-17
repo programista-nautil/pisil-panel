@@ -49,8 +49,11 @@ export async function addToPublicList(memberData) {
 				Miasto: miasto || oldEntry.Miasto,
 				Tel: memberData.phones || oldEntry.Tel,
 				Email: memberData.email || oldEntry.Email,
-				Strona_www: oldEntry.Strona_www || '',
-				Fax: oldEntry.Fax || '',
+				Strona_www:
+					memberData.website !== undefined && memberData.website !== null
+						? memberData.website
+						: oldEntry.Strona_www || '',
+				Fax: memberData.fax !== undefined && memberData.fax !== null ? memberData.fax : oldEntry.Fax || '',
 			}
 			console.log(`🔄 Zaktualizowano wpis dla ${memberData.email} w liście publicznej.`)
 		} else {
@@ -60,9 +63,9 @@ export async function addToPublicList(memberData) {
 				Kod: kod,
 				Miasto: miasto,
 				Tel: memberData.phones || '',
-				Fax: '',
+				Fax: memberData.fax || '',
 				Email: memberData.email,
-				Strona_www: '',
+				Strona_www: memberData.website || '',
 			}
 			list.push(newEntry)
 			console.log(`✅ Dodano ${memberData.email} do listy publicznej.`)

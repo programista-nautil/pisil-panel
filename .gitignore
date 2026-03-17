@@ -58,3 +58,5 @@ docker-compose.prod.yml
 /scripts/czlonkowie_import.xlsx
 /src/config/mailingList.json
 src/config/publicMembersList.json
+
+.claude/

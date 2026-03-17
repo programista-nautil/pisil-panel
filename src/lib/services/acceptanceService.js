@@ -104,6 +104,8 @@ export async function processAcceptance(submission, acceptanceDate) {
 						phones: submission.phones,
 						invoiceEmail: submission.invoiceEmail,
 						notificationEmails: submission.notificationEmails,
+						fax: submission.fax,
+						website: submission.website,
 					},
 				})
 			} else {
@@ -123,6 +125,8 @@ export async function processAcceptance(submission, acceptanceDate) {
 						phones: submission.phones,
 						invoiceEmail: submission.invoiceEmail,
 						notificationEmails: submission.notificationEmails,
+						fax: submission.fax,
+						website: submission.website,
 					},
 				})
 				memberId = newMember.id
@@ -131,6 +135,8 @@ export async function processAcceptance(submission, acceptanceDate) {
 					address: submission.address,
 					email: submission.email,
 					phones: submission.phones,
+					fax: submission.fax,
+					website: submission.website,
 				})
 			}
 

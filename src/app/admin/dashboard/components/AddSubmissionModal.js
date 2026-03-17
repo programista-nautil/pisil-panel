@@ -37,6 +37,8 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 				invoiceEmail: '',
 				notificationEmails: '',
 				recommendations: '',
+				fax: '',
+				website: '',
 			})
 
 			setMainPdf(null)
@@ -139,6 +141,29 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 								className='mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-gray-500'
 							/>
 							<p className='text-xs text-gray-500 mt-1'>Możesz podać kilka numerów oddzielonych przecinkami.</p>
+						</div>
+						<div>
+							<label htmlFor='fax' className='block text-sm font-medium text-gray-700'>
+								Fax
+							</label>
+							<input
+								type='text'
+								id='fax'
+								{...register('fax')}
+								className='mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+							/>
+						</div>
+						<div>
+							<label htmlFor='website' className='block text-sm font-medium text-gray-700'>
+								Strona WWW
+							</label>
+							<input
+								type='text'
+								id='website'
+								{...register('website')}
+								className='mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+								placeholder='np. www.firma.pl'
+							/>
 						</div>
 
 						{formType === 'DEKLARACJA_CZLONKOWSKA' && (
