@@ -26,9 +26,11 @@ export async function GET(request) {
 					{ address: { contains: query, mode: 'insensitive' } },
 					{ invoiceEmail: { contains: query, mode: 'insensitive' } },
 					{ notificationEmails: { contains: query, mode: 'insensitive' } },
+					{ fax: { contains: query, mode: 'insensitive' } },
+					{ website: { contains: query, mode: 'insensitive' } },
 					...(isNumericQuery ? [{ memberNumber: { equals: parseInt(query) } }] : []),
 				],
-		  }
+			}
 		: {}
 
 	try {
@@ -51,6 +53,8 @@ export async function GET(request) {
 					address: true,
 					invoiceEmail: true,
 					notificationEmails: true,
+					fax: true,
+					website: true,
 				},
 			}),
 			prisma.member.count({

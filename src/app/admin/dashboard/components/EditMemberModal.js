@@ -7,7 +7,7 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 	const [email, setEmail] = useState('')
 	const [phones, setPhones] = useState('')
 	const [fax, setFax] = useState('') // Nowe pole
-	const [website, setWebsite] = useState('') // Nowe pole
+	const [website, setWebsite] = useState('')
 	const [company, setCompany] = useState('')
 	const [name, setName] = useState('')
 	const [address, setAddress] = useState('')
@@ -19,8 +19,8 @@ export default function EditMemberModal({ isOpen, onClose, member, onSuccess }) 
 		if (member) {
 			setEmail(member.email || '')
 			setPhones(member.phones || '')
-			setFax(member.fax || '') // Inicjalizacja
-			setWebsite(member.website || '') // Inicjalizacja
+			setFax(member.fax || '')
+			setWebsite(member.website || '')
 			setCompany(member.company || '')
 			setName(member.name || '')
 			setAddress(member.address || '')
