@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   postgres:
@@ -11,14 +11,24 @@ services:
       POSTGRES_DB: pisil_db
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
-      - '5433:5432'
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U pisil -d pisil_db']
+      test: ["CMD-SHELL", "pg_isready -U pisil -d pisil_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:alpine
+    container_name: pisil_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
 volumes:
   postgres_data:
+  redis_data:
