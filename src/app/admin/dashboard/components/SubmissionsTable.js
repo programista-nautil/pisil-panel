@@ -113,7 +113,7 @@ export default function SubmissionsTable({
 	const hasExpandableRows = submissions.some(s => s.formType === 'DEKLARACJA_CZLONKOWSKA' || s.formType === 'PATRONAT')
 
 	return (
-		<div className='overflow-x-auto'>
+		<div>
 			<table className='w-full text-sm text-left text-gray-500'>
 				<thead className='text-xs text-gray-700 uppercase bg-gray-50'>
 					<tr>
@@ -179,7 +179,7 @@ export default function SubmissionsTable({
 											)}
 										</div>
 									</td>
-									<td className='px-6 py-4'>{submission.email || 'Brak emaila'}</td>
+									<td className='px-6 py-4 max-w-xs'><span className='truncate block'>{submission.email || 'Brak emaila'}</span></td>
 									<td className='px-6 py-4'>
 										{new Date(submission.createdAt).toLocaleString('pl-PL', {
 											dateStyle: 'short',
