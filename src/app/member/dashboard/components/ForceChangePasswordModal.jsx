@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import { LockClosedIcon, EyeIcon, EyeSlashIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
 
 export default function ForceChangePasswordModal() {
-	const { data: session, update } = useSession()
+	const { data: session } = useSession()
 
 	const [passwords, setPasswords] = useState({
 		newPassword: '',
@@ -50,16 +50,9 @@ export default function ForceChangePasswordModal() {
 
 			if (!res.ok) throw new Error(data.message || 'Błąd zmiany hasła')
 
-			await update({
-				...session,
-				user: {
-					...session?.user,
-					mustChangePassword: false,
-				},
-			})
+			window.location.reload()
 		} catch (error) {
 			setError(error.message)
-		} finally {
 			setIsSubmitting(false)
 		}
 	}
