@@ -7,6 +7,7 @@ import { DocumentTextIcon, UserCircleIcon, ArrowDownTrayIcon, FolderIcon, UserIc
 import MyDataModal from './components/MyDataModal'
 import { CollapsibleFileCategory } from './components/CollapsibleFileCategory'
 import NewslettersSection from './components/NewslettersSection'
+import ReportsSection from './components/ReportsSection'
 import WelcomeBanner from './components/WelcomeBanner'
 import ForceChangePasswordModal from './components/ForceChangePasswordModal'
 
@@ -191,6 +192,9 @@ export default function MemberDashboard() {
 							</section>
 							<section className='mt-8'>
 								<NewslettersSection />
+							</section>
+							<section className='mt-8'>
+								<ReportsSection />
 							</section>
 						</>
 					)}

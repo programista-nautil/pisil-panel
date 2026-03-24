@@ -46,6 +46,7 @@
 		"@testing-library/user-event": "^14.6.1",
 		"@types/bcrypt": "^6.0.0",
 		"@types/jest": "^30.0.0",
+		"@types/mime": "^3.0.4",
 		"eslint": "^9",
 		"eslint-config-next": "^16.0.0",
 		"jest": "^30.2.0",

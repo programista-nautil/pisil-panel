@@ -8,6 +8,7 @@ import { useNotificationModals } from './hooks/useNotificationModals'
 import AddSubmissionModal from './components/AddSubmissionModal'
 import NotificationModals from './components/NotificationModals'
 import MemberManagement from './components/MemberManagement'
+import AdminResourcesTab from './components/AdminResourcesTab'
 import { DocumentDuplicateIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline'
 import AddAttachmentsModal from './components/AddAttachmentsModal'
 import toast from 'react-hot-toast'
@@ -420,6 +421,15 @@ export default function AdminDashboard() {
 							} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>
 							Zarządzanie Strefą Członkowską
 						</button>
+						<button
+                            onClick={() => setActiveTab('resources')}
+                            className={`${
+                                activeTab === 'resources'
+                                    ? 'border-[#005698] text-[#005698]'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>
+                            Materiały i Sprawozdania
+                        </button>
 					</nav>
 				</div>
 
@@ -487,10 +497,9 @@ export default function AdminDashboard() {
 								</div>
 							)}
 
-							{activeTab === 'management' && (
-								// Renderujemy nasz nowy komponent
-								<MemberManagement />
-							)}
+							{activeTab === 'management' && <MemberManagement />}
+
+							{activeTab === 'resources' && <AdminResourcesTab />}
 						</div>
 					)}
 				</main>
