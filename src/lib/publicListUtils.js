@@ -8,15 +8,19 @@ const parseAddressToParts = fullAddress => {
 	let kod = ''
 	let miasto = ''
 
-	const zipMatch = fullAddress?.match(/(\d{2}-\d{3})/)
+	const zipMatch = fullAddress?.match(/(\d{2}[-\s]?\d{3})/)
 
 	if (zipMatch) {
-		kod = zipMatch[0]
+		kod = zipMatch[0].replace(/\s/g, '').replace(/(\d{2})(\d{3})/, '$1-$2')
 		const zipIndex = zipMatch.index
 
 		ulica = fullAddress.substring(0, zipIndex).trim().replace(/,$/, '')
 
-		miasto = fullAddress.substring(zipIndex + 6).trim()
+		let restAfterZip = fullAddress.substring(zipIndex + zipMatch[0].length).trim()
+
+		restAfterZip = restAfterZip.replace(/^,/, '').trim()
+
+		miasto = restAfterZip.split(',')[0].trim()
 	}
 
 	return { ulica, kod, miasto }
@@ -41,19 +45,20 @@ export async function addToPublicList(memberData) {
 		if (existingIndex > -1) {
 			const oldEntry = list[existingIndex]
 
+			const newPhones = (memberData.phones && memberData.phones !== 'Brak numerów telefonu') ? memberData.phones : oldEntry.Tel;
+            const newWebsite = memberData.website ? memberData.website : (oldEntry.Strona_www || '');
+            const newFax = memberData.fax ? memberData.fax : (oldEntry.Fax || '');
+
 			list[existingIndex] = {
 				...oldEntry,
 				Nazwa: companyName || oldEntry.Nazwa,
 				Ulica: ulica || oldEntry.Ulica,
 				Kod: kod || oldEntry.Kod,
 				Miasto: miasto || oldEntry.Miasto,
-				Tel: memberData.phones || oldEntry.Tel,
+				Tel: newPhones,
 				Email: memberData.email || oldEntry.Email,
-				Strona_www:
-					memberData.website !== undefined && memberData.website !== null
-						? memberData.website
-						: oldEntry.Strona_www || '',
-				Fax: memberData.fax !== undefined && memberData.fax !== null ? memberData.fax : oldEntry.Fax || '',
+				Strona_www: newWebsite,
+                Fax: newFax
 			}
 			console.log(`🔄 Zaktualizowano wpis dla ${memberData.email} w liście publicznej.`)
 		} else {
@@ -62,8 +67,8 @@ export async function addToPublicList(memberData) {
 				Ulica: ulica,
 				Kod: kod,
 				Miasto: miasto,
-				Tel: memberData.phones || '',
-				Fax: memberData.fax || '',
+				Tel: memberData.phones === 'Brak numerów telefonu' ? '' : (memberData.phones || ''),
+                Fax: memberData.fax || '',
 				Email: memberData.email,
 				Strona_www: memberData.website || '',
 			}
