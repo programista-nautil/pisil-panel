@@ -7,6 +7,8 @@ import {
   TrashIcon,
   DocumentArrowDownIcon,
   ArrowDownTrayIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from "@heroicons/react/24/outline";
 import AddCommunicationModal from "./AddCommunicationModal";
 
@@ -15,6 +17,9 @@ export default function CommunicationsManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+
+  // Stan przechowujący otwarte/zamknięte roczniki (np. { 2024: true, 2023: false })
+  const [expandedYears, setExpandedYears] = useState({});
 
   useEffect(() => {
     fetchCommunications();
@@ -26,13 +31,27 @@ export default function CommunicationsManagement() {
       const res = await fetch("/api/admin/communications");
       if (!res.ok) throw new Error("Błąd ładowania komunikatów");
       const data = await res.json();
+
       setCommunications(data);
+
+      // Domyślnie otwieramy najnowszy rocznik, jeśli są jakieś dane
+      if (data.length > 0) {
+        const maxYear = Math.max(...data.map((c) => c.year));
+        setExpandedYears({ [maxYear]: true });
+      }
     } catch (error) {
       console.error(error);
       toast.error("Nie udało się pobrać komunikatów.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleYear = (year) => {
+    setExpandedYears((prev) => ({
+      ...prev,
+      [year]: !prev[year],
+    }));
   };
 
   const handleDelete = async (id, title) => {
@@ -70,7 +89,22 @@ export default function CommunicationsManagement() {
           b.year - a.year || new Date(b.createdAt) - new Date(a.createdAt),
       );
     });
+
+    // Upewniamy się, że rocznik do którego dodano plik jest rozwinięty
+    setExpandedYears((prev) => ({
+      ...prev,
+      [newCommunication.year]: true,
+    }));
   };
+
+  // Grupowanie komunikatów rocznikami
+  const groupedCommunications = communications.reduce((acc, curr) => {
+    if (!acc[curr.year]) acc[curr.year] = [];
+    acc[curr.year].push(curr);
+    return acc;
+  }, {});
+
+  const sortedYears = Object.keys(groupedCommunications).sort((a, b) => b - a);
 
   return (
     <div className="space-y-6">
@@ -107,78 +141,118 @@ export default function CommunicationsManagement() {
             pierwszy.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+          <div className="divide-y divide-gray-200">
+            {sortedYears.map((year) => {
+              const isExpanded = expandedYears[year];
+              const yearComms = groupedCommunications[year];
+
+              return (
+                <div key={year} className="bg-white">
+                  {/* Pasek klikalny rocznika */}
+                  <button
+                    onClick={() => toggleYear(year)}
+                    className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none"
                   >
-                    Rok
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Tytuł
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Nazwa pliku
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Akcje
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {communications.map((comm) => (
-                  <tr key={comm.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {comm.year}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                      {comm.title}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex items-center gap-2">
-                        <DocumentArrowDownIcon className="h-4 w-4 text-gray-400" />
-                        {comm.fileName}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
-                        <a
-                          href={`/api/admin/communications/${comm.id}/download`}
-                          className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-md transition-colors inline-block"
-                          title="Pobierz plik"
-                        >
-                          <ArrowDownTrayIcon className="h-5 w-5" />
-                        </a>
-                        <button
-                          onClick={() => handleDelete(comm.id, comm.title)}
-                          disabled={deletingId === comm.id}
-                          className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-md transition-colors disabled:opacity-50"
-                          title="Usuń komunikat"
-                        >
-                          {deletingId === comm.id ? (
-                            "..."
-                          ) : (
-                            <TrashIcon className="h-5 w-5" />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    <span className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+                      Rok {year}{" "}
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-800">
+                        {yearComms.length}
+                      </span>
+                    </span>
+                    {isExpanded ? (
+                      <ChevronUpIcon className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+                    )}
+                  </button>
+
+                  {/* Rozwinięta tabela */}
+                  {isExpanded && (
+                    <div className="overflow-x-auto border-t border-gray-200">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-white">
+                          <tr>
+                            <th
+                              scope="col"
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/2"
+                            >
+                              Tytuł
+                            </th>
+                            <th
+                              scope="col"
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4"
+                            >
+                              Nazwa pliku
+                            </th>
+                            <th
+                              scope="col"
+                              className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4"
+                            >
+                              Akcje
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-100">
+                          {yearComms.map((comm) => (
+                            <tr
+                              key={comm.id}
+                              className="hover:bg-gray-50 group"
+                            >
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                {/* Zabezpieczenie przed długim tytułem */}
+                                <div
+                                  className="max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl truncate"
+                                  title={comm.title}
+                                >
+                                  {comm.title}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {/* Zabezpieczenie przed długą nazwą pliku */}
+                                <div
+                                  className="flex items-center gap-2 max-w-[150px] sm:max-w-[200px] truncate"
+                                  title={comm.fileName}
+                                >
+                                  <DocumentArrowDownIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                  <span className="truncate">
+                                    {comm.fileName}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div className="flex items-center justify-end gap-2">
+                                  <a
+                                    href={`/api/admin/communications/${comm.id}/download`}
+                                    className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-md transition-colors inline-block"
+                                    title="Pobierz plik"
+                                  >
+                                    <ArrowDownTrayIcon className="h-5 w-5" />
+                                  </a>
+                                  <button
+                                    onClick={() =>
+                                      handleDelete(comm.id, comm.title)
+                                    }
+                                    disabled={deletingId === comm.id}
+                                    className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-md transition-colors disabled:opacity-50"
+                                    title="Usuń komunikat"
+                                  >
+                                    {deletingId === comm.id ? (
+                                      "..."
+                                    ) : (
+                                      <TrashIcon className="h-5 w-5" />
+                                    )}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
