@@ -3,8 +3,10 @@ import { auth } from '@/auth'
 import fs from 'fs/promises'
 import path from 'path'
 import { STATIC_ACCEPTANCE_DOCUMENTS } from '@/lib/staticDocuments'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
 export async function GET(request, { params }) {
+	logDeprecated(request)
 	const session = await auth()
 
 	// 1. Sprawdź, czy użytkownik jest zalogowanym członkiem

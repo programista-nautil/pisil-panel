@@ -60,7 +60,7 @@ export default function MemberFileEditor({ memberId }) {
 		if (confirm('Czy na pewno chcesz usunąć ten plik?')) {
 			setDeletingId(fileId)
 			try {
-				const response = await fetch(`/api/admin/member-files/${fileId}`, {
+				const response = await fetch(`/api/admin/members/files/${fileId}`, {
 					method: 'DELETE',
 				})
 				if (!response.ok) throw new Error('Błąd usuwania pliku.')
@@ -126,7 +126,7 @@ export default function MemberFileEditor({ memberId }) {
 							</div>
 							<div className='flex items-center gap-2'>
 								<Link
-									href={`/api/admin/member-files/${file.id}/download`}
+									href={`/api/admin/members/files/${file.id}/download`}
 									download
 									className='p-2 text-blue-600 hover:bg-blue-100 rounded-md'
 									title='Pobierz plik'>

@@ -2,6 +2,50 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { deleteFileFromGCS } from '@/lib/gcs'
+import { Status } from '@prisma/client'
+
+export async function PATCH(request, { params }) {
+	const session = await auth()
+	if (!session) {
+		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	}
+
+	const { id } = await params
+	const body = await request.json()
+	const { status, isArchived } = body
+
+	const data = {}
+
+	if (status !== undefined) {
+		if (!Object.values(Status).includes(status)) {
+			return NextResponse.json({ message: 'Nieprawidłowa wartość statusu' }, { status: 400 })
+		}
+		data.status = status
+	}
+
+	if (isArchived !== undefined) {
+		if (typeof isArchived !== 'boolean') {
+			return NextResponse.json({ message: 'Nieprawidłowa wartość `isArchived`' }, { status: 400 })
+		}
+		data.isArchived = isArchived
+	}
+
+	if (Object.keys(data).length === 0) {
+		return NextResponse.json({ message: 'Brak pól do aktualizacji (status, isArchived)' }, { status: 400 })
+	}
+
+	try {
+		const updatedSubmission = await prisma.submission.update({
+			where: { id },
+			data,
+		})
+
+		return NextResponse.json(updatedSubmission, { status: 200 })
+	} catch (error) {
+		console.error('Błąd podczas aktualizacji zgłoszenia:', error)
+		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })
+	}
+}
 
 export async function DELETE(request, { params }) {
 	const session = await auth()

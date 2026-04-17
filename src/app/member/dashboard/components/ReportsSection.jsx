@@ -85,7 +85,7 @@ export default function ReportsSection() {
       id: `report-${group.year}-${index}`,
       fileName: fileName,
 
-      downloadUrl: `/api/member/reports/${encodeURIComponent(fileName)}`,
+      downloadUrl: `/api/member/resources/reports/${encodeURIComponent(fileName)}`,
     })),
   }));
 

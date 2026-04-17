@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import nodemailer from 'nodemailer'
 import fs from 'fs/promises'
 import path from 'path'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
 const textToHtml = text => {
 	if (!text) return ''
@@ -14,6 +15,7 @@ const textToHtml = text => {
 }
 
 export async function POST(request, { params }) {
+	logDeprecated(request)
 	const session = await auth()
 	if (!session) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })

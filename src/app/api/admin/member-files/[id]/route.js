@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { deleteFileFromGCS } from '@/lib/gcs'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
 // Usuwa plik członka (MemberFile)
 export async function DELETE(request, { params }) {
+	logDeprecated(request)
 	const session = await auth()
 	if (!session) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })

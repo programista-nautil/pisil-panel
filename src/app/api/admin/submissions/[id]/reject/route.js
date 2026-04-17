@@ -3,8 +3,10 @@ import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import nodemailer from 'nodemailer'
 import { Status } from '@prisma/client'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
 export async function POST(request, { params }) {
+	logDeprecated(request)
 	const session = await auth()
 	if (!session) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })

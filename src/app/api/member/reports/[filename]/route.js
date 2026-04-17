@@ -3,8 +3,10 @@ import { auth } from '@/auth'
 import fs from 'fs'
 import path from 'path'
 import mime from 'mime'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
 export async function GET(request, { params }) {
+    logDeprecated(request)
     const session = await auth()
     if (!session) {
         return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })

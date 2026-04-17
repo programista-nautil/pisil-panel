@@ -4,10 +4,12 @@ import * as nodemailer from 'nodemailer'
 import { uploadFileToGCS } from '@/lib/gcs'
 import { generateSurveyResultsPDF } from '@/lib/surveyPdfGenerator'
 import { sanitizeFilename } from '@/lib/utils'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'programista@nautil.pl'
 
 export async function POST(request) {
+	logDeprecated(request)
 	try {
 		const formData = await request.json()
 		const { formType, fieldLabels, ...submissionData } = formData

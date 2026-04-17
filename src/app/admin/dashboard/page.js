@@ -53,8 +53,6 @@ export default function AdminDashboard() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const [uploadingMemberFile, setUploadingMemberFile] = useState(null);
-
   const [deleteModalTitle, setDeleteModalTitle] = useState(
     "Potwierdź usunięcie",
   );
@@ -130,7 +128,7 @@ export default function AdminDashboard() {
 
     try {
       const response = await fetch(
-        `/api/admin/submissions/${submission.id}/archive`,
+        `/api/admin/submissions/${submission.id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -335,46 +333,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleMemberFileUpload = async (submissionId, files) => {
-    if (!files || files.length === 0) return;
-    setUploadingMemberFile(submissionId);
-
-    const formData = new FormData();
-    files.forEach((file) => formData.append("files[]", file));
-
-    try {
-      const response = await fetch(
-        `/api/admin/submissions/${submissionId}/upload-member-file`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-      if (!response.ok) throw new Error("Nie udało się wgrać plików.");
-
-      const newAttachments = await response.json();
-
-      // Odświeżamy stan zgłoszeń, dodając nowe załączniki
-      setSubmissions((currentSubmissions) =>
-        currentSubmissions.map((sub) => {
-          if (sub.id === submissionId) {
-            return {
-              ...sub,
-              attachments: [...sub.attachments, ...newAttachments],
-            };
-          }
-          return sub;
-        }),
-      );
-      toast.success("Pliki zostały wgrane pomyślnie.");
-    } catch (error) {
-      console.error(error);
-      toast.error("Wystąpił błąd podczas wgrywania plików.");
-    } finally {
-      setUploadingMemberFile(null);
-    }
-  };
-
   const openAttachModal = (submission) => {
     setSubmissionToAttach(submission);
     setIsAttachModalOpen(true);
@@ -540,8 +498,6 @@ export default function AdminDashboard() {
                   deletingAttachmentId={deletingAttachmentId}
                   openDeleteModal={openDeleteModal}
                   onArchiveToggle={null}
-                  onMemberFileUpload={handleMemberFileUpload}
-                  uploadingMemberFileId={uploadingMemberFile}
                   openAttachModal={openAttachModal}
                 />
               )}

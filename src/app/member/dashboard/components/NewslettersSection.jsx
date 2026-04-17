@@ -16,7 +16,7 @@ export default function NewslettersSection() {
   const newsletterFiles = years.map((year) => ({
     id: `newsletter-${year}`,
     fileName: `spis-newsletterow-${year}.pdf`,
-    downloadUrl: `/api/member/newsletter/spis-newsletterow-${year}.pdf`,
+    downloadUrl: `/api/member/resources/newsletter/spis-newsletterow-${year}.pdf`,
   }));
 
   const newsletterCategory = {

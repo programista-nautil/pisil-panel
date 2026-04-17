@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
 import { sanitizeFilename } from '@/lib/utils'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 import crypto from 'crypto'
 
 export async function POST(request, { params }) {
+	logDeprecated(request)
 	const { id } = await params
 
 	const submissionId = id

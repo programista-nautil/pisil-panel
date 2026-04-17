@@ -4,6 +4,7 @@ import { PDFDocument, PDFSignature } from 'pdf-lib'
 import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
 import { sanitizeFilename } from '@/lib/utils'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
 const EMAILS = {
 	// Pani Teresa (Deklaracje Członkowskie)
@@ -17,6 +18,7 @@ const EMAILS = {
 }
 
 export async function POST(request) {
+	logDeprecated(request)
 	try {
 		const data = await request.formData()
 		const file = data.get('pdf')

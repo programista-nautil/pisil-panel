@@ -6,8 +6,10 @@ import nodemailer from 'nodemailer'
 import { FormType } from '@prisma/client'
 import { generateCommunicationDoc } from '@/lib/services/communicationService' // Import serwisu
 import { uploadFileToGCS } from '@/lib/gcs'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
 export async function POST(request, { params }) {
+	logDeprecated(request)
 	const session = await auth()
 	if (!session) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })

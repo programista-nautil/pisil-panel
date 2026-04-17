@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { Storage } from '@google-cloud/storage'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
 const storage = new Storage({
 	credentials: JSON.parse(process.env.GCS_CREDENTIALS),
@@ -9,6 +10,7 @@ const storage = new Storage({
 const bucketName = process.env.GCS_BUCKET_NAME
 
 export async function GET(request, { params }) {
+	logDeprecated(request)
 	const session = await auth()
 	if (!session?.user || session.user.role !== 'member') {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })

@@ -43,7 +43,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 		setSubmissions(current => current.map(sub => (sub.id === submissionId ? { ...sub, status: newStatus } : sub)))
 
 		try {
-			const response = await fetch(`/api/admin/submissions/${submissionId}/status`, {
+			const response = await fetch(`/api/admin/submissions/${submissionId}`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ status: newStatus }),
@@ -107,7 +107,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 			await updateStatus(submissionToVerify.id, submissionToVerify.status)
 
 			// 2. Wyślij e-mail
-			const response = await fetch(`/api/admin/submissions/${submissionToVerify.id}/send-verification-email`, {
+			const response = await fetch(`/api/admin/submissions/${submissionToVerify.id}/actions/send-verification-email`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ shouldSendEmails }),
@@ -145,7 +145,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 		setIsSubmitting(true)
 
 		try {
-			const response = await fetch(`/api/admin/submissions/${submissionToAccept.id}/accept`, {
+			const response = await fetch(`/api/admin/submissions/${submissionToAccept.id}/actions/accept`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ acceptanceDate }),
@@ -180,7 +180,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 
 		try {
 			// Wywołujemy nowe API, które jednocześnie zmienia status i wysyła maila
-			const response = await fetch(`/api/admin/submissions/${submissionToReject.id}/reject`, {
+			const response = await fetch(`/api/admin/submissions/${submissionToReject.id}/actions/reject`, {
 				method: 'POST',
 			})
 			if (!response.ok) throw new Error('Nie udało się wysłać e-maila o odrzuceniu.')
@@ -215,7 +215,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 			await updateStatus(submissionToVerify.id, 'APPROVED')
 
 			// Krok 2: Wyślij e-mail z edytowalną treścią
-			const response = await fetch(`/api/admin/submissions/${submissionToVerify.id}/send-patronage-verification`, {
+			const response = await fetch(`/api/admin/submissions/${submissionToVerify.id}/actions/send-patronage-verification`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ emailBody: patronageVerificationBody }),
@@ -244,7 +244,7 @@ export function useNotificationModals(submissions, setSubmissions) {
 			await updateStatus(submissionToAccept.id, 'ACCEPTED')
 
 			// Krok 2: Wyślij e-mail z edytowalną treścią
-			const response = await fetch(`/api/admin/submissions/${submissionToAccept.id}/send-patronage-acceptance`, {
+			const response = await fetch(`/api/admin/submissions/${submissionToAccept.id}/actions/send-patronage-acceptance`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ emailBody: patronageAcceptanceBody }),

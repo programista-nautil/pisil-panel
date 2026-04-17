@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcrypt'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
 const SALT_ROUNDS = 10
 
@@ -9,6 +10,7 @@ const PASSWORD_ERROR_MESSAGE =
 	'Hasło musi mieć minimum 8 znaków, zawierać 1 dużą literę, 1 małą literę, 1 cyfrę i 1 znak specjalny.'
 
 export async function POST(request) {
+	logDeprecated(request)
 	try {
 		const { token, password } = await request.json()
 		if (!token || !password) {

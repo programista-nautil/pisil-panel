@@ -45,7 +45,7 @@ export default function SurveySubmitButton({ formData, formType, fieldLabels, on
 	const handleSubmit = async () => {
 		setIsSubmitting(true)
 		try {
-			const response = await fetch('/api/submit-survey', {
+			const response = await fetch('/api/public/submissions/survey', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ ...formData, formType, fieldLabels }),

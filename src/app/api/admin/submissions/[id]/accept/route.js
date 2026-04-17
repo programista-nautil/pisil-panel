@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { processAcceptance } from '@/lib/services/acceptanceService'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
 export async function POST(request, { params }) {
+	logDeprecated(request)
 	const session = await auth()
 	if (!session) {
 		return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })

@@ -3,8 +3,10 @@ import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { Status, AttachmentSource } from '@prisma/client'
 import { STATIC_ACCEPTANCE_DOCUMENTS } from '@/lib/staticDocuments'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
-export async function GET() {
+export async function GET(request) {
+	logDeprecated(request)
 	const session = await auth()
 
 	if (!session?.user || session.user.role !== 'member') {
@@ -43,13 +45,13 @@ export async function GET() {
 			})
 		).map(file => ({
 			...file,
-			downloadUrl: `/api/member/member-files/${file.id}/download`, // Używamy NOWEGO endpointu
+			downloadUrl: `/api/member/members/files/${file.id}/download`,
 		}))
 
 		const acceptanceDocs = STATIC_ACCEPTANCE_DOCUMENTS.map((name, index) => ({
 			id: `static-${index}`,
 			fileName: name,
-			downloadUrl: `/api/member/static-document/${name}`, // Link do ich dedykowanego API
+			downloadUrl: `/api/member/resources/acceptance/${name}`,
 		}))
 
 		const generalFilesCategories = [

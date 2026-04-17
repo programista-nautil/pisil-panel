@@ -32,7 +32,7 @@ export default function MemberDashboard() {
     const fetchFiles = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/member/files");
+        const response = await fetch("/api/member/dashboard");
         if (!response.ok) {
           throw new Error("Nie udało się pobrać plików.");
         }

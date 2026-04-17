@@ -78,7 +78,7 @@ const FileUpload = forwardRef(function FileUpload({ formData, onUploadSuccess },
 			formDataToSend.append('pdf', file)
 			formDataToSend.append('formData', JSON.stringify(formData))
 
-			const response = await fetch('/api/upload', {
+			const response = await fetch('/api/public/submissions', {
 				method: 'POST',
 				body: formDataToSend,
 			})

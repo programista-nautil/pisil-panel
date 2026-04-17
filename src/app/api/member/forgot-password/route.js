@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import crypto from 'crypto'
 import nodemailer from 'nodemailer'
+import { logDeprecated } from '@/lib/deprecatedLogger'
 
 export async function POST(request) {
+	logDeprecated(request)
 	try {
 		const { email } = await request.json()
 		if (!email) {

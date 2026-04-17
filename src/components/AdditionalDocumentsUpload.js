@@ -66,7 +66,7 @@ const AdditionalDocumentsUpload = forwardRef(function AdditionalDocumentsUpload(
 		files.forEach(file => formData.append('additionalFiles[]', file))
 
 		try {
-			const response = await fetch(`/api/submissions/${submissionId}/attachments`, {
+			const response = await fetch(`/api/public/submissions/${submissionId}/attachments`, {
 				method: 'POST',
 				body: formData,
 			})

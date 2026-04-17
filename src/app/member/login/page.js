@@ -45,7 +45,7 @@ export default function MemberLoginPage() {
 		setMessage('Przetwarzanie...')
 
 		try {
-			const response = await fetch('/api/member/forgot-password', {
+			const response = await fetch('/api/public/forgot-password', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ email }),
