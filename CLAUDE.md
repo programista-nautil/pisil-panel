@@ -130,6 +130,43 @@ export { POST } from '@/app/api/member/forgot-password/route'
 
 Parametry dynamiczne: `[id]` (cuid/UUID w DB), `[filename]` (nazwa pliku). Wyjątek `[attachmentId]` w `/submissions/[id]/attachments/[attachmentId]` — nie zmieniamy, bo kolidowałby z `[id]` w tej samej ścieżce.
 
+## Deploy na VPS
+
+Produkcja stoi na VPSie (Ubuntu + PM2). Dostęp SSH — dane u właściciela projektu (NIE commitować do repo, jest publiczne).
+
+**Przed wykonaniem deploya: ZAWSZE otwórz lokalny plik `.deploy-notes.md`** (gitignore) — zawiera pełne komendy z hostem, userem, ścieżką, ID procesów PM2. W CLAUDE.md jest tylko schemat bez sekretów.
+
+Procesy PM2:
+- `pisil-app` — Next.js `next start` na porcie 3019
+- `pisil-worker` — BullMQ worker (`workers/email-worker.js`)
+
+Standardowa procedura deployu (po `git push origin master` z localki):
+
+```bash
+ssh <user>@<vps-host>
+cd ~/apps/pisil-panel
+git pull
+npm install              # pomijalne jeśli package.json bez zmian
+npx prisma migrate deploy # TYLKO jeśli są nowe migracje (prisma/migrations)
+npm run build
+pm2 restart pisil-app
+pm2 logs pisil-app --lines 20 --nostream   # sanity check
+```
+
+Jedną linią (non-interactive, dobra do automatyzacji — jeśli build się wywali, `pm2 restart` się nie uruchomi, apka dalej działa na poprzednim `.next/`):
+
+```bash
+ssh <user>@<vps-host> "cd ~/apps/pisil-panel && git pull && npm install && npm run build && pm2 restart pisil-app"
+```
+
+**`pisil-worker` restartuj tylko** gdy zmieniłeś `workers/email-worker.js`, `src/lib/queue.js`, albo jego bezpośrednie zależności. Worker nie czyta `.next/`, nie zyska nic na restarcie aplikacji.
+
+**Migracje Prismy** — tylko gdy w PR jest nowy katalog w `prisma/migrations/`. Zmiana samego `schema.prisma` bez migracji nie wymaga `migrate deploy`. Jeśli generujesz migrację lokalnie przez `prisma migrate dev`, nie zapomnij jej zacommitować przed pushem — inaczej VPS nie ma co zaaplikować.
+
+**Sanity check po deployu**: w `pm2 logs pisil-app` musi pojawić się `✓ Ready in <N>ms`. Ostrzeżenia `Failed to find Server Action "x"` to niegroźny artefakt — ktoś ma starą kartę z nieaktualnymi hash'ami Server Actions i odświeży ją sam.
+
+**Rollback** w razie awarii: `cd ~/apps/pisil-panel && git reset --hard HEAD~1 && npm run build && pm2 restart pisil-app`. Jeśli HEAD~1 miał migrację — trzeba ją cofnąć ręcznie w DB, Prisma nie ma automatycznego downgrade.
+
 ## Gotchas
 
 - When you add a `Submission` field, also update `acceptanceService.js` (member upsert) and any admin modal (`AddSubmissionModal.js`, `EditMemberModal.js`) — there is no shared schema-to-form generator.

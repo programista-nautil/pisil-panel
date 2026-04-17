@@ -61,3 +61,6 @@ src/config/publicMembersList.json
 
 .claude/
 .github/
+
+# Lokalne notatki z sekretami (dostępy do VPS itp.)
+.deploy-notes.md
