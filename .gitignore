@@ -60,3 +60,4 @@ docker-compose.prod.yml
 src/config/publicMembersList.json
 
 .claude/
+.github/
