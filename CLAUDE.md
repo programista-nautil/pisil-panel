@@ -175,3 +175,4 @@ ssh <user>@<vps-host> "cd ~/apps/pisil-panel && git pull && npm install && npm r
 - The `authorize` callback in `src/auth.js` for members has verbose `console.log` statements retained intentionally for debugging production login issues. Leave them unless the user asks otherwise.
 - Toasts use `react-hot-toast` globally configured in `src/app/layout.js` (note the typo `botttom-right` — harmless, falls back to default).
 - Session maxAge is 30 minutes; `AutoLogout` component enforces it client-side.
+- Wszystkie elementy `<input>`, `<select>`, `<textarea>` muszą mieć jawnie ustawiony kolor tekstu (np. `text-gray-700` lub `text-gray-900`). Domyślny kolor przeglądarki (szczególnie Chrome/Safari) jest szarobiały i słabo widoczny na jasnym tle — nie polegaj na dziedziczeniu koloru.

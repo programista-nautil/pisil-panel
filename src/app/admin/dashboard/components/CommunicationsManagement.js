@@ -1,29 +1,156 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import toast from "react-hot-toast";
-import {
-  MegaphoneIcon,
-  TrashIcon,
-  DocumentArrowDownIcon,
-  ArrowDownTrayIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-} from "@heroicons/react/24/outline";
+import { MegaphoneIcon, PrinterIcon } from "@heroicons/react/24/outline";
 import AddCommunicationModal from "./AddCommunicationModal";
+import CommunicationsByYear, {
+  compareByCommunicationNumber,
+} from "./CommunicationsByYear";
+
+// ---------------------------------------------------------------------------
+// Generowanie raportu HTML (otwierany w nowej karcie, do druku Ctrl+P)
+// ---------------------------------------------------------------------------
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function pluralKomunikat(n) {
+  if (n === 1) return "komunikat";
+  if (n >= 2 && n <= 4) return "komunikaty";
+  return "komunikatów";
+}
+
+function generateReportHtml(items, yearFrom, yearTo) {
+  const from = yearFrom ? Number(yearFrom) : null;
+  const to = yearTo ? Number(yearTo) : null;
+
+  const filtered = items.filter(
+    (i) => (!from || i.year >= from) && (!to || i.year <= to),
+  );
+
+  const grouped = {};
+  for (const item of filtered) {
+    if (!grouped[item.year]) grouped[item.year] = [];
+    grouped[item.year].push(item);
+  }
+  for (const year in grouped) {
+    grouped[year].sort(compareByCommunicationNumber);
+  }
+  const sortedYears = Object.keys(grouped).sort((a, b) => b - a);
+
+  const rangeLabel =
+    from && to
+      ? from === to
+        ? `Rok ${from}`
+        : `Lata ${from}–${to}`
+      : from
+        ? `Od roku ${from}`
+        : to
+          ? `Do roku ${to}`
+          : "Wszystkie lata";
+
+  const dateStr = new Date().toLocaleDateString("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+  const yearsHtml = sortedYears
+    .map((year) => {
+      const comms = grouped[year];
+      const rows = comms
+        .map(
+          (c, i) =>
+            `<li><span class="num">${i + 1}.</span><span class="title">${escapeHtml(c.title)}</span></li>`,
+        )
+        .join("");
+      return `<div class="year-section">
+  <h2>Rok ${year} <span class="count">(${comms.length})</span></h2>
+  <ul>${rows}</ul>
+</div>`;
+    })
+    .join("");
+
+  return `<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lista komunikatów — ${escapeHtml(rangeLabel)}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#111;background:#fff;padding:24px 40px}
+    .header{margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #005698}
+    .org{font-size:11px;color:#6b7280;margin-bottom:2px}
+    h1{font-size:18px;font-weight:700;color:#005698;margin-bottom:4px}
+    .meta{font-size:11px;color:#6b7280}
+    .year-section{margin-bottom:20px}
+    h2{font-size:13px;font-weight:700;color:#005698;padding-bottom:4px;border-bottom:1px solid #e5e7eb;margin-bottom:8px}
+    .count{font-weight:400;color:#9ca3af}
+    ul{list-style:none}
+    li{display:flex;gap:8px;padding:2px 0;line-height:1.5}
+    .num{color:#9ca3af;min-width:28px;flex-shrink:0;text-align:right}
+    .title{flex:1}
+    .no-data{color:#9ca3af;font-style:italic;margin-top:12px}
+    @media print{
+      body{padding:10mm 15mm}
+      .year-section{page-break-inside:avoid}
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="org">Polska Izba Spedycji i Logistyki</div>
+    <h1>Lista komunikatów — ${escapeHtml(rangeLabel)}</h1>
+    <div class="meta">Wygenerowano: ${dateStr}&nbsp;&nbsp;·&nbsp;&nbsp;Łącznie: ${filtered.length} ${pluralKomunikat(filtered.length)}</div>
+  </div>
+  ${yearsHtml || '<p class="no-data">Brak komunikatów dla podanego zakresu.</p>'}
+</body>
+</html>`;
+}
+
+// ---------------------------------------------------------------------------
+// Komponent główny
+// ---------------------------------------------------------------------------
 
 export default function CommunicationsManagement() {
-  const [communications, setCommunications] = useState([]);
+  const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
-  // Stan przechowujący otwarte/zamknięte roczniki (np. { 2024: true, 2023: false })
-  const [expandedYears, setExpandedYears] = useState({});
+  // Panel raportu
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportFrom, setReportFrom] = useState("");
+  const [reportTo, setReportTo] = useState("");
 
   useEffect(() => {
     fetchCommunications();
   }, []);
+
+  // Jednorazowe ustawienie domyślnego zakresu raportu po załadowaniu danych.
+  const hasInitReport = useRef(false);
+  useEffect(() => {
+    if (hasInitReport.current || !items.length) return;
+    hasInitReport.current = true;
+    const years = items.map((i) => i.year);
+    setReportFrom(String(Math.min(...years)));
+    setReportTo(String(Math.max(...years)));
+  }, [items]);
+
+  const availableYears = useMemo(() => {
+    if (!items.length) return [];
+    return [...new Set(items.map((i) => i.year))].sort((a, b) => b - a);
+  }, [items]);
+
+  const reportRangeInvalid =
+    reportFrom && reportTo && Number(reportFrom) > Number(reportTo);
 
   const fetchCommunications = async () => {
     setIsLoading(true);
@@ -31,27 +158,13 @@ export default function CommunicationsManagement() {
       const res = await fetch("/api/admin/communications");
       if (!res.ok) throw new Error("Błąd ładowania komunikatów");
       const data = await res.json();
-
-      setCommunications(data);
-
-      // Domyślnie otwieramy najnowszy rocznik, jeśli są jakieś dane
-      if (data.length > 0) {
-        const maxYear = Math.max(...data.map((c) => c.year));
-        setExpandedYears({ [maxYear]: true });
-      }
+      setItems(data);
     } catch (error) {
       console.error(error);
       toast.error("Nie udało się pobrać komunikatów.");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const toggleYear = (year) => {
-    setExpandedYears((prev) => ({
-      ...prev,
-      [year]: !prev[year],
-    }));
   };
 
   const handleDelete = async (id, title) => {
@@ -69,7 +182,7 @@ export default function CommunicationsManagement() {
       });
       if (!res.ok) throw new Error("Błąd podczas usuwania");
 
-      setCommunications((prev) => prev.filter((c) => c.id !== id));
+      setItems((prev) => prev.filter((c) => c.id !== id));
       toast.success("Komunikat usunięty pomyślnie.");
     } catch (error) {
       console.error(error);
@@ -81,33 +194,30 @@ export default function CommunicationsManagement() {
 
   const handleUploadSuccess = (newCommunication) => {
     toast.success("Komunikat dodany pomyślnie!");
-
-    setCommunications((prev) => {
-      const updated = [newCommunication, ...prev];
-      return updated.sort(
+    setItems((prev) =>
+      [newCommunication, ...prev].sort(
         (a, b) =>
           b.year - a.year || new Date(b.createdAt) - new Date(a.createdAt),
-      );
-    });
-
-    // Upewniamy się, że rocznik do którego dodano plik jest rozwinięty
-    setExpandedYears((prev) => ({
-      ...prev,
-      [newCommunication.year]: true,
-    }));
+      ),
+    );
   };
 
-  // Grupowanie komunikatów rocznikami
-  const groupedCommunications = communications.reduce((acc, curr) => {
-    if (!acc[curr.year]) acc[curr.year] = [];
-    acc[curr.year].push(curr);
-    return acc;
-  }, {});
-
-  const sortedYears = Object.keys(groupedCommunications).sort((a, b) => b - a);
+  const openReport = () => {
+    const html = generateReportHtml(
+      items,
+      reportFrom || null,
+      reportTo || null,
+    );
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {/* Nagłówek */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <div className="flex items-center gap-3">
           <div className="bg-blue-50 p-2 rounded-lg">
@@ -122,140 +232,98 @@ export default function CommunicationsManagement() {
             </p>
           </div>
         </div>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#005698] text-white font-medium rounded-md hover:bg-[#005698]/90 transition-colors shadow-sm"
-        >
-          + Dodaj komunikat
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => setIsReportOpen((o) => !o)}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md border transition-colors ${
+              isReportOpen
+                ? "border-[#005698] text-[#005698] bg-[#005698]/5"
+                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            <PrinterIcon className="h-4 w-4" />
+            Raport
+          </button>
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#005698] text-white font-medium rounded-md hover:bg-[#005698]/90 transition-colors shadow-sm"
+          >
+            + Dodaj komunikat
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center text-gray-500">
-            Ładowanie komunikatów...
+      {/* Panel raportu */}
+      {isReportOpen && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <p className="text-sm font-semibold text-gray-700 mb-3">
+            Generuj raport listy komunikatów
+          </p>
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Od roku
+              </label>
+              <select
+                value={reportFrom}
+                onChange={(e) => setReportFrom(e.target.value)}
+                className="px-2 py-1.5 text-sm border border-gray-300 rounded text-gray-700 focus:outline-none focus:border-[#005698]"
+              >
+                {availableYears.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Do roku
+              </label>
+              <select
+                value={reportTo}
+                onChange={(e) => setReportTo(e.target.value)}
+                className="px-2 py-1.5 text-sm border border-gray-300 rounded text-gray-700 focus:outline-none focus:border-[#005698]"
+              >
+                {availableYears.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {reportRangeInvalid && (
+              <p className="text-xs text-red-500 self-center">
+                Rok „od" musi być ≤ rok „do".
+              </p>
+            )}
+            <button
+              onClick={openReport}
+              disabled={!!reportRangeInvalid || !items.length}
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#005698] text-white text-sm font-medium rounded-md hover:bg-[#005698]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <PrinterIcon className="h-4 w-4" />
+              Otwórz raport
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsReportOpen(false)}
+              className="text-sm text-gray-500 hover:text-gray-800 transition-colors"
+            >
+              Anuluj
+            </button>
           </div>
-        ) : communications.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            Brak dodanych komunikatów. Użyj przycisku powyżej, aby dodać
-            pierwszy.
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-200">
-            {sortedYears.map((year) => {
-              const isExpanded = expandedYears[year];
-              const yearComms = groupedCommunications[year];
+        </div>
+      )}
 
-              return (
-                <div key={year} className="bg-white">
-                  {/* Pasek klikalny rocznika */}
-                  <button
-                    onClick={() => toggleYear(year)}
-                    className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none"
-                  >
-                    <span className="text-sm font-bold text-gray-700 uppercase tracking-wider">
-                      Rok {year}{" "}
-                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-800">
-                        {yearComms.length}
-                      </span>
-                    </span>
-                    {isExpanded ? (
-                      <ChevronUpIcon className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <ChevronDownIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-
-                  {/* Rozwinięta tabela */}
-                  {isExpanded && (
-                    <div className="overflow-x-auto border-t border-gray-200">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-white">
-                          <tr>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/2"
-                            >
-                              Tytuł
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4"
-                            >
-                              Nazwa pliku
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4"
-                            >
-                              Akcje
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-100">
-                          {yearComms.map((comm) => (
-                            <tr
-                              key={comm.id}
-                              className="hover:bg-gray-50 group"
-                            >
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                                {/* Zabezpieczenie przed długim tytułem */}
-                                <div
-                                  className="max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl truncate"
-                                  title={comm.title}
-                                >
-                                  {comm.title}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {/* Zabezpieczenie przed długą nazwą pliku */}
-                                <div
-                                  className="flex items-center gap-2 max-w-[150px] sm:max-w-[200px] truncate"
-                                  title={comm.fileName}
-                                >
-                                  <DocumentArrowDownIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                                  <span className="truncate">
-                                    {comm.fileName}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div className="flex items-center justify-end gap-2">
-                                  <a
-                                    href={`/api/admin/communications/${comm.id}/download`}
-                                    className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-md transition-colors inline-block"
-                                    title="Pobierz plik"
-                                  >
-                                    <ArrowDownTrayIcon className="h-5 w-5" />
-                                  </a>
-                                  <button
-                                    onClick={() =>
-                                      handleDelete(comm.id, comm.title)
-                                    }
-                                    disabled={deletingId === comm.id}
-                                    className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-md transition-colors disabled:opacity-50"
-                                    title="Usuń komunikat"
-                                  >
-                                    {deletingId === comm.id ? (
-                                      "..."
-                                    ) : (
-                                      <TrashIcon className="h-5 w-5" />
-                                    )}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      <CommunicationsByYear
+        items={items}
+        isLoading={isLoading}
+        downloadUrlBuilder={(id) => `/api/admin/communications/${id}/download`}
+        onDelete={handleDelete}
+        deletingId={deletingId}
+        emptyMessage="Brak dodanych komunikatów. Użyj przycisku powyżej, aby dodać pierwszy."
+      />
 
       <AddCommunicationModal
         isOpen={isAddModalOpen}
