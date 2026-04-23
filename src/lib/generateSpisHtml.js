@@ -39,7 +39,6 @@ export function generateSpisHtml(communications, yearFilter, options = {}) {
     downloadUrlBuilder = null,
     attachmentDownloadUrlBuilder = null,
     cutoffYear = 2026,
-    forPrint = false,
   } = options;
 
   const yearNum = yearFilter && yearFilter !== "all" ? Number(yearFilter) : null;
@@ -157,7 +156,13 @@ export function generateSpisHtml(communications, yearFilter, options = {}) {
     })
     .join("");
 
-  const screenCss = `
+  return `<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${escapeHtml(title)}</title>
+  <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#111;background:#fff;padding:24px 40px}
     .header{margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #005698}
@@ -172,45 +177,24 @@ export function generateSpisHtml(communications, yearFilter, options = {}) {
     th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb}
     .nr{width:80px;white-space:nowrap;font-weight:600;color:#005698}
     .comm-link{color:#005698;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;white-space:nowrap}
+    .comm-link:hover{text-decoration-style:solid}
     .date{width:90px;white-space:nowrap;color:#6b7280}
+    .title{flex:1}
     .author{width:48px;text-align:center;color:#6b7280}
     tr:last-child td{border-bottom:none}
     .no-data{color:#9ca3af;font-style:italic;margin-top:12px}
     .spis-pdf{color:#374151;font-size:12px;padding:6px 0}
     .spis-pdf a{color:#005698;text-decoration:none;font-weight:600}
+    .spis-pdf a:hover{text-decoration:underline}
     .spis-pdf .sep{margin:0 6px;color:#d1d5db}
     .attachments{color:#6b7280;font-size:11px}
-    .attachments a{color:#005698;text-decoration:none;display:block}`;
-
-  // CSS dla LibreOffice — bez @page (powoduje pustą str. 1), marginesy na body
-  const printCss = `
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Times New Roman',Times,serif;font-size:11pt;color:#000;background:#fff;margin:15mm 20mm}
-    .header{margin-bottom:10pt;padding-bottom:4pt;border-bottom:1.5pt solid #000}
-    .org{font-size:9pt;color:#444;margin-bottom:2pt}
-    h1{font-size:13pt;font-weight:bold;margin-bottom:2pt}
-    .meta{font-size:9pt;color:#444}
-    .year-section{margin-bottom:12pt}
-    h2{font-size:11pt;font-weight:bold;border-bottom:0.75pt solid #000;padding-bottom:2pt;margin-bottom:3pt}
-    .count{font-weight:normal}
-    table{width:100%;border-collapse:collapse;font-size:10pt}
-    th{font-size:8pt;font-weight:bold;text-transform:uppercase;border-top:0.75pt solid #000;border-bottom:0.75pt solid #000;padding:1pt 3pt;text-align:left}
-    td{padding:1pt 3pt;text-align:left;border-bottom:0.5pt solid #ccc;vertical-align:top}
-    .nr{width:80pt;white-space:nowrap;font-weight:bold}
-    .comm-link{color:#000;text-decoration:underline}
-    .date{width:56pt;white-space:nowrap}
-    .author{width:30pt;text-align:center}
-    .attachments{width:85pt;font-size:9pt}
-    .no-data{font-style:italic;margin-top:6pt}
-    .spis-pdf{font-size:10pt;padding:3pt 0}
-    a{color:#000;text-decoration:underline}`;
-
-  return `<!DOCTYPE html>
-<html lang="pl">
-<head>
-  <meta charset="utf-8">
-  <title>${escapeHtml(title)}</title>
-  <style>${forPrint ? printCss : screenCss}</style>
+    .attachments a{color:#005698;text-decoration:none;display:block}
+    .attachments a:hover{text-decoration:underline}
+    @media print{
+      body{padding:10mm 15mm;font-size:11px}
+      .year-section{page-break-inside:avoid}
+    }
+  </style>
 </head>
 <body>
   <div class="header">

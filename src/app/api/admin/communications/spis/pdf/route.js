@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { generateSpisHtml } from "@/lib/generateSpisHtml";
-import { convertHtmlToPdf } from "@/lib/services/htmlToPdfService";
+import { generateSpisDocx } from "@/lib/generateSpisDocx";
+import { convertDocxToPdf } from "@/lib/services/docxToPdfService";
 import { submissionToComm } from "@/lib/submissionAsComm";
 
 export async function GET(request) {
@@ -36,45 +36,37 @@ export async function GET(request) {
         include: { attachments: true },
       }),
       prisma.communication.findMany({
-        where: {
-          isSpis: true,
-          ...(yearNum ? { year: yearNum } : {}),
-        },
+        where: { isSpis: true, ...(yearNum ? { year: yearNum } : {}) },
       }),
-      prisma.submission.findMany({
-        where: subWhere,
-        orderBy: [{ createdAt: "desc" }],
-      }),
+      prisma.submission.findMany({ where: subWhere, orderBy: [{ createdAt: "desc" }] }),
     ]);
 
-    const submissionComms = submissions.map((sub) =>
-      submissionToComm(sub, { includeDownloadUrls: true, downloadUrlBase: "/api/admin" }),
-    );
+    const submissionComms = submissions.map((sub) => submissionToComm(sub));
 
     const oldSpisRecords = spisRecords.reduce((acc, r) => {
       acc[r.year] = r;
       return acc;
     }, {});
 
-    const html = generateSpisHtml([...communications, ...submissionComms], year, {
-      oldSpisRecords,
-      downloadUrlBuilder: (id) => `/api/admin/communications/${id}/download`,
-      attachmentDownloadUrlBuilder: (commId, aId) =>
-        `/api/admin/communications/${commId}/attachments/${aId}/download`,
-      forPrint: true,
-    });
-
     const yearSuffix = year && year !== "all" ? `-${year}` : "";
     const filenameBase = `spis-komunikatow${yearSuffix}`;
 
-    const pdfBuffer = await convertHtmlToPdf(html, filenameBase);
+    const docxBuffer = generateSpisDocx([...communications, ...submissionComms], year, {
+      oldSpisRecords,
+    });
 
-    if (!pdfBuffer) {
-      return new NextResponse(html, {
+    // Na devie (bez LibreOffice) zwróć DOCX
+    if (process.env.NODE_ENV !== "production" && !process.env.ENABLE_PDF_CONVERSION) {
+      return new NextResponse(docxBuffer, {
         status: 200,
-        headers: { "Content-Type": "text/html; charset=utf-8" },
+        headers: {
+          "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(`${filenameBase}.docx`)}`,
+        },
       });
     }
+
+    const { buffer: pdfBuffer } = await convertDocxToPdf(docxBuffer, `${filenameBase}.docx`);
 
     return new NextResponse(pdfBuffer, {
       status: 200,
