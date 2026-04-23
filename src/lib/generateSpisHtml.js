@@ -160,47 +160,36 @@ export function generateSpisHtml(communications, yearFilter, options = {}) {
 <html lang="pl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>${escapeHtml(title)}</title>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#111;background:#fff;padding:24px 40px}
-    .header{margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #005698}
-    .org{font-size:11px;color:#6b7280;margin-bottom:2px}
-    h1{font-size:17px;font-weight:700;color:#005698;margin-bottom:4px}
-    .meta{font-size:11px;color:#6b7280}
-    .year-section{margin-bottom:24px}
-    h2{font-size:13px;font-weight:700;color:#005698;padding-bottom:4px;border-bottom:1px solid #e5e7eb;margin-bottom:6px}
-    .count{font-weight:400;color:#9ca3af}
-    table{width:100%;border-collapse:collapse}
-    th,td{text-align:left;padding:4px 6px;line-height:1.5;border-bottom:1px solid #f3f4f6}
-    th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb}
-    .nr{width:80px;white-space:nowrap;font-weight:600;color:#005698}
-    .comm-link{color:#005698;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;white-space:nowrap}
-    .comm-link:hover{text-decoration-style:solid}
-    .date{width:90px;white-space:nowrap;color:#6b7280}
-    .title{flex:1}
-    .author{width:48px;text-align:center;color:#6b7280}
-    tr:last-child td{border-bottom:none}
-    .no-data{color:#9ca3af;font-style:italic;margin-top:12px}
-    .spis-pdf{color:#374151;font-size:12px;padding:6px 0}
-    .spis-pdf a{color:#005698;text-decoration:none;font-weight:600}
-    .spis-pdf a:hover{text-decoration:underline}
-    .spis-pdf .sep{margin:0 6px;color:#d1d5db}
-    .attachments{color:#6b7280;font-size:11px}
-    .attachments a{color:#005698;text-decoration:none;display:block}
-    .attachments a:hover{text-decoration:underline}
-    @media print{
-      body{padding:10mm 15mm;font-size:11px}
-      .year-section{page-break-inside:avoid}
-    }
+    @page { size: A4; margin: 18mm 22mm 18mm 22mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; }
+    .header { margin-bottom: 14pt; padding-bottom: 6pt; border-bottom: 1.5pt solid #000; }
+    .org { font-size: 9pt; color: #444; margin-bottom: 2pt; }
+    h1 { font-size: 14pt; font-weight: bold; margin-bottom: 2pt; }
+    .meta { font-size: 9pt; color: #444; }
+    .year-section { margin-bottom: 16pt; page-break-inside: avoid; }
+    h2 { font-size: 11pt; font-weight: bold; border-bottom: 0.75pt solid #000; padding-bottom: 2pt; margin-bottom: 4pt; }
+    .count { font-weight: normal; }
+    table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+    th { font-size: 8pt; font-weight: bold; text-transform: uppercase; border-bottom: 0.75pt solid #000; border-top: 0.75pt solid #000; padding: 3pt 4pt; text-align: left; }
+    td { padding: 3pt 4pt; text-align: left; border-bottom: 0.5pt solid #ccc; vertical-align: top; }
+    .nr { width: 70pt; white-space: nowrap; font-weight: bold; }
+    .date { width: 60pt; white-space: nowrap; }
+    .title { }
+    .author { width: 32pt; text-align: center; }
+    .attachments { width: 90pt; font-size: 9pt; }
+    .no-data { font-style: italic; margin-top: 8pt; }
+    .spis-pdf { font-size: 10pt; padding: 4pt 0; }
+    a, .comm-link { color: #000; text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="org">Polska Izba Spedycji i Logistyki</div>
     <h1>${escapeHtml(title)}</h1>
-    <div class="meta">Wygenerowano: ${dateStr}&nbsp;&nbsp;·&nbsp;&nbsp;Łącznie: ${filtered.length} komunikatów</div>
+    <div class="meta">Wygenerowano: ${dateStr} &nbsp;·&nbsp; Łącznie: ${filtered.length} komunikatów</div>
   </div>
   ${yearsHtml || '<p class="no-data">Brak komunikatów.</p>'}
 </body>
