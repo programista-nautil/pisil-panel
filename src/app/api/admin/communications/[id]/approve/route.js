@@ -9,20 +9,20 @@ function padMonth(m) {
   return String(m).padStart(2, "0");
 }
 
-async function getNextNumber(month, year) {
-  const monthStart = new Date(year, month - 1, 1);
-  const monthEnd = new Date(year, month, 1);
+async function getNextNumber(year) {
+  const yearStart = new Date(year, 0, 1);
+  const yearEnd = new Date(year + 1, 0, 1);
 
   const [commResult, subResult] = await Promise.all([
     prisma.communication.aggregate({
       _max: { number: true },
-      where: { month, year, number: { not: null } },
+      where: { year, number: { not: null } },
     }),
     prisma.submission.aggregate({
       _max: { communicationNumber: true },
       where: {
         communicationNumber: { not: null },
-        createdAt: { gte: monthStart, lt: monthEnd },
+        createdAt: { gte: yearStart, lt: yearEnd },
       },
     }),
   ]);
@@ -63,7 +63,7 @@ export async function POST(request, { params }) {
     const sentAt = comm.sentAt ?? new Date();
     const month = sentAt.getMonth() + 1;
     const year = sentAt.getFullYear();
-    const number = await getNextNumber(month, year);
+    const number = await getNextNumber(year);
     const numLabel = `${number}/${padMonth(month)}/${year}`;
     const title = `Komunikat ${numLabel}`;
 
