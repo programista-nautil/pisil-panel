@@ -61,6 +61,7 @@ export async function GET(request) {
       downloadUrlBuilder: (id) => `/api/member/communications/${id}/download`,
       attachmentDownloadUrlBuilder: (commId, aId) =>
         `/api/member/communications/${commId}/attachments/${aId}/download`,
+      forPrint: true,
     });
 
     const yearSuffix = year && year !== "all" ? `-${year}` : "";
