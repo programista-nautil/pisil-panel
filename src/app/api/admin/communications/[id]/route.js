@@ -13,7 +13,11 @@ export async function PATCH(request, { params }) {
 
   try {
     const body = await request.json();
-    const { subject, body: bodyText, authorInitials, sentAt, attachmentNames, title, year, month, status, isSpis } = body;
+    const {
+      subject, body: bodyText, authorInitials, sentAt,
+      attachmentNames, title, year, month, status, isSpis,
+      authorName, authorPosition, authorLabel,
+    } = body;
 
     const updateData = {};
     if (subject !== undefined) updateData.subject = subject;
@@ -26,6 +30,9 @@ export async function PATCH(request, { params }) {
     if (status !== undefined) updateData.status = status;
     if (isSpis !== undefined) updateData.isSpis = !!isSpis;
     if (sentAt !== undefined) updateData.sentAt = sentAt ? new Date(sentAt) : null;
+    if (authorName     !== undefined) updateData.authorName     = authorName     || null;
+    if (authorPosition !== undefined) updateData.authorPosition = authorPosition || null;
+    if (authorLabel    !== undefined) updateData.authorLabel    = authorLabel    || null;
 
     const updated = await prisma.communication.update({
       where: { id },

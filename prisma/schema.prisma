@@ -202,6 +202,9 @@ model Communication {
   month          Int?               // 1–12
   sentAt         DateTime?
   authorInitials String?
+  authorName     String?            // pełne imię i nazwisko (do stopki dokumentu)
+  authorPosition String?            // stanowisko (np. "Specjalistka ds. celnych")
+  authorLabel    String?            // etykieta (np. "Przygotowała:" / "Przygotował:")
   subject        String?            // "sprawa" — temat do spisu i subject maila
   body           String?            @db.Text
   attachmentNames String?           // tekstowa lista nazw załączników (do spisu)
@@ -226,5 +229,8 @@ model CommunicationAttachment {
 // Zarządzana lista inicjałów autorów komunikatów (osobna od authorInitials w Communication)
 model CommunicationAuthor {
   initials  String   @id
+  name      String?
+  position  String?
+  label     String?
   createdAt DateTime @default(now())
 }

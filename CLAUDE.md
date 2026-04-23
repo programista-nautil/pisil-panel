@@ -6,9 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Rozmawiaj z użytkownikiem po polsku. Wszystkie wiadomości tekstowe, podsumowania i pytania kieruj w języku polskim. Kod, nazwy zmiennych i commity zostawiaj w takiej konwencji, jaka już jest w repozytorium (komentarze i stringi UI — po polsku).
 
+## Wspólne komponenty UI
+
+**Modal potwierdzenia usunięcia:** zawsze używaj `src/components/DeleteConfirmationModal.js`.
+Props: `isOpen`, `onClose`, `onConfirm` (async — komponent sam zarządza stanem ładowania), `title`, `message`, `confirmButtonText`. Nie twórz własnych confirm-modalów.
+
 ## Commitowanie
 
 **Nie commituj zmian dopóki nie zostanie potwierdzone, że działają.** Commit rób tylko na wyraźne polecenie użytkownika lub po tym, jak użytkownik przetestuje i potwierdzi poprawność działania. Build (`npm run build`) to warunek konieczny, ale niewystarczający — nie zastępuje testów ręcznych.
+
+Nie dodawaj linii `Co-Authored-By:` w wiadomościach commitów.
 
 ## Project
 

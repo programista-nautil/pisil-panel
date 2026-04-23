@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { TrashIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import AuthorSelect from "./AuthorSelect";
+import RichTextarea from "./RichTextarea";
 
 function padMonth(m) {
   return String(m).padStart(2, "0");
@@ -17,9 +19,9 @@ export default function EditCommunicationModal({
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [authorInitials, setAuthorInitials] = useState("");
-  const [newInitials, setNewInitials] = useState("");
-  const [showNewInitials, setShowNewInitials] = useState(false);
-  const [knownAuthors, setKnownAuthors] = useState([]);
+  const [authorName, setAuthorName] = useState("");
+  const [authorPosition, setAuthorPosition] = useState("");
+  const [authorLabel, setAuthorLabel] = useState("Przygotowała:");
   const [sentAt, setSentAt] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
@@ -31,19 +33,15 @@ export default function EditCommunicationModal({
     setSubject(communication.subject || "");
     setBody(communication.body || "");
     setAuthorInitials(communication.authorInitials || "");
-    setNewInitials("");
-    setShowNewInitials(false);
+    setAuthorName(communication.authorName || "");
+    setAuthorPosition(communication.authorPosition || "");
+    setAuthorLabel(communication.authorLabel || "Przygotowała:");
     setSentAt(
       communication.sentAt
         ? new Date(communication.sentAt).toISOString().slice(0, 10)
         : new Date().toISOString().slice(0, 10),
     );
     setLocalAttachments(communication.attachments || []);
-
-    fetch("/api/admin/communications/authors")
-      .then((r) => r.json())
-      .then((data) => Array.isArray(data) && setKnownAuthors(data))
-      .catch(() => {});
   }, [isOpen, communication]);
 
   if (!isOpen || !communication) return null;
@@ -53,48 +51,16 @@ export default function EditCommunicationModal({
       ? `${communication.number}/${padMonth(communication.month)}/${communication.year}`
       : null;
 
-  // ── Inicjały ────────────────────────────────────────────────────────────
-
-  const handleAddInitials = async () => {
-    const val = newInitials.trim();
-    if (!val) return;
-    setKnownAuthors((prev) => [...new Set([...prev, val])].sort());
-    setAuthorInitials(val);
-    setShowNewInitials(false);
-    setNewInitials("");
-    try {
-      await fetch("/api/admin/communications/authors", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ initials: val }),
-      });
-    } catch {
-      toast.error("Nie udało się zapisać inicjałów.");
-    }
+  const handleAuthorSelect = (author) => {
+    setAuthorInitials(author?.initials || "");
+    setAuthorName(author?.name || "");
+    setAuthorPosition(author?.position || "");
+    setAuthorLabel(author?.label || "Przygotowała:");
   };
-
-  const handleDeleteInitials = async (initials) => {
-    setKnownAuthors((prev) => prev.filter((a) => a !== initials));
-    if (authorInitials === initials) setAuthorInitials("");
-    try {
-      await fetch(
-        `/api/admin/communications/authors/${encodeURIComponent(initials)}`,
-        { method: "DELETE" },
-      );
-    } catch {
-      toast.error("Nie udało się usunąć inicjałów.");
-      setKnownAuthors((prev) => [...new Set([...prev, initials])].sort());
-    }
-  };
-
-  // ── Zapis ────────────────────────────────────────────────────────────────
 
   const handleSave = async (e) => {
     e.preventDefault();
     setIsSaving(true);
-    const effectiveInitials = showNewInitials
-      ? newInitials.trim()
-      : authorInitials;
     try {
       const res = await fetch(`/api/admin/communications/${communication.id}`, {
         method: "PATCH",
@@ -102,7 +68,10 @@ export default function EditCommunicationModal({
         body: JSON.stringify({
           subject: subject.trim(),
           body: body.trim() || null,
-          authorInitials: effectiveInitials || null,
+          authorInitials: authorInitials || null,
+          authorName:     authorName     || null,
+          authorPosition: authorPosition || null,
+          authorLabel:    authorLabel    || null,
           sentAt,
         }),
       });
@@ -120,8 +89,6 @@ export default function EditCommunicationModal({
       setIsSaving(false);
     }
   };
-
-  // ── Załączniki ───────────────────────────────────────────────────────────
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -208,11 +175,10 @@ export default function EditCommunicationModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Treść
             </label>
-            <textarea
+            <RichTextarea
               value={body}
-              onChange={(e) => setBody(e.target.value)}
+              onChange={setBody}
               rows={7}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:border-[#005698] resize-y"
             />
           </div>
 
@@ -233,83 +199,9 @@ export default function EditCommunicationModal({
             {/* Autor */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Autor (inicjały)
+                Autor
               </label>
-              {!showNewInitials ? (
-                <div className="flex gap-1">
-                  <select
-                    value={authorInitials}
-                    onChange={(e) => setAuthorInitials(e.target.value)}
-                    className="flex-1 px-2 py-2 border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:border-[#005698]"
-                  >
-                    <option value="">—</option>
-                    {knownAuthors.map((a) => (
-                      <option key={a} value={a}>
-                        {a}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => setShowNewInitials(true)}
-                    className="px-2 py-1 text-xs text-[#005698] border border-[#005698]/30 rounded hover:bg-[#005698]/5"
-                  >
-                    + Nowe
-                  </button>
-                </div>
-              ) : (
-                <div className="flex gap-1">
-                  <input
-                    type="text"
-                    value={newInitials}
-                    onChange={(e) =>
-                      setNewInitials(e.target.value.toUpperCase().slice(0, 5))
-                    }
-                    placeholder="np. TJ"
-                    maxLength={5}
-                    autoFocus
-                    className="flex-1 px-2 py-2 border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:border-[#005698]"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddInitials}
-                    disabled={!newInitials.trim()}
-                    className="px-2 py-1 text-xs text-white bg-[#005698] rounded disabled:opacity-40 hover:bg-[#005698]/80"
-                  >
-                    Dodaj
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowNewInitials(false);
-                      setNewInitials("");
-                    }}
-                    className="px-2 py-1 text-xs text-gray-500 border border-gray-300 rounded hover:bg-gray-50"
-                  >
-                    Anuluj
-                  </button>
-                </div>
-              )}
-              {knownAuthors.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1.5">
-                  {knownAuthors.map((a) => (
-                    <span
-                      key={a}
-                      className="inline-flex items-center gap-0.5 pl-1.5 pr-0.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600"
-                    >
-                      {a}
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteInitials(a)}
-                        className="text-gray-400 hover:text-red-500 font-bold px-0.5 leading-none"
-                        title={`Usuń ${a}`}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
+              <AuthorSelect value={authorInitials} onSelect={handleAuthorSelect} />
             </div>
           </div>
 

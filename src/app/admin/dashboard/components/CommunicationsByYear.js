@@ -10,6 +10,7 @@ import {
   ChevronRightIcon,
   XMarkIcon,
   ArrowDownTrayIcon,
+  ArrowTopRightOnSquareIcon,
   TrashIcon,
   DocumentIcon,
   PencilSquareIcon,
@@ -76,10 +77,12 @@ export default function CommunicationsByYear({
   isLoading,
   downloadUrlBuilder,
   attachmentDownloadUrlBuilder,
+  docxUrlBuilder,
   onDelete,
   deletingId,
   onEdit,
   onApprove,
+  showAuthorInitials = true,
   emptyMessage = "Brak komunikatów.",
 }) {
   const [search, setSearch] = useState("");
@@ -256,10 +259,12 @@ export default function CommunicationsByYear({
                             attachmentDownloadUrlBuilder={
                               attachmentDownloadUrlBuilder
                             }
+                            docxUrl={docxUrlBuilder ? docxUrlBuilder(comm.id) : null}
                             onDelete={onDelete}
                             deletingId={deletingId}
                             onEdit={onEdit}
                             onApprove={onApprove}
+                            showAuthorInitials={showAuthorInitials}
                           />
                         ))}
                       </ul>
@@ -450,10 +455,12 @@ function CommunicationRow({
   comm,
   downloadUrl,
   attachmentDownloadUrlBuilder,
+  docxUrl,
   onDelete,
   deletingId,
   onEdit,
   onApprove,
+  showAuthorInitials,
 }) {
   const [attachmentsExpanded, setAttachmentsExpanded] = useState(false);
   const isDeleting = deletingId === comm.id;
@@ -469,22 +476,22 @@ function CommunicationRow({
     const effectiveDownloadUrl = comm.downloadUrl;
 
     return (
-      <li className="hover:bg-gray-50 transition-colors opacity-70">
+      <li className="hover:bg-gray-50 transition-colors">
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0 flex-1 flex items-center gap-3">
             {numLabel ? (
               <span
-                className="flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded text-xs font-bold bg-gray-100 text-gray-500 whitespace-nowrap"
+                className="flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded text-xs font-bold bg-gray-100 text-gray-600 whitespace-nowrap"
                 title="Numer komunikatu"
               >
                 {numLabel}
               </span>
             ) : null}
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-600 truncate" title={comm.subject}>
+              <p className="text-sm font-medium text-gray-900 truncate" title={comm.subject}>
                 {comm.subject}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">Zgłoszenie członkowskie</p>
+              <p className="text-xs text-gray-500 mt-0.5">Zgłoszenie członkowskie</p>
             </div>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
@@ -493,7 +500,7 @@ function CommunicationRow({
                 href={effectiveDownloadUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-gray-400 hover:text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
+                className="p-2 text-gray-500 hover:text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
                 title="Otwórz zgłoszenie"
               >
                 <ArrowDownTrayIcon className="h-5 w-5" />
@@ -562,7 +569,7 @@ function CommunicationRow({
               <p className="text-sm font-medium text-gray-900 truncate" title={displayTitle}>
                 {displayTitle}
               </p>
-              {comm.authorInitials && (
+              {showAuthorInitials && comm.authorInitials && (
                 <p className="text-xs text-gray-500 mt-0.5">{comm.authorInitials}</p>
               )}
             </div>
@@ -589,7 +596,7 @@ function CommunicationRow({
                 <CheckCircleIcon className="h-5 w-5" />
               </button>
             )}
-            {onEdit && (
+            {onEdit && !isSent && (
               <button
                 type="button"
                 onClick={() => onEdit(comm)}
@@ -605,7 +612,16 @@ function CommunicationRow({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
-                title="Otwórz w nowej karcie"
+                title="Podgląd"
+              >
+                <ArrowTopRightOnSquareIcon className="h-5 w-5" />
+              </a>
+            )}
+            {docxUrl && !comm.isSubmission && (
+              <a
+                href={docxUrl}
+                className="p-2 text-gray-500 hover:text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
+                title="Pobierz DOCX"
               >
                 <ArrowDownTrayIcon className="h-5 w-5" />
               </a>

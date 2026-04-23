@@ -3,52 +3,7 @@ import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { uploadFileToGCS } from "@/lib/gcs";
 import nodemailer from "nodemailer";
-
-function escapeHtml(str) {
-  return String(str ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function buildCommunicationHtml(comm) {
-  const numLabel =
-    comm.number != null
-      ? `Komunikat ${comm.number}/${String(comm.month).padStart(2, "0")}/${comm.year}`
-      : comm.title;
-
-  return `<!DOCTYPE html>
-<html lang="pl">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${escapeHtml(numLabel)}</title>
-  <style>
-    body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;padding:0 20px;color:#111}
-    .header{border-bottom:1px solid #ccc;padding-bottom:12px;margin-bottom:24px}
-    .num{font-size:12px;color:#666;margin-bottom:4px}
-    h1{font-size:16px;margin:0 0 4px}
-    .meta{font-size:12px;color:#888}
-    .body{line-height:1.7;white-space:pre-wrap;margin-top:24px}
-    .footer{margin-top:40px;color:#444;font-size:13px;border-top:1px solid #eee;padding-top:16px}
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="num">${escapeHtml(numLabel)}</div>
-    <h1>${escapeHtml(comm.subject || comm.title)}</h1>
-    ${comm.sentAt ? `<div class="meta">${new Date(comm.sentAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })}</div>` : ""}
-  </div>
-  <div class="body">${escapeHtml(comm.body || "")}</div>
-  <div class="footer">
-    <p>Z poważaniem,<br>
-    ${comm.authorInitials ? `${escapeHtml(comm.authorInitials)}<br>` : ""}
-    Polska Izba Spedycji i Logistyki</p>
-  </div>
-</body>
-</html>`;
-}
+import { buildCommunicationHtml } from "@/lib/communicationHtml";
 
 export async function POST(request, { params }) {
   const session = await auth();

@@ -1,162 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
-import { MegaphoneIcon, PrinterIcon } from "@heroicons/react/24/outline";
+import { MegaphoneIcon, ListBulletIcon } from "@heroicons/react/24/outline";
 import AddCommunicationModal from "./AddCommunicationModal";
 import EditCommunicationModal from "./EditCommunicationModal";
 import CommunicationsByYear, {
   compareByCommunicationNumber,
 } from "./CommunicationsByYear";
-
-// ---------------------------------------------------------------------------
-// Generowanie raportu HTML (otwierany w nowej karcie, do druku Ctrl+P)
-// ---------------------------------------------------------------------------
-
-function escapeHtml(str) {
-  return String(str ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function pluralKomunikat(n) {
-  if (n === 1) return "komunikat";
-  if (n >= 2 && n <= 4) return "komunikaty";
-  return "komunikatów";
-}
-
-function padMonthReport(m) {
-  return String(m).padStart(2, "0");
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return "";
-  try {
-    return new Date(dateStr).toLocaleDateString("pl-PL", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  } catch {
-    return "";
-  }
-}
-
-function generateReportHtml(items, yearFrom, yearTo) {
-  const from = yearFrom ? Number(yearFrom) : null;
-  const to = yearTo ? Number(yearTo) : null;
-
-  const filtered = items.filter(
-    (i) => (!from || i.year >= from) && (!to || i.year <= to),
-  );
-
-  const grouped = {};
-  for (const item of filtered) {
-    if (!grouped[item.year]) grouped[item.year] = [];
-    grouped[item.year].push(item);
-  }
-  for (const year in grouped) {
-    grouped[year].sort(compareByCommunicationNumber);
-  }
-  const sortedYears = Object.keys(grouped).sort((a, b) => b - a);
-
-  const rangeLabel =
-    from && to
-      ? from === to
-        ? `Rok ${from}`
-        : `Lata ${from}–${to}`
-      : from
-        ? `Od roku ${from}`
-        : to
-          ? `Do roku ${to}`
-          : "Wszystkie lata";
-
-  const dateStr = new Date().toLocaleDateString("pl-PL", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-
-  const yearsHtml = sortedYears
-    .map((year) => {
-      const comms = grouped[year];
-      const rows = comms
-        .map((c) => {
-          const numLabel =
-            c.number != null
-              ? `${c.number}/${padMonthReport(c.month)}/${c.year}`
-              : "—";
-          const sprawa = escapeHtml(c.subject || c.title || "");
-          const data = formatDate(c.sentAt);
-          const autor = escapeHtml(c.authorInitials || "");
-          return `<tr>
-  <td class="nr">${escapeHtml(numLabel)}</td>
-  <td class="date">${data}</td>
-  <td class="title">${sprawa}</td>
-  <td class="author">${autor}</td>
-</tr>`;
-        })
-        .join("");
-      return `<div class="year-section">
-  <h2>Rok ${year} <span class="count">(${comms.length})</span></h2>
-  <table>
-    <thead>
-      <tr>
-        <th class="nr">Nr</th>
-        <th class="date">Data wysyłki</th>
-        <th class="title">Sprawa</th>
-        <th class="author">Autor</th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  </table>
-</div>`;
-    })
-    .join("");
-
-  return `<!DOCTYPE html>
-<html lang="pl">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Lista komunikatów — ${escapeHtml(rangeLabel)}</title>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#111;background:#fff;padding:24px 40px}
-    .header{margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #005698}
-    .org{font-size:11px;color:#6b7280;margin-bottom:2px}
-    h1{font-size:17px;font-weight:700;color:#005698;margin-bottom:4px}
-    .meta{font-size:11px;color:#6b7280}
-    .year-section{margin-bottom:24px}
-    h2{font-size:13px;font-weight:700;color:#005698;padding-bottom:4px;border-bottom:1px solid #e5e7eb;margin-bottom:6px}
-    .count{font-weight:400;color:#9ca3af}
-    table{width:100%;border-collapse:collapse}
-    th,td{text-align:left;padding:4px 6px;line-height:1.5;border-bottom:1px solid #f3f4f6}
-    th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb}
-    .nr{width:80px;white-space:nowrap;font-weight:600;color:#005698}
-    .date{width:90px;white-space:nowrap;color:#6b7280}
-    .title{flex:1}
-    .author{width:48px;text-align:center;color:#6b7280}
-    tr:last-child td{border-bottom:none}
-    .no-data{color:#9ca3af;font-style:italic;margin-top:12px}
-    @media print{
-      body{padding:10mm 15mm;font-size:11px}
-      .year-section{page-break-inside:avoid}
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="org">Polska Izba Spedycji i Logistyki</div>
-    <h1>Lista komunikatów — ${escapeHtml(rangeLabel)}</h1>
-    <div class="meta">Wygenerowano: ${dateStr}&nbsp;&nbsp;·&nbsp;&nbsp;Łącznie: ${filtered.length} ${pluralKomunikat(filtered.length)}</div>
-  </div>
-  ${yearsHtml || '<p class="no-data">Brak komunikatów dla podanego zakresu.</p>'}
-</body>
-</html>`;
-}
 
 // ---------------------------------------------------------------------------
 // Modal potwierdzenia zatwierdzenia komunikatu
@@ -224,11 +75,6 @@ export default function CommunicationsManagement() {
   const [approvingCommunication, setApprovingCommunication] = useState(null);
   const [isApproving, setIsApproving] = useState(false);
 
-  // Panel raportu
-  const [isReportOpen, setIsReportOpen] = useState(false);
-  const [reportFrom, setReportFrom] = useState("");
-  const [reportTo, setReportTo] = useState("");
-
   // Panel spisu
   const [isSpisOpen, setIsSpisOpen] = useState(false);
   const [spisYear, setSpisYear] = useState(() =>
@@ -238,16 +84,6 @@ export default function CommunicationsManagement() {
   useEffect(() => {
     fetchCommunications();
   }, []);
-
-  // Jednorazowe ustawienie domyślnego zakresu raportu po załadowaniu danych.
-  const hasInitReport = useRef(false);
-  useEffect(() => {
-    if (hasInitReport.current || !items.length) return;
-    hasInitReport.current = true;
-    const years = items.map((i) => i.year);
-    setReportFrom(String(Math.min(...years)));
-    setReportTo(String(Math.max(...years)));
-  }, [items]);
 
   const SPIS_CUTOFF_YEAR = 2026;
 
@@ -272,9 +108,6 @@ export default function CommunicationsManagement() {
   const selectedSpisRecord = selectedSpisYearNum
     ? (spisByYear[selectedSpisYearNum] ?? null)
     : null;
-
-  const reportRangeInvalid =
-    reportFrom && reportTo && Number(reportFrom) > Number(reportTo);
 
   const fetchCommunications = async () => {
     setIsLoading(true);
@@ -368,19 +201,6 @@ export default function CommunicationsManagement() {
     }
   };
 
-  const openReport = () => {
-    const html = generateReportHtml(
-      items,
-      reportFrom || null,
-      reportTo || null,
-    );
-    const win = window.open("", "_blank");
-    if (win) {
-      win.document.write(html);
-      win.document.close();
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Nagłówek */}
@@ -400,17 +220,6 @@ export default function CommunicationsManagement() {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
-            onClick={() => setIsReportOpen((o) => !o)}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md border transition-colors ${
-              isReportOpen
-                ? "border-[#005698] text-[#005698] bg-[#005698]/5"
-                : "border-gray-300 text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            <PrinterIcon className="h-4 w-4" />
-            Raport
-          </button>
-          <button
             onClick={() => setIsSpisOpen((o) => !o)}
             className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md border transition-colors ${
               isSpisOpen
@@ -418,6 +227,7 @@ export default function CommunicationsManagement() {
                 : "border-gray-300 text-gray-700 hover:bg-gray-50"
             }`}
           >
+            <ListBulletIcon className="h-4 w-4" />
             Spis
           </button>
           <button
@@ -428,69 +238,6 @@ export default function CommunicationsManagement() {
           </button>
         </div>
       </div>
-
-      {/* Panel raportu */}
-      {isReportOpen && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <p className="text-sm font-semibold text-gray-700 mb-3">
-            Generuj raport listy komunikatów
-          </p>
-          <div className="flex flex-wrap items-end gap-3">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Od roku
-              </label>
-              <select
-                value={reportFrom}
-                onChange={(e) => setReportFrom(e.target.value)}
-                className="px-2 py-1.5 text-sm border border-gray-300 rounded text-gray-700 focus:outline-none focus:border-[#005698]"
-              >
-                {availableYears.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Do roku
-              </label>
-              <select
-                value={reportTo}
-                onChange={(e) => setReportTo(e.target.value)}
-                className="px-2 py-1.5 text-sm border border-gray-300 rounded text-gray-700 focus:outline-none focus:border-[#005698]"
-              >
-                {availableYears.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {reportRangeInvalid && (
-              <p className="text-xs text-red-500 self-center">
-                Rok „od" musi być ≤ rok „do".
-              </p>
-            )}
-            <button
-              onClick={openReport}
-              disabled={!!reportRangeInvalid || !items.length}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#005698] text-white text-sm font-medium rounded-md hover:bg-[#005698]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <PrinterIcon className="h-4 w-4" />
-              Otwórz raport
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsReportOpen(false)}
-              className="text-sm text-gray-500 hover:text-gray-800 transition-colors"
-            >
-              Anuluj
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Panel spisu */}
       {isSpisOpen && (
@@ -579,6 +326,7 @@ export default function CommunicationsManagement() {
         attachmentDownloadUrlBuilder={(commId, aId) =>
           `/api/admin/communications/${commId}/attachments/${aId}/download`
         }
+        docxUrlBuilder={(id) => `/api/admin/communications/${id}/docx`}
         onDelete={handleDelete}
         deletingId={deletingId}
         onEdit={(comm) => setEditingCommunication(comm)}

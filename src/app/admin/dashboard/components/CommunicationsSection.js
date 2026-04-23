@@ -151,6 +151,7 @@ export default function CommunicationsSection() {
             attachmentDownloadUrlBuilder={(commId, aId) =>
               `/api/member/communications/${commId}/attachments/${aId}/download`
             }
+            showAuthorInitials={false}
             emptyMessage="Brak komunikatów."
           />
         </div>

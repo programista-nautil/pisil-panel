@@ -51,7 +51,8 @@ export async function POST(request) {
     // -----------------------------------------------------------------------
     if (contentType.includes("application/json")) {
       const body = await request.json();
-      const { subject, body: bodyText, authorInitials, sentAt, isSpis } = body;
+      const { subject, body: bodyText, authorInitials, sentAt, isSpis,
+              authorName, authorPosition, authorLabel } = body;
 
       if (!subject) {
         return NextResponse.json(
@@ -72,6 +73,9 @@ export async function POST(request) {
           subject,
           body: bodyText || null,
           authorInitials: authorInitials || null,
+          authorName:     authorName     || null,
+          authorPosition: authorPosition || null,
+          authorLabel:    authorLabel    || null,
           sentAt: date,
           isSpis: !!isSpis,
           status: "DRAFT",
