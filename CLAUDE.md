@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Rozmawiaj z użytkownikiem po polsku. Wszystkie wiadomości tekstowe, podsumowania i pytania kieruj w języku polskim. Kod, nazwy zmiennych i commity zostawiaj w takiej konwencji, jaka już jest w repozytorium (komentarze i stringi UI — po polsku).
 
+## Commitowanie
+
+**Nie commituj zmian dopóki nie zostanie potwierdzone, że działają.** Commit rób tylko na wyraźne polecenie użytkownika lub po tym, jak użytkownik przetestuje i potwierdzi poprawność działania. Build (`npm run build`) to warunek konieczny, ale niewystarczający — nie zastępuje testów ręcznych.
+
 ## Project
 
 PISiL Panel — platform for Polska Izba Spedycji i Logistyki (Polish Chamber of Forwarding and Logistics). Handles four online forms (Deklaracja Członkowska, Patronat, Ankieta Spedytor Roku, Młody Spedytor Roku), generates PDFs, accepts signed uploads, and provides admin + member panels for managing submissions, generated documents, communications, and files. UI strings, DB comments, and commit messages are in Polish — keep new ones in Polish too.

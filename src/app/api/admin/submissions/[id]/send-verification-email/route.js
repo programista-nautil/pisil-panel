@@ -40,8 +40,22 @@ export async function POST(request, { params }) {
 
 		let commNumber = submission.communicationNumber
 		if (!commNumber) {
-			const maxResult = await prisma.submission.aggregate({ _max: { communicationNumber: true } })
-			commNumber = (maxResult._max.communicationNumber || 0) + 1
+			const now = new Date()
+			const month = now.getMonth() + 1
+			const year = now.getFullYear()
+			const monthStart = new Date(year, month - 1, 1)
+			const monthEnd = new Date(year, month, 1)
+			const [commResult, subResult] = await Promise.all([
+				prisma.communication.aggregate({
+					_max: { number: true },
+					where: { month, year, number: { not: null } },
+				}),
+				prisma.submission.aggregate({
+					_max: { communicationNumber: true },
+					where: { communicationNumber: { not: null }, createdAt: { gte: monthStart, lt: monthEnd } },
+				}),
+			])
+			commNumber = Math.max(commResult._max.number ?? 0, subResult._max.communicationNumber ?? 0) + 1
 		}
 
 		const { buffer, fileName } = await generateCommunicationDoc(submission, commNumber)

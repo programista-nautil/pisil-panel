@@ -112,9 +112,9 @@ export function generateSpisHtml(communications, yearFilter, options = {}) {
               : (numRaw ?? "—");
           const sprawa = escapeHtml(c.subject || c.title || "");
           const data = formatDate(c.sentAt);
-          const autor = escapeHtml(c.authorInitials || "");
+          const autor = escapeHtml(c.authorInitials || "—");
 
-          let attachCell = "<td></td>";
+          let attachCell = "<td>—</td>";
           if (c.attachments && c.attachments.length > 0) {
             const links = c.attachments
               .map((att) => {
