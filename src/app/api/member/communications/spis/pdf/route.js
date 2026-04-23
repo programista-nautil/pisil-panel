@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { generateSpisHtml } from "@/lib/generateSpisHtml";
 import { convertHtmlToPdf } from "@/lib/services/htmlToPdfService";
+import { submissionToComm } from "@/lib/submissionAsComm";
 
 export async function GET(request) {
   const session = await auth();
@@ -14,7 +15,15 @@ export async function GET(request) {
   const year = searchParams.get("year");
 
   try {
-    const [communications, spisRecords] = await Promise.all([
+    const yearNum = year && year !== "all" ? Number(year) : null;
+    const subWhere = {
+      communicationNumber: { not: null },
+      ...(yearNum ? {
+        createdAt: { gte: new Date(yearNum, 0, 1), lt: new Date(yearNum + 1, 0, 1) },
+      } : {}),
+    };
+
+    const [communications, spisRecords, submissions] = await Promise.all([
       prisma.communication.findMany({
         where: {
           isSpis: false,
@@ -29,17 +38,25 @@ export async function GET(request) {
       prisma.communication.findMany({
         where: {
           isSpis: true,
-          ...(year && year !== "all" ? { year: Number(year) } : {}),
+          ...(yearNum ? { year: yearNum } : {}),
         },
       }),
+      prisma.submission.findMany({
+        where: subWhere,
+        orderBy: [{ createdAt: "desc" }],
+      }),
     ]);
+
+    const submissionComms = submissions.map((sub) =>
+      submissionToComm(sub, { includeDownloadUrls: true, downloadUrlBase: "/api/member" }),
+    );
 
     const oldSpisRecords = spisRecords.reduce((acc, r) => {
       acc[r.year] = r;
       return acc;
     }, {});
 
-    const html = generateSpisHtml(communications, year, {
+    const html = generateSpisHtml([...communications, ...submissionComms], year, {
       oldSpisRecords,
       downloadUrlBuilder: (id) => `/api/member/communications/${id}/download`,
       attachmentDownloadUrlBuilder: (commId, aId) =>

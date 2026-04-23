@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { uploadFileToGCS } from "@/lib/gcs";
 import { sanitizeFilename } from "@/lib/utils";
+import { submissionToComm } from "@/lib/submissionAsComm";
 
 export async function GET(request) {
   const session = await auth();
@@ -11,12 +12,22 @@ export async function GET(request) {
   }
 
   try {
-    const communications = await prisma.communication.findMany({
-      orderBy: [{ year: "desc" }, { createdAt: "desc" }],
-      include: { attachments: true },
-    });
+    const [communications, submissions] = await Promise.all([
+      prisma.communication.findMany({
+        orderBy: [{ year: "desc" }, { createdAt: "desc" }],
+        include: { attachments: true },
+      }),
+      prisma.submission.findMany({
+        where: { communicationNumber: { not: null } },
+        orderBy: [{ createdAt: "desc" }],
+      }),
+    ]);
 
-    return NextResponse.json(communications, { status: 200 });
+    const submissionComms = submissions.map((sub) =>
+      submissionToComm(sub, { includeDownloadUrls: true, downloadUrlBase: "/api/admin" }),
+    );
+
+    return NextResponse.json([...communications, ...submissionComms], { status: 200 });
   } catch (error) {
     console.error("Błąd podczas pobierania komunikatów:", error);
     return NextResponse.json(

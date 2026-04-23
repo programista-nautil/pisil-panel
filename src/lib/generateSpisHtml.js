@@ -105,25 +105,25 @@ export function generateSpisHtml(communications, yearFilter, options = {}) {
             c.number != null
               ? `${c.number}/${padMonth(c.month)}/${c.year}`
               : null;
+          const commUrl = c.downloadUrl || (downloadUrlBuilder && c.filePath ? downloadUrlBuilder(c.id) : null);
           const numLabel =
-            numRaw && downloadUrlBuilder && c.filePath
-              ? `<a href="${escapeHtml(downloadUrlBuilder(c.id))}" target="_blank" class="comm-link">${numRaw}&nbsp;&#8599;</a>`
+            numRaw && commUrl
+              ? `<a href="${escapeHtml(commUrl)}" target="_blank" class="comm-link">${numRaw}&nbsp;&#8599;</a>`
               : (numRaw ?? "—");
           const sprawa = escapeHtml(c.subject || c.title || "");
           const data = formatDate(c.sentAt);
           const autor = escapeHtml(c.authorInitials || "");
 
           let attachCell = "<td></td>";
-          if (
-            attachmentDownloadUrlBuilder &&
-            c.attachments &&
-            c.attachments.length > 0
-          ) {
+          if (c.attachments && c.attachments.length > 0) {
             const links = c.attachments
-              .map(
-                (att) =>
-                  `<a href="${escapeHtml(attachmentDownloadUrlBuilder(c.id, att.id))}">${escapeHtml(att.fileName)}</a>`,
-              )
+              .map((att) => {
+                const url = att.downloadUrl ||
+                  (attachmentDownloadUrlBuilder ? attachmentDownloadUrlBuilder(c.id, att.id) : null);
+                return url
+                  ? `<a href="${escapeHtml(url)}">${escapeHtml(att.fileName)}</a>`
+                  : escapeHtml(att.fileName);
+              })
               .join("<br>");
             attachCell = `<td class="attachments">${links}</td>`;
           }

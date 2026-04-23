@@ -42,15 +42,20 @@ export async function POST(request, { params }) {
 		if (!commNumber) {
 			const maxResult = await prisma.submission.aggregate({ _max: { communicationNumber: true } })
 			commNumber = (maxResult._max.communicationNumber || 0) + 1
-			await prisma.submission.update({
-				where: { id },
-				data: { communicationNumber: commNumber },
-			})
 		}
 
 		const { buffer, fileName } = await generateCommunicationDoc(submission, commNumber)
 
 		const gcsPath = await uploadFileToGCS(buffer, `communications/${fileName}`)
+
+		await prisma.submission.update({
+			where: { id },
+			data: {
+				communicationNumber: commNumber,
+				communicationFilePath: gcsPath,
+				communicationFileName: fileName,
+			},
+		})
 
 		const transporter = nodemailer.createTransport({
 			host: 'smtp.gmail.com',

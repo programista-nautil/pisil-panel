@@ -460,6 +460,80 @@ function CommunicationRow({
   const displayTitle = comm.subject || comm.title;
   const hasAttachments = (comm.attachments?.length || 0) > 0;
 
+  // ── Zgłoszenie członkowskie (isSubmission=true) — wyszarzone, tylko odczyt ─
+  if (comm.isSubmission) {
+    const numLabel =
+      comm.number != null
+        ? `${comm.number}/${padMonth(comm.month)}/${comm.year}`
+        : null;
+    const effectiveDownloadUrl = comm.downloadUrl;
+
+    return (
+      <li className="hover:bg-gray-50 transition-colors opacity-70">
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
+          <div className="min-w-0 flex-1 flex items-center gap-3">
+            {numLabel ? (
+              <span
+                className="flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded text-xs font-bold bg-gray-100 text-gray-500 whitespace-nowrap"
+                title="Numer komunikatu"
+              >
+                {numLabel}
+              </span>
+            ) : null}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-600 truncate" title={comm.subject}>
+                {comm.subject}
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">Zgłoszenie członkowskie</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {effectiveDownloadUrl && (
+              <a
+                href={effectiveDownloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 text-gray-400 hover:text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
+                title="Otwórz zgłoszenie"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+              </a>
+            )}
+            {hasAttachments && (
+              <button
+                type="button"
+                onClick={() => setAttachmentsExpanded((v) => !v)}
+                className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                title={attachmentsExpanded ? "Zwiń załączniki" : "Rozwiń załączniki"}
+              >
+                <PaperClipIcon className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        </div>
+        {attachmentsExpanded && hasAttachments && (
+          <ul className="px-4 pb-3 pt-0 space-y-1 bg-gray-50 border-t border-gray-100">
+            {comm.attachments.map((att) => (
+              <li key={att.id} className="flex items-center gap-2 py-1.5">
+                <PaperClipIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <span className="text-sm text-gray-600 flex-1 truncate">{att.fileName}</span>
+                {att.downloadUrl && (
+                  <a
+                    href={att.downloadUrl}
+                    className="p-1.5 text-[#005698] hover:bg-[#005698]/10 rounded transition-colors flex-shrink-0"
+                    title="Pobierz załącznik"
+                  >
+                    <ArrowDownTrayIcon className="h-4 w-4" />
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </li>
+    );
+  }
+
   // ── Nowy komunikat (comm.subject != null) — SZKIC lub WYSŁANY ────────────
   if (comm.subject != null) {
     const isSent = comm.status === "SENT";

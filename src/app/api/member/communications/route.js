@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import { submissionToComm } from "@/lib/submissionAsComm";
 
 export async function GET(request) {
   const session = await auth();
@@ -37,7 +38,16 @@ export async function GET(request) {
       include: { attachments: true },
     });
 
-    return NextResponse.json(communications, { status: 200 });
+    const submissions = await prisma.submission.findMany({
+      where: { communicationNumber: { not: null } },
+      orderBy: [{ createdAt: "desc" }],
+    });
+
+    const submissionComms = submissions.map((sub) =>
+      submissionToComm(sub, { includeDownloadUrls: true, downloadUrlBase: "/api/member" }),
+    );
+
+    return NextResponse.json([...communications, ...submissionComms], { status: 200 });
   } catch (error) {
     console.error("Błąd podczas pobierania komunikatów:", error);
     return NextResponse.json(

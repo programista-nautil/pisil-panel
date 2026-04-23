@@ -9,11 +9,26 @@ function padMonth(m) {
 }
 
 async function getNextNumber(month, year) {
-  const result = await prisma.communication.aggregate({
-    _max: { number: true },
-    where: { month, year, number: { not: null } },
-  });
-  return (result._max.number ?? 0) + 1;
+  const monthStart = new Date(year, month - 1, 1);
+  const monthEnd = new Date(year, month, 1);
+
+  const [commResult, subResult] = await Promise.all([
+    prisma.communication.aggregate({
+      _max: { number: true },
+      where: { month, year, number: { not: null } },
+    }),
+    prisma.submission.aggregate({
+      _max: { communicationNumber: true },
+      where: {
+        communicationNumber: { not: null },
+        createdAt: { gte: monthStart, lt: monthEnd },
+      },
+    }),
+  ]);
+
+  const maxComm = commResult._max.number ?? 0;
+  const maxSub = subResult._max.communicationNumber ?? 0;
+  return Math.max(maxComm, maxSub) + 1;
 }
 
 function escapeHtml(str) {

@@ -112,7 +112,9 @@ model Submission {
   website String?
 
   recommendations String?
-  communicationNumber Int? @unique
+  communicationNumber    Int?    @unique
+  communicationFilePath  String?
+  communicationFileName  String?
 
   member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
   memberId String?
