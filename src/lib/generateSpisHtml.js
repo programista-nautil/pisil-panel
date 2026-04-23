@@ -162,7 +162,7 @@ export function generateSpisHtml(communications, yearFilter, options = {}) {
   <meta charset="utf-8">
   <title>${escapeHtml(title)}</title>
   <style>
-    @page { size: A4; margin: 18mm 22mm 18mm 22mm; }
+    @page { margin: 18mm 22mm 18mm 22mm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; }
     .header { margin-bottom: 14pt; padding-bottom: 6pt; border-bottom: 1.5pt solid #000; }
@@ -173,9 +173,9 @@ export function generateSpisHtml(communications, yearFilter, options = {}) {
     h2 { font-size: 11pt; font-weight: bold; border-bottom: 0.75pt solid #000; padding-bottom: 2pt; margin-bottom: 4pt; }
     .count { font-weight: normal; }
     table { width: 100%; border-collapse: collapse; font-size: 10pt; }
-    th { font-size: 8pt; font-weight: bold; text-transform: uppercase; border-bottom: 0.75pt solid #000; border-top: 0.75pt solid #000; padding: 3pt 4pt; text-align: left; }
-    td { padding: 3pt 4pt; text-align: left; border-bottom: 0.5pt solid #ccc; vertical-align: top; }
-    .nr { width: 70pt; white-space: nowrap; font-weight: bold; }
+    th { font-size: 8pt; font-weight: bold; text-transform: uppercase; border-bottom: 0.75pt solid #000; border-top: 0.75pt solid #000; padding: 2pt 4pt; text-align: left; }
+    td { padding: 2pt 4pt; text-align: left; border-bottom: 0.5pt solid #ccc; vertical-align: top; }
+    .nr { width: 88pt; white-space: nowrap; font-weight: bold; }
     .date { width: 60pt; white-space: nowrap; }
     .title { }
     .author { width: 32pt; text-align: center; }
