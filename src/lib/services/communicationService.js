@@ -3,8 +3,8 @@ import Docxtemplater from 'docxtemplater'
 import fs from 'fs/promises'
 import path from 'path'
 
-export async function generateCommunicationDoc(submission, commNumber) {
-	const now = new Date()
+export async function generateCommunicationDoc(submission, commNumber, refDate) {
+	const now = refDate ? new Date(refDate) : new Date()
 
 	const dataZgloszenia = now.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })
 
