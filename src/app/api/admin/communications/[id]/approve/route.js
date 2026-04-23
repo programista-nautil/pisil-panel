@@ -100,7 +100,7 @@ export async function POST(request, { params }) {
 
     await transporter.sendMail({
       from: `"System PISiL" <${process.env.SMTP_USER}>`,
-      to: process.env.ADMIN_EMAIL,
+      to: process.env.DEKLARACJE_EMAIL,
       subject: `[Komunikat ${numLabel}] ${comm.subject || comm.title}`,
       html,
       attachments: emailAttachments,

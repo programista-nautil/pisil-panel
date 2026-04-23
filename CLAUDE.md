@@ -98,6 +98,8 @@ Never hand-edit these in production; go through the util functions so the `.json
 ### Email
 Single shared SMTP config (Gmail, `SMTP_USER`/`SMTP_PASS`). Different functional mailboxes route via env vars: `DEKLARACJE_EMAIL` (Pani Teresa), `PATRONATY_EMAIL` (Pan Czesław), `ADMIN_EMAIL` (default). Form-type routes its admin copy to the matching mailbox in `src/app/api/upload/route.js`.
 
+Komunikaty wewnętrzne (moduł Pani Teresy) — maile przy zatwierdzaniu komunikatu (`/api/admin/communications/[id]/approve`) idą na `DEKLARACJE_EMAIL`.
+
 ### Private assets
 `private/` (gitignored) contains DOCX templates and static acceptance attachments. Anything the app reads via `path.join(process.cwd(), 'private', ...)` must be deployed alongside the code — it is not in git.
 
