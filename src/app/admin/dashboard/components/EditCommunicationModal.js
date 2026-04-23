@@ -2,45 +2,56 @@
 
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
-export default function AddCommunicationModal({
+function padMonth(m) {
+  return String(m).padStart(2, "0");
+}
+
+export default function EditCommunicationModal({
+  communication,
   isOpen,
   onClose,
-  onUploadSuccess,
+  onSaved,
 }) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [authorInitials, setAuthorInitials] = useState("");
   const [newInitials, setNewInitials] = useState("");
   const [showNewInitials, setShowNewInitials] = useState(false);
-  const [sentAt, setSentAt] = useState(
-    () => new Date().toISOString().slice(0, 10),
-  );
   const [knownAuthors, setKnownAuthors] = useState([]);
-  const [pendingFiles, setPendingFiles] = useState([]); // File[] — przed zapisem
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sentAt, setSentAt] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState(null);
+  const [localAttachments, setLocalAttachments] = useState([]);
 
   useEffect(() => {
-    if (!isOpen) {
-      setSubject("");
-      setBody("");
-      setAuthorInitials("");
-      setNewInitials("");
-      setShowNewInitials(false);
-      setSentAt(new Date().toISOString().slice(0, 10));
-      setPendingFiles([]);
-      return;
-    }
+    if (!isOpen || !communication) return;
+    setSubject(communication.subject || "");
+    setBody(communication.body || "");
+    setAuthorInitials(communication.authorInitials || "");
+    setNewInitials("");
+    setShowNewInitials(false);
+    setSentAt(
+      communication.sentAt
+        ? new Date(communication.sentAt).toISOString().slice(0, 10)
+        : new Date().toISOString().slice(0, 10),
+    );
+    setLocalAttachments(communication.attachments || []);
+
     fetch("/api/admin/communications/authors")
       .then((r) => r.json())
       .then((data) => Array.isArray(data) && setKnownAuthors(data))
       .catch(() => {});
-  }, [isOpen]);
+  }, [isOpen, communication]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !communication) return null;
 
-  const effectiveInitials = showNewInitials ? newInitials.trim() : authorInitials;
+  const numLabel =
+    communication.number != null
+      ? `${communication.number}/${padMonth(communication.month)}/${communication.year}`
+      : null;
 
   // ── Inicjały ────────────────────────────────────────────────────────────
 
@@ -76,32 +87,17 @@ export default function AddCommunicationModal({
     }
   };
 
-  // ── Pliki ────────────────────────────────────────────────────────────────
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPendingFiles((prev) => [...prev, file]);
-    e.target.value = "";
-  };
-
-  const handleRemovePendingFile = (index) => {
-    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
   // ── Zapis ────────────────────────────────────────────────────────────────
 
-  const handleSubmit = async (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (!subject.trim()) {
-      toast.error("Podaj temat (sprawę) komunikatu.");
-      return;
-    }
-    setIsSubmitting(true);
+    setIsSaving(true);
+    const effectiveInitials = showNewInitials
+      ? newInitials.trim()
+      : authorInitials;
     try {
-      // 1. Utwórz komunikat
-      const res = await fetch("/api/admin/communications", {
-        method: "POST",
+      const res = await fetch(`/api/admin/communications/${communication.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           subject: subject.trim(),
@@ -111,37 +107,64 @@ export default function AddCommunicationModal({
         }),
       });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Błąd podczas tworzenia komunikatu.");
+        const d = await res.json();
+        throw new Error(d.message || "Błąd zapisu.");
       }
-      const newComm = await res.json();
-
-      // 2. Wgraj oczekujące pliki
-      const uploadedAttachments = [];
-      for (const file of pendingFiles) {
-        try {
-          const fd = new FormData();
-          fd.append("file", file);
-          const r = await fetch(
-            `/api/admin/communications/${newComm.id}/attachments`,
-            { method: "POST", body: fd },
-          );
-          if (r.ok) {
-            const att = await r.json();
-            uploadedAttachments.push(att);
-          }
-        } catch {
-          // pomiń nieudane — nie blokuj całego zapisu
-        }
-      }
-
-      toast.success(`Komunikat „${newComm.subject}" zapisany jako szkic.`);
-      onUploadSuccess({ ...newComm, attachments: uploadedAttachments });
+      const updated = await res.json();
+      toast.success("Komunikat zapisany.");
+      onSaved({ ...updated, attachments: localAttachments });
       onClose();
     } catch (err) {
       toast.error(err.message);
     } finally {
-      setIsSubmitting(false);
+      setIsSaving(false);
+    }
+  };
+
+  // ── Załączniki ───────────────────────────────────────────────────────────
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingFile(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await fetch(
+        `/api/admin/communications/${communication.id}/attachments`,
+        { method: "POST", body: fd },
+      );
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.message || "Błąd uploadu.");
+      }
+      const attachment = await res.json();
+      setLocalAttachments((prev) => [...prev, attachment]);
+      toast.success(`Dodano: ${attachment.fileName}`);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setIsUploadingFile(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleDeleteAttachment = async (aId) => {
+    setDeletingAttachmentId(aId);
+    try {
+      const res = await fetch(
+        `/api/admin/communications/${communication.id}/attachments/${aId}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.message || "Błąd usuwania.");
+      }
+      setLocalAttachments((prev) => prev.filter((a) => a.id !== aId));
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setDeletingAttachmentId(null);
     }
   };
 
@@ -151,30 +174,31 @@ export default function AddCommunicationModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-lg shadow-xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4">
           <h3 className="text-lg font-bold text-[#005698]">
-            Utwórz komunikat
+            Edytuj komunikat
           </h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Numer zostanie przydzielony po zatwierdzeniu komunikatu.
-          </p>
+          {numLabel && (
+            <p className="text-xs text-gray-500 mt-0.5">
+              Nr komunikatu:{" "}
+              <span className="font-medium text-gray-700">{numLabel}</span>
+            </p>
+          )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSave} className="space-y-4">
           {/* Sprawa */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sprawa <span className="text-red-500">*</span>
+              Sprawa
             </label>
             <input
               type="text"
-              required
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="np. szkolenia PISiL — wiosna 2025"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:border-[#005698]"
             />
           </div>
@@ -182,13 +206,12 @@ export default function AddCommunicationModal({
           {/* Treść */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Treść komunikatu
+              Treść
             </label>
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              rows={6}
-              placeholder="Szanowni Członkowie,&#10;&#10;..."
+              rows={7}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:border-[#005698] resize-y"
             />
           </div>
@@ -290,56 +313,71 @@ export default function AddCommunicationModal({
             </div>
           </div>
 
-          {/* Załączniki */}
+          {/* Pliki do pobrania dla członków */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Pliki do pobrania dla członków
             </label>
-            {pendingFiles.length > 0 && (
+            {localAttachments.length > 0 ? (
               <ul className="space-y-1 mb-2">
-                {pendingFiles.map((f, i) => (
+                {localAttachments.map((att) => (
                   <li
-                    key={i}
+                    key={att.id}
                     className="flex items-center justify-between gap-2 bg-gray-50 px-3 py-1.5 rounded text-sm"
                   >
-                    <span className="text-gray-700 truncate">{f.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemovePendingFile(i)}
-                      className="p-1 text-red-500 hover:bg-red-50 rounded flex-shrink-0"
-                      title="Usuń"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+                    <span className="text-gray-700 truncate">
+                      {att.fileName}
+                    </span>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <a
+                        href={`/api/admin/communications/${communication.id}/attachments/${att.id}/download`}
+                        className="p-1 text-[#005698] hover:bg-[#005698]/10 rounded"
+                        title="Pobierz"
+                      >
+                        <ArrowDownTrayIcon className="h-4 w-4" />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteAttachment(att.id)}
+                        disabled={deletingAttachmentId === att.id}
+                        className="p-1 text-red-500 hover:bg-red-50 rounded disabled:opacity-40"
+                        title="Usuń"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
+            ) : (
+              <p className="text-xs text-gray-400 mb-2">Brak dodanych plików.</p>
             )}
             <label className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-700 cursor-pointer hover:bg-gray-50">
-              + Dodaj plik
+              {isUploadingFile ? "Wgrywam..." : "+ Dodaj plik"}
               <input
                 type="file"
                 className="hidden"
-                onChange={handleFileSelect}
+                onChange={handleFileUpload}
+                disabled={isUploadingFile}
               />
             </label>
           </div>
 
-          <div className="mt-6 flex justify-end gap-3">
+          <div className="mt-6 flex justify-end gap-3 pt-2 border-t border-gray-100">
             <button
               type="button"
               onClick={onClose}
-              disabled={isSubmitting}
+              disabled={isSaving}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Anuluj
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !subject.trim()}
+              disabled={isSaving}
               className="px-4 py-2 text-sm font-medium text-white bg-[#005698] rounded-md hover:bg-[#005698]/80 disabled:opacity-50"
             >
-              {isSubmitting ? "Zapisywanie..." : "Zapisz szkic"}
+              {isSaving ? "Zapisuję..." : "Zapisz zmiany"}
             </button>
           </div>
         </form>

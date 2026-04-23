@@ -13,6 +13,7 @@ export async function GET(request) {
   try {
     const communications = await prisma.communication.findMany({
       orderBy: [{ year: "desc" }, { createdAt: "desc" }],
+      include: { attachments: true },
     });
 
     return NextResponse.json(communications, { status: 200 });
@@ -31,11 +32,53 @@ export async function POST(request) {
     return NextResponse.json({ message: "Brak autoryzacji" }, { status: 401 });
   }
 
+  const contentType = request.headers.get("content-type") || "";
+
   try {
+    // -----------------------------------------------------------------------
+    // JSON body → tworzenie nowego komunikatu jako SZKIC z auto-numerem
+    // -----------------------------------------------------------------------
+    if (contentType.includes("application/json")) {
+      const body = await request.json();
+      const { subject, body: bodyText, authorInitials, sentAt, isSpis } = body;
+
+      if (!subject) {
+        return NextResponse.json(
+          { message: "Pole 'subject' (sprawa) jest wymagane." },
+          { status: 400 },
+        );
+      }
+
+      const date = sentAt ? new Date(sentAt) : new Date();
+      const year = date.getFullYear();
+
+      const newCommunication = await prisma.communication.create({
+        data: {
+          title: subject,
+          year,
+          month: null,
+          number: null,
+          subject,
+          body: bodyText || null,
+          authorInitials: authorInitials || null,
+          sentAt: date,
+          isSpis: !!isSpis,
+          status: "DRAFT",
+        },
+        include: { attachments: true },
+      });
+
+      return NextResponse.json(newCommunication, { status: 201 });
+    }
+
+    // -----------------------------------------------------------------------
+    // multipart/form-data → upload pliku (legacy lub spis PDF)
+    // -----------------------------------------------------------------------
     const data = await request.formData();
     const title = data.get("title");
     const year = parseInt(data.get("year"), 10);
     const file = data.get("file");
+    const isSpis = data.get("isSpis") === "true";
 
     if (!title || !year || !file) {
       return NextResponse.json(
@@ -57,7 +100,10 @@ export async function POST(request) {
         year,
         fileName: originalFilename,
         filePath: gcsPath,
+        isSpis,
+        status: "SENT", // wgrany plik = od razu widoczny
       },
+      include: { attachments: true },
     });
 
     return NextResponse.json(newCommunication, { status: 201 });

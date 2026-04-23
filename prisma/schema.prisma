@@ -183,13 +183,46 @@ model GeneralFile {
   category String? 
 }
 
+enum CommunicationStatus {
+  DRAFT
+  SENT
+}
+
 model Communication {
   id        String   @id @default(cuid())
-  title     String   
-  year      Int      
-  fileName  String   
-  filePath  String   
-  
+  title     String
+  year      Int
+  fileName  String?  // nullable — legacy rekordy mają wypełnione, nowe mogą nie mieć pliku głównego
+  filePath  String?  // nullable
+
+  // Pola strukturalne (null = rekordy archiwalne / legacy)
+  number         Int?               // sekwencja w miesiącu (1, 2, 3…)
+  month          Int?               // 1–12
+  sentAt         DateTime?
+  authorInitials String?
+  subject        String?            // "sprawa" — temat do spisu i subject maila
+  body           String?            @db.Text
+  attachmentNames String?           // tekstowa lista nazw załączników (do spisu)
+  status         CommunicationStatus @default(DRAFT)
+  isSpis         Boolean            @default(false)
+
+  attachments CommunicationAttachment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model CommunicationAttachment {
+  id              String        @id @default(cuid())
+  communicationId String
+  communication   Communication @relation(fields: [communicationId], references: [id], onDelete: Cascade)
+  fileName        String
+  filePath        String
+  createdAt       DateTime      @default(now())
+}
+
+// Zarządzana lista inicjałów autorów komunikatów (osobna od authorInitials w Communication)
+model CommunicationAuthor {
+  initials  String   @id
+  createdAt DateTime @default(now())
 }

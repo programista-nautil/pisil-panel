@@ -12,10 +12,18 @@ import {
   ArrowDownTrayIcon,
   TrashIcon,
   DocumentIcon,
+  PencilSquareIcon,
+  CheckCircleIcon,
+  ClipboardDocumentListIcon,
+  PaperClipIcon,
 } from "@heroicons/react/24/outline";
 
 const PER_PAGE = 10;
 const MIN_FALLBACK_YEAR = 2010;
+
+function padMonth(m) {
+  return String(m).padStart(2, "0");
+}
 
 function extractNumber(title) {
   if (!title) return 0;
@@ -26,6 +34,19 @@ function extractNumber(title) {
 }
 
 export function compareByCommunicationNumber(a, b) {
+  // Drafty (subject != null, number == null) — na górze, posortowane po dacie tworzenia malejąco
+  const aIsDraft = a.subject != null && a.number == null;
+  const bIsDraft = b.subject != null && b.number == null;
+  if (aIsDraft && bIsDraft) {
+    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+  }
+  if (aIsDraft) return -1;
+  if (bIsDraft) return 1;
+  // Nowe komunikaty z polem `number` — sortuj po numerze (malejąco).
+  if (a.number != null && b.number != null) return b.number - a.number;
+  if (a.number != null) return -1; // nowe przed legacy
+  if (b.number != null) return 1;
+  // Legacy — wyciągaj numer z tytułu.
   const numA = extractNumber(a.title);
   const numB = extractNumber(b.title);
   if (numA !== numB) return numB - numA;
@@ -43,16 +64,22 @@ export function compareByCommunicationNumber(a, b) {
  *  - items: Communication[] (pełna lista, bez filtrowania)
  *  - isLoading: bool
  *  - downloadUrlBuilder: (id) => string
- *  - onDelete?: (id, title) => void  (gdy podane, pokazujemy przycisk usuń)
+ *  - attachmentDownloadUrlBuilder?: (commId, aId) => string
+ *  - onDelete?: (id, title) => void  (gdy podane, pokazujemy przycisk usuń — tylko dla szkiców)
  *  - deletingId?: string  (id w trakcie usuwania — dezaktywuje przycisk)
+ *  - onEdit?: (comm) => void  (gdy podane, pokazujemy przycisk Edytuj — tylko admin)
+ *  - onApprove?: (comm) => void  (gdy podane, pokazujemy przycisk Zatwierdź — tylko dla szkiców)
  *  - emptyMessage?: string
  */
 export default function CommunicationsByYear({
   items,
   isLoading,
   downloadUrlBuilder,
+  attachmentDownloadUrlBuilder,
   onDelete,
   deletingId,
+  onEdit,
+  onApprove,
   emptyMessage = "Brak komunikatów.",
 }) {
   const [search, setSearch] = useState("");
@@ -67,7 +94,11 @@ export default function CommunicationsByYear({
     hasInitializedCollapsed.current = true;
     const newestYear = Math.max(...items.map((i) => i.year));
     setCollapsed(
-      new Set(items.map((i) => String(i.year)).filter((y) => Number(y) !== newestYear)),
+      new Set(
+        items
+          .map((i) => String(i.year))
+          .filter((y) => Number(y) !== newestYear),
+      ),
     );
   }, [items]);
 
@@ -83,7 +114,14 @@ export default function CommunicationsByYear({
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
     return items.filter((item) => {
-      if (s && !item.title.toLowerCase().includes(s)) return false;
+      if (s) {
+        const inTitle = item.title?.toLowerCase().includes(s);
+        const inSubject = item.subject?.toLowerCase().includes(s);
+        const inNumber =
+          item.number != null &&
+          `${item.number}/${padMonth(item.month)}/${item.year}`.includes(s);
+        if (!inTitle && !inSubject && !inNumber) return false;
+      }
       if (yearRange) {
         const [from, to] = yearRange;
         if (item.year < from || item.year > to) return false;
@@ -98,8 +136,6 @@ export default function CommunicationsByYear({
       if (!map[item.year]) map[item.year] = [];
       map[item.year].push(item);
     }
-    // Sortowanie wewnątrz każdego roku po numerze komunikatu z tytułu (malejąco).
-    // Obsługuje formaty "Komunikat nr 195", "195 Wniosek", "1.01.25.pdf".
     for (const year in map) {
       map[year].sort(compareByCommunicationNumber);
     }
@@ -111,7 +147,6 @@ export default function CommunicationsByYear({
     [grouped],
   );
 
-  // Gdy filtry zmienią liczbę wyników — zresetuj paginację roczników do stron które jeszcze istnieją.
   useEffect(() => {
     setPagePerYear((prev) => {
       const next = {};
@@ -195,18 +230,18 @@ export default function CommunicationsByYear({
                   <button
                     type="button"
                     onClick={() => toggleYear(year)}
-                    className="w-full flex items-center justify-between px-4 sm:px-6 py-3 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none"
+                    className="w-full flex items-center justify-between px-4 py-3.5 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none border-b border-gray-200"
                   >
-                    <span className="text-sm font-semibold text-gray-700">
+                    <span className="text-base font-semibold text-[#005698]">
                       Rok {year}
-                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700">
                         {yearComms.length}
                       </span>
                     </span>
                     {expanded ? (
-                      <ChevronUpIcon className="h-4 w-4 text-gray-400" />
+                      <ChevronUpIcon className="h-5 w-5 text-gray-400" />
                     ) : (
-                      <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+                      <ChevronDownIcon className="h-5 w-5 text-gray-400" />
                     )}
                   </button>
 
@@ -218,8 +253,13 @@ export default function CommunicationsByYear({
                             key={comm.id}
                             comm={comm}
                             downloadUrl={downloadUrlBuilder(comm.id)}
+                            attachmentDownloadUrlBuilder={
+                              attachmentDownloadUrlBuilder
+                            }
                             onDelete={onDelete}
                             deletingId={deletingId}
+                            onEdit={onEdit}
+                            onApprove={onApprove}
                           />
                         ))}
                       </ul>
@@ -406,40 +446,236 @@ function YearRangePill({ value, minYear, maxYear, onChange }) {
   );
 }
 
-function CommunicationRow({ comm, downloadUrl, onDelete, deletingId }) {
+function CommunicationRow({
+  comm,
+  downloadUrl,
+  attachmentDownloadUrlBuilder,
+  onDelete,
+  deletingId,
+  onEdit,
+  onApprove,
+}) {
+  const [attachmentsExpanded, setAttachmentsExpanded] = useState(false);
+  const isDeleting = deletingId === comm.id;
+  const displayTitle = comm.subject || comm.title;
+  const hasAttachments = (comm.attachments?.length || 0) > 0;
+
+  // ── Nowy komunikat (comm.subject != null) — SZKIC lub WYSŁANY ────────────
+  if (comm.subject != null) {
+    const isSent = comm.status === "SENT";
+    const numLabel =
+      comm.number != null
+        ? `${comm.number}/${padMonth(comm.month)}/${comm.year}`
+        : null;
+
+    return (
+      <li className="hover:bg-gray-50 transition-colors">
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
+          <div className="min-w-0 flex-1 flex items-center gap-3">
+            {numLabel ? (
+              <span
+                className="flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded text-xs font-bold bg-[#005698]/10 text-[#005698] whitespace-nowrap"
+                title="Numer komunikatu"
+              >
+                {numLabel}
+              </span>
+            ) : (
+              <span className="flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded text-xs font-bold bg-gray-100 text-gray-500 whitespace-nowrap">
+                SZKIC
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-900 truncate" title={displayTitle}>
+                {displayTitle}
+              </p>
+              {comm.authorInitials && (
+                <p className="text-xs text-gray-500 mt-0.5">{comm.authorInitials}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {onEdit && (
+              <span
+                className={`text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${
+                  isSent
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {isSent ? "WYSŁANY" : "SZKIC"}
+              </span>
+            )}
+            {onApprove && !isSent && (
+              <button
+                type="button"
+                onClick={() => onApprove(comm)}
+                className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
+                title="Zatwierdź komunikat"
+              >
+                <CheckCircleIcon className="h-5 w-5" />
+              </button>
+            )}
+            {onEdit && (
+              <button
+                type="button"
+                onClick={() => onEdit(comm)}
+                className="p-2 text-gray-500 hover:text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
+                title="Edytuj komunikat"
+              >
+                <PencilSquareIcon className="h-5 w-5" />
+              </button>
+            )}
+            {comm.filePath && (
+              <a
+                href={downloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
+                title="Otwórz w nowej karcie"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+              </a>
+            )}
+            {hasAttachments && (
+              <button
+                type="button"
+                onClick={() => setAttachmentsExpanded((v) => !v)}
+                className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                title={attachmentsExpanded ? "Zwiń załączniki" : "Rozwiń załączniki"}
+              >
+                <PaperClipIcon className="h-5 w-5" />
+              </button>
+            )}
+            {onDelete && !isSent && (
+              <button
+                type="button"
+                onClick={() => onDelete(comm.id, displayTitle)}
+                disabled={isDeleting}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                title="Usuń komunikat"
+              >
+                {isDeleting ? (
+                  <span className="text-xs text-gray-400">...</span>
+                ) : (
+                  <TrashIcon className="h-5 w-5" />
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+        {attachmentsExpanded && hasAttachments && (
+          <ul className="px-4 pb-3 pt-0 space-y-1 bg-gray-50 border-t border-gray-100">
+            {comm.attachments.map((att) => (
+              <li key={att.id} className="flex items-center gap-2 py-1.5">
+                <PaperClipIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <span className="text-sm text-gray-700 flex-1 truncate">
+                  {att.fileName}
+                </span>
+                {attachmentDownloadUrlBuilder && (
+                  <a
+                    href={attachmentDownloadUrlBuilder(comm.id, att.id)}
+                    className="p-1.5 text-[#005698] hover:bg-[#005698]/10 rounded transition-colors flex-shrink-0"
+                    title="Pobierz załącznik"
+                  >
+                    <ArrowDownTrayIcon className="h-4 w-4" />
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </li>
+    );
+  }
+
+  // ── Spis (isSpis=true, archiwalne) ───────────────────────────────────────
+  if (comm.isSpis) {
+    return (
+      <li className="flex items-center justify-between gap-3 px-4 py-3 border-l-4 border-blue-400 bg-blue-50/40 hover:bg-blue-50 transition-colors">
+        <div className="min-w-0 flex-1 flex items-center gap-3">
+          <ClipboardDocumentListIcon className="h-5 w-5 text-blue-500 flex-shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-gray-900 truncate" title={comm.title}>
+              {comm.title}
+            </p>
+            {comm.fileName && (
+              <p className="text-xs text-gray-500 truncate mt-0.5">{comm.fileName}</p>
+            )}
+          </div>
+          <span className="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+            SPIS
+          </span>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {comm.filePath && (
+            <a
+              href={downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
+              title="Otwórz w nowej karcie"
+            >
+              <ArrowDownTrayIcon className="h-5 w-5" />
+            </a>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(comm.id, comm.title)}
+              disabled={isDeleting}
+              className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+              title="Usuń spis"
+            >
+              {isDeleting ? (
+                <span className="text-xs text-gray-400">...</span>
+              ) : (
+                <TrashIcon className="h-5 w-5" />
+              )}
+            </button>
+          )}
+        </div>
+      </li>
+    );
+  }
+
+  // ── Legacy (archiwalny plik, number=null, isSpis=false) ──────────────────
   return (
-    <li className="flex items-center justify-between gap-3 px-4 sm:px-6 py-2.5 hover:bg-gray-50 transition-colors">
-      <div className="min-w-0 flex-1 flex items-center gap-2">
-        <DocumentIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+    <li className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+      <div className="min-w-0 flex-1 flex items-center gap-3">
+        <DocumentIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-gray-800 truncate" title={comm.title}>
+          <p className="text-sm font-medium text-gray-900 truncate" title={comm.title}>
             {comm.title}
           </p>
-          <p className="text-xs text-gray-400 truncate" title={comm.fileName}>
+          <p className="text-xs text-gray-500 truncate mt-0.5" title={comm.fileName}>
             {comm.fileName}
           </p>
         </div>
       </div>
       <div className="flex items-center gap-1 flex-shrink-0">
-        <a
-          href={downloadUrl}
-          className="text-[#005698] hover:bg-[#005698]/10 p-2 rounded-md transition-colors"
-          title="Pobierz plik"
-        >
-          <ArrowDownTrayIcon className="h-4 w-4" />
-        </a>
+        {comm.filePath && (
+          <a
+            href={downloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
+            title="Otwórz w nowej karcie"
+          >
+            <ArrowDownTrayIcon className="h-5 w-5" />
+          </a>
+        )}
         {onDelete && (
           <button
             type="button"
             onClick={() => onDelete(comm.id, comm.title)}
-            disabled={deletingId === comm.id}
-            className="text-red-600 hover:bg-red-50 p-2 rounded-md transition-colors disabled:opacity-50"
+            disabled={isDeleting}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
             title="Usuń komunikat"
           >
-            {deletingId === comm.id ? (
-              <span className="text-xs">...</span>
+            {isDeleting ? (
+              <span className="text-xs text-gray-400">...</span>
             ) : (
-              <TrashIcon className="h-4 w-4" />
+              <TrashIcon className="h-5 w-5" />
             )}
           </button>
         )}

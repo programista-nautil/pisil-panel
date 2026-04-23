@@ -176,3 +176,45 @@ ssh <user>@<vps-host> "cd ~/apps/pisil-panel && git pull && npm install && npm r
 - Toasts use `react-hot-toast` globally configured in `src/app/layout.js` (note the typo `botttom-right` — harmless, falls back to default).
 - Session maxAge is 30 minutes; `AutoLogout` component enforces it client-side.
 - Wszystkie elementy `<input>`, `<select>`, `<textarea>` muszą mieć jawnie ustawiony kolor tekstu (np. `text-gray-700` lub `text-gray-900`). Domyślny kolor przeglądarki (szczególnie Chrome/Safari) jest szarobiały i słabo widoczny na jasnym tle — nie polegaj na dziedziczeniu koloru.
+
+## Komunikaty — stan implementacji (do przetestowania przed deploy)
+
+Poniższe zmiany są **lokalnie zaimplementowane, niezcommitowane** — czekają na testy:
+
+**Gotowe (niezcommitowane):**
+- Migracja `20260423072620_komunikaty_redesign`: pola number, month, sentAt, authorInitials, subject, body, attachmentNames, status, isSpis; model CommunicationAttachment; enum CommunicationStatus
+- Migracja `20260423074718_autor_inicjaly`: model CommunicationAuthor (@id initials) — zarządzana lista inicjałów
+- POST /communications (JSON) → tworzy SZKIC bez numeru (`number: null, month: null`); numer przydzielany dopiero przy zatwierdzeniu
+- POST /communications/[id]/approve → przypisuje numer, buduje HTML, wysyła email (z załącznikami), zmienia status na SENT
+- DELETE /communications/[id] → guard: SENT nie można usunąć (409); usuwa też pliki załączników z GCS
+- GET /admin/communications/[id]/attachments/[aId]/download → pobieranie załącznika (admin)
+- GET /member/communications/[id]/attachments/[aId]/download → pobieranie załącznika (member, tylko SENT)
+- CommunicationsByYear — detekcja nowego stylu po `comm.subject != null`; SZKIC bez numeru = szary chip; badge WYSŁANY/SZKIC tylko w panelu admina; przycisk Zatwierdź (CheckCircleIcon) zamiast Wyślij podgląd; rozwijane załączniki; usunięty `sendingPreviewId`
+- CommunicationsManagement — usunięty przycisk „Dodaj spis"; modal potwierdzenia zatwierdzenia; prop `onApprove`; `attachmentDownloadUrlBuilder`
+- CommunicationsSection — `attachmentDownloadUrlBuilder` (member URL)
+- AddCommunicationModal — brak podglądu numeru; toast ze subject zamiast numeru
+- EditCommunicationModal — inline inicjały (select + chips `[TJ ×]`); zarządzanie załącznikami
+
+**Do sprawdzenia podczas testów:**
+- Utwórz szkic → widoczny jako „SZKIC" bez numeru; przycisk Zatwierdź dostępny
+- Edytuj szkic → zapis, zmiana daty/inicjałów, dodawanie/usuwanie załączników
+- Kliknij Zatwierdź → modal potwierdzenia → po kliknięciu: numer przydzielony, email z załącznikami, status SENT, pojawia się w panelu członka
+- Spróbuj usunąć WYSŁANY komunikat → toast błędu (server 409)
+- Usuń szkic → OK (pliki GCS usunięte)
+- Rozwiń komunikat z załącznikami → lista plików, pobieranie działa (admin i member)
+- Panel członka: brak badge WYSŁANY; załączniki rozwijalne
+- Email: treść HTML + załączniki jako pliki
+- Raport druku: kolumny Nr/Data/Sprawa/Autor
+
+**Planowane po testach:**
+- Commit + deploy na VPS (z `npx prisma migrate deploy` na serwerze)
+- Skrypt jednorazowy do uploadowania archiwalnych spisów PDF (isSpis=true)
+
+## Komunikaty — notatki do przyszłości
+
+**Planowana wysyłka masowa (nie zaimplementowane):**
+`POST /api/admin/communications/[id]/send-all` → enqueue BullMQ job `send-communication`.
+Worker czyta `Communication.body` i wysyła jako HTML w body maila (nie jako załącznik) do wszystkich adresów z `mailingList.json`, w partiach po 20 z 5s przerwą. Schemat jobu: `{ communicationId, adminEmail }`. Do implementacji gdy Pani Teresa potwierdzi workflow. Kolejka `emailQueue` eksportowana z `src/lib/queue.js`.
+
+**Potencjalne połączenie numeracji (do wyjaśnienia z Panią Teresą):**
+`Submission.communicationNumber` (okólniki formalne przy rekrutacji kandydatów) i `Communication.number` (okólniki Pani Teresy `X/MM/RRRR`) to dziś **osobne, niezależne liczniki**. Możliwe scenariusze do zbadania: czy okólniki przy rekrutacji powinny trafiać do spisu Communications i dzielić numerację? Czy obie sekwencje powinny być zsynchronizowane (wspólny MAX)? Przed zmianą: potwierdzić z Panią Teresą, czy widzi te dwa typy jako jedną listę czy dwie osobne.
