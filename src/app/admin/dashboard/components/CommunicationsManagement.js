@@ -175,6 +175,24 @@ export default function CommunicationsManagement() {
     setApprovingCommunication(comm);
   };
 
+  // Ponowna wysyłka emaila dla zatwierdzonego komunikatu
+  const handleResend = async (comm) => {
+    const numLabel = comm.number != null
+      ? `${String(comm.number)}/${String(comm.month).padStart(2, "0")}/${comm.year}`
+      : String(comm.year);
+    if (!window.confirm(`Wysłać ponownie komunikat ${numLabel} na adres Pani Teresy?`)) return;
+    try {
+      const res = await fetch(`/api/admin/communications/${comm.id}/resend`, { method: "POST" });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.message || "Błąd ponownej wysyłki.");
+      }
+      toast.success(`Komunikat ${numLabel} wysłany ponownie.`);
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
   // Potwierdzenie w modalu — wyślij żądanie do API
   const handleConfirmApprove = async () => {
     if (!approvingCommunication) return;
@@ -331,6 +349,7 @@ export default function CommunicationsManagement() {
         deletingId={deletingId}
         onEdit={(comm) => setEditingCommunication(comm)}
         onApprove={handleApprove}
+        onResend={handleResend}
         emptyMessage="Brak dodanych komunikatów. Użyj przycisku powyżej, aby dodać pierwszy."
       />
 

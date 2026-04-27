@@ -17,6 +17,7 @@ import {
   CheckCircleIcon,
   ClipboardDocumentListIcon,
   PaperClipIcon,
+  PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
 
 const PER_PAGE = 10;
@@ -68,8 +69,9 @@ export function compareByCommunicationNumber(a, b) {
  *  - attachmentDownloadUrlBuilder?: (commId, aId) => string
  *  - onDelete?: (id, title) => void  (gdy podane, pokazujemy przycisk usuń — tylko dla szkiców)
  *  - deletingId?: string  (id w trakcie usuwania — dezaktywuje przycisk)
- *  - onEdit?: (comm) => void  (gdy podane, pokazujemy przycisk Edytuj — tylko admin)
+ *  - onEdit?: (comm) => void  (gdy podane, pokazujemy przycisk Edytuj — admin, dla szkiców i wysłanych)
  *  - onApprove?: (comm) => void  (gdy podane, pokazujemy przycisk Zatwierdź — tylko dla szkiców)
+ *  - onResend?: (comm) => void  (gdy podane, pokazujemy przycisk Wyślij ponownie — tylko dla wysłanych)
  *  - emptyMessage?: string
  */
 export default function CommunicationsByYear({
@@ -82,6 +84,7 @@ export default function CommunicationsByYear({
   deletingId,
   onEdit,
   onApprove,
+  onResend,
   showAuthorInitials = true,
   emptyMessage = "Brak komunikatów.",
 }) {
@@ -264,6 +267,7 @@ export default function CommunicationsByYear({
                             deletingId={deletingId}
                             onEdit={onEdit}
                             onApprove={onApprove}
+                            onResend={onResend}
                             showAuthorInitials={showAuthorInitials}
                           />
                         ))}
@@ -460,6 +464,7 @@ function CommunicationRow({
   deletingId,
   onEdit,
   onApprove,
+  onResend,
   showAuthorInitials,
 }) {
   const [attachmentsExpanded, setAttachmentsExpanded] = useState(false);
@@ -599,7 +604,17 @@ function CommunicationRow({
                 <CheckCircleIcon className="h-5 w-5" />
               </button>
             )}
-            {onEdit && !isSent && (
+            {onResend && isSent && (
+              <button
+                type="button"
+                onClick={() => onResend(comm)}
+                className="p-2 text-gray-500 hover:text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
+                title="Wyślij ponownie"
+              >
+                <PaperAirplaneIcon className="h-5 w-5" />
+              </button>
+            )}
+            {onEdit && (
               <button
                 type="button"
                 onClick={() => onEdit(comm)}
