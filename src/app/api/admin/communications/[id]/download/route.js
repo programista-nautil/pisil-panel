@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { downloadFileFromGCS } from "@/lib/gcs";
+import { buildCommunicationHtml } from "@/lib/communicationHtml";
 import mime from "mime";
+
+function padMonth(m) {
+  return String(m).padStart(2, "0");
+}
 
 export async function GET(request, { params }) {
   const session = await auth();
@@ -17,10 +22,30 @@ export async function GET(request, { params }) {
       where: { id },
     });
 
-    if (!communication || !communication.filePath) {
-      return new NextResponse("Nie znaleziono komunikatu lub pliku", {
-        status: 404,
-      });
+    if (!communication) {
+      return new NextResponse("Nie znaleziono komunikatu", { status: 404 });
+    }
+
+    // Szkic bez pliku — generuj podgląd HTML on-the-fly
+    if (!communication.filePath) {
+      if (communication.subject != null) {
+        const numLabel =
+          communication.number != null
+            ? `${communication.number}/${padMonth(communication.month)}/${communication.year}`
+            : "SZKIC";
+        const html = buildCommunicationHtml(
+          { ...communication, attachments: [] },
+          numLabel,
+        );
+        return new NextResponse(html, {
+          status: 200,
+          headers: {
+            "Content-Type": "text/html; charset=utf-8",
+            "Content-Disposition": "inline",
+          },
+        });
+      }
+      return new NextResponse("Nie znaleziono pliku komunikatu", { status: 404 });
     }
 
     const fileBuffer = await downloadFileFromGCS(communication.filePath);

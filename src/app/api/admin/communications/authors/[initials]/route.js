@@ -37,9 +37,15 @@ export async function PATCH(request, { params }) {
         prisma.communicationAuthor.deleteMany({ where: { initials: originalInitials } }),
       ]);
     } else {
-      updated = await prisma.communicationAuthor.update({
+      updated = await prisma.communicationAuthor.upsert({
         where: { initials: originalInitials },
-        data: {
+        create: {
+          initials: originalInitials,
+          name: name?.trim() || null,
+          position: position?.trim() || null,
+          label: label?.trim() || null,
+        },
+        update: {
           name: name?.trim() || null,
           position: position?.trim() || null,
           label: label?.trim() || null,

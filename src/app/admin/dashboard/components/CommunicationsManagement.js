@@ -13,6 +13,51 @@ import CommunicationsByYear, {
 // Modal potwierdzenia zatwierdzenia komunikatu
 // ---------------------------------------------------------------------------
 
+function ResendConfirmModal({ communication, isResending, onConfirm, onCancel }) {
+  if (!communication) return null;
+  const numLabel = communication.number != null
+    ? `${communication.number}/${String(communication.month).padStart(2, "0")}/${communication.year}`
+    : String(communication.year);
+  return (
+    <div
+      className="fixed inset-0 bg-gray-900/50 z-50 flex justify-center items-center p-4"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-white rounded-lg shadow-xl w-full max-w-md p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-lg font-bold text-[#005698] mb-3">
+          Wyślij ponownie
+        </h3>
+        <p className="text-sm text-gray-600 mb-6">
+          Komunikat{" "}
+          <span className="font-medium text-gray-800">{numLabel}</span>{" "}
+          „{communication.subject}" zostanie wysłany ponownie na adres email. Status i numer komunikatu pozostają bez zmian.
+        </p>
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isResending}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+          >
+            Anuluj
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isResending}
+            className="px-4 py-2 text-sm font-medium text-white bg-[#005698] rounded-md hover:bg-[#005698]/80 disabled:opacity-50"
+          >
+            {isResending ? "Wysyłam..." : "Wyślij ponownie"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ApproveConfirmModal({ communication, isApproving, onConfirm, onCancel }) {
   if (!communication) return null;
   return (
@@ -74,6 +119,10 @@ export default function CommunicationsManagement() {
   // Modal potwierdzenia zatwierdzenia
   const [approvingCommunication, setApprovingCommunication] = useState(null);
   const [isApproving, setIsApproving] = useState(false);
+
+  // Modal potwierdzenia ponownej wysyłki
+  const [resendingCommunication, setResendingCommunication] = useState(null);
+  const [isResending, setIsResending] = useState(false);
 
   // Panel spisu
   const [isSpisOpen, setIsSpisOpen] = useState(false);
@@ -176,11 +225,17 @@ export default function CommunicationsManagement() {
   };
 
   // Ponowna wysyłka emaila dla zatwierdzonego komunikatu
-  const handleResend = async (comm) => {
+  const handleResend = (comm) => {
+    setResendingCommunication(comm);
+  };
+
+  const handleConfirmResend = async () => {
+    if (!resendingCommunication) return;
+    setIsResending(true);
+    const comm = resendingCommunication;
     const numLabel = comm.number != null
       ? `${String(comm.number)}/${String(comm.month).padStart(2, "0")}/${comm.year}`
       : String(comm.year);
-    if (!window.confirm(`Wysłać ponownie komunikat ${numLabel} na adres Pani Teresy?`)) return;
     try {
       const res = await fetch(`/api/admin/communications/${comm.id}/resend`, { method: "POST" });
       if (!res.ok) {
@@ -188,8 +243,11 @@ export default function CommunicationsManagement() {
         throw new Error(d.message || "Błąd ponownej wysyłki.");
       }
       toast.success(`Komunikat ${numLabel} wysłany ponownie.`);
+      setResendingCommunication(null);
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -371,6 +429,13 @@ export default function CommunicationsManagement() {
         isApproving={isApproving}
         onConfirm={handleConfirmApprove}
         onCancel={() => !isApproving && setApprovingCommunication(null)}
+      />
+
+      <ResendConfirmModal
+        communication={resendingCommunication}
+        isResending={isResending}
+        onConfirm={handleConfirmResend}
+        onCancel={() => !isResending && setResendingCommunication(null)}
       />
     </div>
   );

@@ -554,8 +554,10 @@ function CommunicationRow({
         ? `${comm.number}/${padMonth(comm.month)}/${comm.year}`
         : null;
     // PDF-y otwieramy inline w nowej karcie; HTML-e serwer obsługuje inline automatycznie.
+    // Szkice bez pliku: podgląd generowany on-the-fly przez download route.
     const isPdfFile = comm.fileName?.toLowerCase().endsWith(".pdf");
     const previewUrl = isPdfFile ? `${downloadUrl}?inline=1` : downloadUrl;
+    const showPreview = !!comm.filePath || comm.subject != null;
 
     return (
       <li className="hover:bg-gray-50 transition-colors">
@@ -614,7 +616,7 @@ function CommunicationRow({
                 <PaperAirplaneIcon className="h-5 w-5" />
               </button>
             )}
-            {onEdit && (
+            {onEdit && !isPdfFile && (
               <button
                 type="button"
                 onClick={() => onEdit(comm)}
@@ -624,7 +626,7 @@ function CommunicationRow({
                 <PencilSquareIcon className="h-5 w-5" />
               </button>
             )}
-            {comm.filePath && (
+            {showPreview && (
               <a
                 href={previewUrl}
                 target="_blank"

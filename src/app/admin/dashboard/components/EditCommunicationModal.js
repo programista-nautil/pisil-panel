@@ -176,6 +176,7 @@ export default function EditCommunicationModal({
               Treść
             </label>
             <RichTextarea
+              key={communication.id}
               value={body}
               onChange={setBody}
               rows={7}

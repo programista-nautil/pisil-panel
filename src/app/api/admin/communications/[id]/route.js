@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { deleteFileFromGCS } from "@/lib/gcs";
+import { uploadFileToGCS, deleteFileFromGCS } from "@/lib/gcs";
+import { buildCommunicationHtml } from "@/lib/communicationHtml";
+
+function padMonth(m) {
+  return String(m).padStart(2, "0");
+}
 
 export async function PATCH(request, { params }) {
   const session = await auth();
@@ -34,11 +39,33 @@ export async function PATCH(request, { params }) {
     if (authorPosition !== undefined) updateData.authorPosition = authorPosition || null;
     if (authorLabel    !== undefined) updateData.authorLabel    = authorLabel    || null;
 
+    // Pobierz bieżący stan komunikatu (potrzebny do regeneracji HTML)
+    const current = await prisma.communication.findUnique({
+      where: { id },
+      include: { attachments: true },
+    });
+
     const updated = await prisma.communication.update({
       where: { id },
       data: updateData,
       include: { attachments: true },
     });
+
+    // Jeśli komunikat jest WYSŁANY i ma plik HTML — regeneruj podgląd w GCS
+    const isHtmlComm = current?.filePath && current.fileName?.toLowerCase().endsWith(".html");
+    if (current?.status === "SENT" && isHtmlComm) {
+      try {
+        const merged = { ...current, ...updateData };
+        const numLabel = merged.number != null
+          ? `${merged.number}/${padMonth(merged.month)}/${merged.year}`
+          : String(merged.year);
+        const html = buildCommunicationHtml({ ...merged, attachments: updated.attachments }, numLabel);
+        await uploadFileToGCS(Buffer.from(html, "utf-8"), current.filePath);
+      } catch (e) {
+        console.error("Błąd regeneracji HTML komunikatu:", e);
+        // Nie przerywamy — zapis do DB się udał
+      }
+    }
 
     return NextResponse.json(updated, { status: 200 });
   } catch (error) {
