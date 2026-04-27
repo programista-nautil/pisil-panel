@@ -548,6 +548,9 @@ function CommunicationRow({
       comm.number != null
         ? `${comm.number}/${padMonth(comm.month)}/${comm.year}`
         : null;
+    // PDF-y otwieramy inline w nowej karcie; HTML-e serwer obsługuje inline automatycznie.
+    const isPdfFile = comm.fileName?.toLowerCase().endsWith(".pdf");
+    const previewUrl = isPdfFile ? `${downloadUrl}?inline=1` : downloadUrl;
 
     return (
       <li className="hover:bg-gray-50 transition-colors">
@@ -608,7 +611,7 @@ function CommunicationRow({
             )}
             {comm.filePath && (
               <a
-                href={downloadUrl}
+                href={previewUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
