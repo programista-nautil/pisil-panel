@@ -204,6 +204,7 @@ export default function AuthorSelect({ value, onSelect }) {
         if (value === original) onSelect(updated);
       }
       setFormModal(null);
+      toast.success(isNew ? "Autor dodany." : "Autor zapisany.");
     } catch (err) {
       toast.error(err.message);
       throw err;
