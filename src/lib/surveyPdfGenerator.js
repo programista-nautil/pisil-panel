@@ -46,33 +46,53 @@ export const generateSurveyResultsPDF = async (title, formData, fieldLabels = {}
 	doc.setLineWidth(0.5)
 	doc.line(margin, yPosition - 5, pageWidth - margin, yPosition - 5)
 
+	const LINE_H = 5       // wysokość jednej linii tekstu (pt)
+	const Q_GAP = 2        // odstęp między pytaniem a odpowiedzią
+	const A_GAP = 10       // odstęp po odpowiedzi
+	const PAGE_BOTTOM = 278 // margines dolny (przed stopką)
+	const PAGE_TOP = 25
+
 	// Iteracja po danych formularza i ich wyświetlanie
 	Object.entries(formData)
 		.filter(([key]) => fieldLabels[key]) // Bierzemy tylko te pola, które mają etykietę
 		.forEach(([key, value]) => {
-			if (yPosition > 270) {
-				doc.addPage()
-				yPosition = 25
-			}
-
 			const question = fieldLabels[key] || key
 			const answer = value ? value.toString() : 'Brak odpowiedzi'
 
-			// Pytanie
-			doc.setFont('Roboto', 'bold')
 			doc.setFontSize(10)
-			doc.setTextColor(60, 60, 60) // Ciemnoszary dla pytania
 			const questionLines = doc.splitTextToSize(question, contentWidth)
-			doc.text(questionLines, margin, yPosition)
-			yPosition += questionLines.length * 5 + 2 // Odstęp po pytaniu
+			const answerLines = doc.splitTextToSize(answer, contentWidth)
+
+			// Oblicz całkowitą wysokość bloku przed renderowaniem
+			const blockHeight = questionLines.length * LINE_H + Q_GAP + answerLines.length * LINE_H + A_GAP
+
+			// Jeśli blok nie zmieści się na bieżącej stronie — zacznij nową
+			if (yPosition + blockHeight > PAGE_BOTTOM) {
+				doc.addPage()
+				yPosition = PAGE_TOP
+			}
+
+			// Jeśli sam blok przekracza całą stronę, renderuj linia po linii z podziałem
+			const renderLines = (lines, font, color) => {
+				doc.setFont('Roboto', font)
+				doc.setTextColor(...color)
+				for (const line of lines) {
+					if (yPosition > PAGE_BOTTOM) {
+						doc.addPage()
+						yPosition = PAGE_TOP
+					}
+					doc.text(line, margin, yPosition)
+					yPosition += LINE_H
+				}
+			}
+
+			// Pytanie
+			renderLines(questionLines, 'bold', [60, 60, 60])
+			yPosition += Q_GAP
 
 			// Odpowiedź
-			doc.setFont('Roboto', 'normal')
-			doc.setFontSize(10)
-			doc.setTextColor(0, 0, 0) // Czarny dla odpowiedzi
-			const answerLines = doc.splitTextToSize(answer, contentWidth)
-			doc.text(answerLines, margin, yPosition)
-			yPosition += answerLines.length * 5 + 10 // Większy odstęp po odpowiedzi
+			renderLines(answerLines, 'normal', [0, 0, 0])
+			yPosition += A_GAP
 		})
 
 	// Stopka

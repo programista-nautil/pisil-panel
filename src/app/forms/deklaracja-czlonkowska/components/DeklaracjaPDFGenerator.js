@@ -14,11 +14,19 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 		return text.toString()
 	}
 
-	// Ulepszona funkcja do zawijania tekstu z poprawą dla długich słów
+	// Zawijanie tekstu z automatycznym podziałem na strony gdy tekst nie mieści się na stronie
 	const wrapText = (pdf, text, x, y, maxWidth, lineHeight = 6) => {
 		const lines = pdf.splitTextToSize(text, maxWidth)
-		pdf.text(lines, x, y)
-		return y + lines.length * lineHeight
+		const pageH = pdf.internal.pageSize.getHeight()
+		for (const line of lines) {
+			if (y > pageH - 20) {
+				pdf.addPage()
+				y = 30
+			}
+			pdf.text(line, x, y)
+			y += lineHeight
+		}
+		return y
 	}
 
 	// Funkcja do konwersji ArrayBuffer na string binarny
