@@ -1,3 +1,5 @@
+import { useState, useRef } from 'react'
+
 export const GeneralInfoStep = ({ register, errors }) => (
 	<div className='space-y-6'>
 		<h2 className='text-xl font-semibold text-gray-700 '>Ankieta Spedytor Roku</h2>
@@ -97,6 +99,10 @@ export const FinancialResultsStep = ({ year, register, errors }) => (
 					label:
 						'Wynik na pozostałej działalności operacyjnej (pozostałe przychody operacyjne - pozostałe koszty operacyjne)',
 				},
+				{
+					name: `wynikNaDzialalnosciFinansowej_${year}`,
+					label: 'Wynik na działalności finansowej (przychody finansowe - koszty finansowe)',
+				},
 				{ name: `zyskStrataBrutto_${year}`, label: 'Zysk/strata brutto' },
 				{ name: `wartoscSprzedazyNaPracownika_${year}`, label: 'Wartość sprzedaży na 1 pracownika' },
 				{ name: `zyskZeSprzedazyNaPracownika_${year}`, label: 'Zysk ze sprzedaży na 1 pracownika' },
@@ -130,6 +136,7 @@ export const FinancialLiquidityStep = ({ year, register, errors }) => (
 				{ name: `sredniTerminRealizacjiZobowiazan_${year}`, label: 'Średni termin realizacji zobowiązań (w dniach)' },
 				{ name: `wskaznikZadluzeniaDR_${year}`, label: 'Wskaźnik zadłużenia DR* (na 31.12)' },
 				{ name: `wskaznikZadluzeniaCR_${year}`, label: 'Wskaźnik zadłużenia CR** (na 31.12)' },
+				{ name: `sredniTerminRealizacjiNaleznosci_${year}`, label: 'Średni termin realizacji należności (w dniach)' },
 			].map(({ name, label }) => (
 				<div key={name}>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>
@@ -307,3 +314,123 @@ export const MiscellaneousStep = ({ register, errors }) => (
 		</div>
 	</div>
 )
+
+export const OrdersStep = ({ year, register, errors }) => (
+	<div className='space-y-6'>
+		<h2 className='text-xl font-semibold text-gray-700'>Liczba zleceń spedycyjnych - {year} r.</h2>
+		<div className='space-y-4'>
+			<div>
+				<label className='block text-sm font-medium text-gray-700 mb-1'>
+					Liczba obsłużonych zleceń spedycyjnych <span className='text-red-500'>*</span>
+				</label>
+				<input
+					type='text'
+					{...register(`liczbaObsluzzonychZlecen_${year}`, { required: 'To pole jest wymagane.' })}
+					className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+				/>
+				{errors[`liczbaObsluzzonychZlecen_${year}`] && (
+					<p className='text-red-500 text-xs mt-1'>{errors[`liczbaObsluzzonychZlecen_${year}`].message}</p>
+				)}
+			</div>
+		</div>
+	</div>
+)
+
+export const SignatoryStep = ({ register, errors, setValue }) => {
+	const [files, setFiles] = useState([])
+	const inputRef = useRef(null)
+
+	const updateForm = updated => {
+		setFiles(updated)
+		setValue('zalacznikiFiles', updated)
+		setValue('zalaczniki', updated.map(f => f.name).join('\n'))
+	}
+
+	const handleAdd = e => {
+		const picked = Array.from(e.target.files || [])
+		if (picked.length === 0) return
+		updateForm([...files, ...picked])
+		e.target.value = ''
+	}
+
+	const handleRemove = i => updateForm(files.filter((_, idx) => idx !== i))
+
+	return (
+	<div className='space-y-6'>
+		<h2 className='text-xl font-semibold text-gray-700'>Deklaracja i dane osoby składającej</h2>
+		<div className='p-4 bg-blue-50 border border-blue-200 rounded-md'>
+			<p className='text-sm text-gray-700'>
+				<strong>Niniejszym deklaruję udział firmy w konkursie Spedytor Roku 2025.</strong>
+			</p>
+			<p className='text-xs text-gray-500 mt-2'>
+				Po wygenerowaniu PDF prosimy o pobranie dokumentu, złożenie podpisu elektronicznego i przesłanie podpisanego pliku.
+			</p>
+		</div>
+		<div className='space-y-4'>
+			<div>
+				<label className='block text-sm font-medium text-gray-700 mb-2'>
+					Załączniki do ankiety <span className='text-gray-400 font-normal'>(opcjonalnie)</span>
+				</label>
+				<input ref={inputRef} type='file' onChange={handleAdd} className='hidden' />
+				{files.length > 0 && (
+					<ul className='mb-2 divide-y divide-gray-200 rounded-md border border-gray-200'>
+						{files.map((file, i) => (
+							<li key={i} className='flex items-center justify-between px-3 py-2 text-sm text-gray-700'>
+								<span className='truncate mr-2'>{i + 1}. {file.name}</span>
+								<button
+									type='button'
+									onClick={() => handleRemove(i)}
+									className='flex-shrink-0 text-gray-400 hover:text-red-500 text-lg leading-none'>
+									×
+								</button>
+							</li>
+						))}
+					</ul>
+				)}
+				<button
+					type='button'
+					onClick={() => inputRef.current?.click()}
+					className='inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50'>
+					<svg className='h-4 w-4 text-gray-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+						<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+					</svg>
+					Dodaj plik
+				</button>
+			</div>
+			<div>
+				<label className='block text-sm font-medium text-gray-700 mb-1'>
+					Miejscowość <span className='text-red-500'>*</span>
+				</label>
+				<input
+					type='text'
+					{...register('miejscowosc', { required: 'To pole jest wymagane.' })}
+					className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+				/>
+				{errors.miejscowosc && <p className='text-red-500 text-xs mt-1'>{errors.miejscowosc.message}</p>}
+			</div>
+			<div>
+				<label className='block text-sm font-medium text-gray-700 mb-1'>
+					Imię i nazwisko osoby wypełniającej ankietę <span className='text-red-500'>*</span>
+				</label>
+				<input
+					type='text'
+					{...register('signatoryName', { required: 'To pole jest wymagane.' })}
+					className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+				/>
+				{errors.signatoryName && <p className='text-red-500 text-xs mt-1'>{errors.signatoryName.message}</p>}
+			</div>
+			<div>
+				<label className='block text-sm font-medium text-gray-700 mb-1'>
+					Telefon / tel. komórkowy <span className='text-red-500'>*</span>
+				</label>
+				<input
+					type='text'
+					{...register('signatoryPhone', { required: 'To pole jest wymagane.' })}
+					className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+				/>
+				{errors.signatoryPhone && <p className='text-red-500 text-xs mt-1'>{errors.signatoryPhone.message}</p>}
+			</div>
+		</div>
+	</div>
+	)
+}

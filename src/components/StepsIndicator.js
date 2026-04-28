@@ -4,7 +4,7 @@ export default function StepsIndicator({ steps, current = 1 }) {
 	// steps: string[]
 	// current: 1-based index of current step
 	return (
-		<nav className='mt-8' aria-label='Postęp'>
+		<nav className={`mt-8${steps.length <= 2 ? ' max-w-sm mx-auto' : ''}`} aria-label='Postęp'>
 			<ol className='flex items-center w-full'>
 				{steps.map((label, idx) => {
 					const stepNumber = idx + 1

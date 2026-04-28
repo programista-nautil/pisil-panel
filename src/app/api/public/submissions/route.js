@@ -53,7 +53,12 @@ export async function POST(request) {
 		// Dynamiczna nazwa pliku zależnie od typu formularza + bezpieczne fallbacki
 		const formType = userData.formType
 		const isDeclaration = formType === 'DEKLARACJA_CZLONKOWSKA'
-		const displayCompanyOrOrg = userData.companyName || userData.organizerName || userData.eventName || 'Nieznana firma'
+		const displayCompanyOrOrg =
+			userData.companyName ||
+			userData.companyNameAndAddress?.split('\n')[0] ||
+			userData.organizerName ||
+			userData.eventName ||
+			'Nieznana firma'
 		const baseName = isDeclaration
 			? `deklaracja_${sanitizeFilename(userData.companyName) || sanitizeFilename(displayCompanyOrOrg)}`
 			: formType === 'PATRONAT'
@@ -75,7 +80,12 @@ export async function POST(request) {
 		// Zapis metadanych do bazy danych
 		const newSubmission = await prisma.submission.create({
 			data: {
-				companyName: userData.companyName || userData.organizerName || userData.eventName || undefined,
+				companyName:
+				userData.companyName ||
+				userData.companyNameAndAddress?.split('\n')[0] ||
+				userData.organizerName ||
+				userData.eventName ||
+				undefined,
 				email: userData.email,
 				invoiceEmail: userData.invoiceEmail,
 				notificationEmails: userData.email,
@@ -101,6 +111,8 @@ export async function POST(request) {
 
 		const supportEmail = isDeclaration ? EMAILS.DEKLARACJE : formType === 'PATRONAT' ? EMAILS.PATRONATY : EMAILS.DEFAULT
 
+		const isSurvey = formType === 'ANKIETA_SPEDYTOR_ROKU' || formType === 'MLODY_SPEDYTOR_ROKU'
+
 		const adminMailOptions = {
 			from: `"System PISiL" <${process.env.SMTP_USER || 'programista@nautil.pl'}>`,
 			to: supportEmail,
@@ -108,7 +120,9 @@ export async function POST(request) {
 				? `Nowa deklaracja członkowska - ${displayCompanyOrOrg}`
 				: formType === 'PATRONAT'
 					? `Nowy wniosek o patronat - ${displayCompanyOrOrg}`
-					: `Nowe zgłoszenie - ${displayCompanyOrOrg}`,
+					: isSurvey
+						? `Nowe zgłoszenie ankiety - ${displayCompanyOrOrg}`
+						: `Nowe zgłoszenie - ${displayCompanyOrOrg}`,
 			html: isDeclaration
 				? `
         <h2>Nowa deklaracja członkowska</h2>
@@ -120,11 +134,21 @@ export async function POST(request) {
 				}</p>
         <p><strong>Data przesłania:</strong> ${new Date().toLocaleString('pl-PL')}</p>
       `
-				: `
+				: formType === 'PATRONAT'
+					? `
         <h2>Nowy wniosek o patronat</h2>
         <p><strong>Organizator/Wydarzenie:</strong> ${displayCompanyOrOrg}</p>
         <p><strong>Email:</strong> ${userData.email}</p>
 		<p><strong>Telefon:</strong> ${userData.phones || 'Nie podano'}</p>
+        <p><strong>Status podpisu:</strong> ${
+					hasSignature ? '✅ Potwierdzono obecność pola podpisu' : '❌ Nie znaleziono pola podpisu'
+				}</p>
+        <p><strong>Data przesłania:</strong> ${new Date().toLocaleString('pl-PL')}</p>
+      `
+					: `
+        <h2>Nowe zgłoszenie ankiety — ${formType.replace(/_/g, ' ')}</h2>
+        <p><strong>Firma/Zgłaszający:</strong> ${displayCompanyOrOrg}</p>
+        <p><strong>Email:</strong> ${userData.email}</p>
         <p><strong>Status podpisu:</strong> ${
 					hasSignature ? '✅ Potwierdzono obecność pola podpisu' : '❌ Nie znaleziono pola podpisu'
 				}</p>
@@ -139,7 +163,9 @@ export async function POST(request) {
 			replyTo: supportEmail,
 			subject: isDeclaration
 				? 'Potwierdzenie otrzymania deklaracji członkowskiej - PISiL'
-				: 'Potwierdzenie otrzymania wniosku o patronat - PISiL',
+				: formType === 'PATRONAT'
+					? 'Potwierdzenie otrzymania wniosku o patronat - PISiL'
+					: 'Potwierdzenie zgłoszenia ankiety - PISiL',
 			html: isDeclaration
 				? `
 				<h2>Dziękujemy za przesłanie deklaracji członkowskiej</h2>
@@ -161,7 +187,8 @@ export async function POST(request) {
 				<p>W razie pytań prosimy o kontakt.</p>
 				<p>Pozdrawiamy,<br>Zespół PISiL</p>
 			`
-				: `
+				: formType === 'PATRONAT'
+					? `
 				<h2>Dziękujemy za przesłanie wniosku o patronat</h2>
 				<p>Szanowni Państwo,</p>
 				<p>Otrzymaliśmy Państwa wniosek o patronat do Polskiej Izby Spedycji i Logistyki.</p>
@@ -180,7 +207,21 @@ export async function POST(request) {
 				}
 				<p>W razie pytań prosimy o kontakt.</p>
 				<p>Pozdrawiamy,<br>Zespół PISiL</p>
+			`
+					: `
+				<h2>Dziękujemy za przesłanie ankiety</h2>
+				<p>Szanowni Państwo,</p>
+				<p>Otrzymaliśmy Państwa ankietę. W załączniku przesyłamy kopię złożonego dokumentu.</p>
+				<h3>Podsumowanie:</h3>
+				<ul>
+					<li><strong>Zgłaszający:</strong> ${displayCompanyOrOrg}</li>
+					<li><strong>Email:</strong> ${userData.email}</li>
+					<li><strong>Data przesłania:</strong> ${new Date().toLocaleString('pl-PL')}</li>
+				</ul>
+				<p>W razie pytań prosimy o kontakt.</p>
+				<p>Pozdrawiamy,<br>Zespół PISiL</p>
 			`,
+			attachments: isSurvey ? [{ filename, content: buffer, contentType: 'application/pdf' }] : undefined,
 		}
 
 		try {

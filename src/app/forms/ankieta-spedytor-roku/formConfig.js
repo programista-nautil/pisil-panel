@@ -1,11 +1,13 @@
-import SurveySubmitButton from '@/components/SurveySubmitButton'
+import AnkietaSpedytorPDFGenerator from './components/AnkietaSpedytorPDFGenerator'
 import {
 	GeneralInfoStep,
 	EmployeesStep,
 	LogisticsPotentialStep,
+	OrdersStep,
 	FinancialResultsStep,
 	FinancialLiquidityStep,
 	MiscellaneousStep,
+	SignatoryStep,
 } from './components/formSteps'
 
 const years = [2025, 2024]
@@ -21,10 +23,12 @@ const generateYearlyDefaultValues = () => {
 		'liczbaPojazdowLeasing',
 		'powierzchniaMagazynowWlasnych',
 		'powierzchniaMagazynowDzierżawionych',
+		'liczbaObsluzzonychZlecen',
 		'przychodyNetto',
 		'kosztyDzialalnosciOperacyjnej',
 		'zyskStrataZeSprzedazy',
 		'wynikNaPozostalejDzialalnosci',
+		'wynikNaDzialalnosciFinansowej',
 		'zyskStrataBrutto',
 		'wartoscSprzedazyNaPracownika',
 		'zyskZeSprzedazyNaPracownika',
@@ -33,6 +37,7 @@ const generateYearlyDefaultValues = () => {
 		'sredniTerminRealizacjiZobowiazan',
 		'wskaznikZadluzeniaDR',
 		'wskaznikZadluzeniaCR',
+		'sredniTerminRealizacjiNaleznosci',
 	]
 
 	let defaults = {}
@@ -47,6 +52,8 @@ const generateYearlyDefaultValues = () => {
 export const ankietaSpedytorRokuConfig = {
 	formType: 'ANKIETA_SPEDYTOR_ROKU',
 	sessionCookieName: 'formSession_ankietaSpedytor',
+	isSurvey: true,
+	requiresSignature: true,
 	steps: [
 		GeneralInfoStep,
 
@@ -62,9 +69,14 @@ export const ankietaSpedytorRokuConfig = {
 		props => <LogisticsPotentialStep {...props} year={2024} />,
 		props => <LogisticsPotentialStep {...props} year={2025} />,
 
+		props => <OrdersStep {...props} year={2024} />,
+		props => <OrdersStep {...props} year={2025} />,
+
 		MiscellaneousStep,
+
+		SignatoryStep,
 	],
-	PDFGeneratorComponent: SurveySubmitButton,
+	PDFGeneratorComponent: AnkietaSpedytorPDFGenerator,
 	defaultValues: {
 		email: '',
 		companyNameAndAddress: '',
@@ -78,6 +90,10 @@ export const ankietaSpedytorRokuConfig = {
 		insuranceInne: null,
 		customerSatisfactionMethods: '',
 		communityActivities: '',
+		signatoryName: '',
+		signatoryPhone: '',
+		miejscowosc: '',
+		zalaczniki: '',
 	},
 	fieldLabels: {
 		// General Info
@@ -106,6 +122,7 @@ export const ankietaSpedytorRokuConfig = {
 		kosztyDzialalnosciOperacyjnej_2024: 'Koszty działalności operacyjnej - 2024 r.',
 		zyskStrataZeSprzedazy_2024: 'Zysk/strata ze sprzedaży - 2024 r.',
 		wynikNaPozostalejDzialalnosci_2024: 'Wynik na pozostałej działalności operacyjnej - 2024 r.',
+		wynikNaDzialalnosciFinansowej_2024: 'Wynik na działalności finansowej - 2024 r.',
 		zyskStrataBrutto_2024: 'Zysk/strata brutto - 2024 r.',
 		wartoscSprzedazyNaPracownika_2024: 'Wartość sprzedaży na 1 pracownika - 2024 r.',
 		zyskZeSprzedazyNaPracownika_2024: 'Zysk ze sprzedaży na 1 pracownika - 2024 r.',
@@ -117,6 +134,7 @@ export const ankietaSpedytorRokuConfig = {
 		kosztyDzialalnosciOperacyjnej_2025: 'Koszty działalności operacyjnej - 2025 r.',
 		zyskStrataZeSprzedazy_2025: 'Zysk/strata ze sprzedaży - 2025 r.',
 		wynikNaPozostalejDzialalnosci_2025: 'Wynik na pozostałej działalności operacyjnej - 2025 r.',
+		wynikNaDzialalnosciFinansowej_2025: 'Wynik na działalności finansowej - 2025 r.',
 		zyskStrataBrutto_2025: 'Zysk/strata brutto - 2025 r.',
 		wartoscSprzedazyNaPracownika_2025: 'Wartość sprzedaży na 1 pracownika - 2025 r.',
 		zyskZeSprzedazyNaPracownika_2025: 'Zysk ze sprzedaży na 1 pracownika - 2025 r.',
@@ -127,11 +145,13 @@ export const ankietaSpedytorRokuConfig = {
 		sredniTerminRealizacjiZobowiazan_2024: 'Średni termin realizacji zobowiązań (w dniach) - 2024 r.',
 		wskaznikZadluzeniaDR_2024: 'Wskaźnik zadłużenia DR* (na 31.12) - 2024 r.',
 		wskaznikZadluzeniaCR_2024: 'Wskaźnik zadłużenia CR** (na 31.12) - 2024 r.',
+		sredniTerminRealizacjiNaleznosci_2024: 'Średni termin realizacji należności (w dniach) - 2024 r.',
 
 		// Financial Liquidity 2025
 		sredniTerminRealizacjiZobowiazan_2025: 'Średni termin realizacji zobowiązań (w dniach) - 2025 r.',
 		wskaznikZadluzeniaDR_2025: 'Wskaźnik zadłużenia DR* (na 31.12) - 2025 r.',
 		wskaznikZadluzeniaCR_2025: 'Wskaźnik zadłużenia CR** (na 31.12) - 2025 r.',
+		sredniTerminRealizacjiNaleznosci_2025: 'Średni termin realizacji należności (w dniach) - 2025 r.',
 
 		// Logistics Potential 2024
 		liczbaPojazdowWlasnych_2024: 'Liczba pojazdów własnych - 2024 r.',
@@ -145,6 +165,10 @@ export const ankietaSpedytorRokuConfig = {
 		powierzchniaMagazynowWlasnych_2025: 'Liczba i powierzchnia magazynów własnych - 2025 r.',
 		powierzchniaMagazynowDzierżawionych_2025: 'Liczba i powierzchnia magazynów dzierżawionych - 2025 r.',
 
+		// Orders
+		liczbaObsluzzonychZlecen_2024: 'Liczba obsłużonych zleceń spedycyjnych - 2024 r.',
+		liczbaObsluzzonychZlecen_2025: 'Liczba obsłużonych zleceń spedycyjnych - 2025 r.',
+
 		// Miscellaneous
 		expandedServices: 'Czy firma poszerzyła zakres usług w ostatnim roku?',
 		implementedIT: 'Czy firma wdrożyła w ostatnim roku nowe rozwiązania w zakresie technologii informatycznych?',
@@ -155,6 +179,12 @@ export const ankietaSpedytorRokuConfig = {
 		customerSatisfactionMethods:
 			'Jakie metody stosuje firma, badając zadowolenie klientów ze świadczonych przez nią usług?',
 		communityActivities: 'Czy firma jest aktywna w działaniach na rzecz społeczności lokalnej?',
+
+		// Signatory
+		signatoryName: 'Imię i nazwisko osoby wypełniającej ankietę',
+		signatoryPhone: 'Telefon / tel. komórkowy',
+		miejscowosc: 'Miejscowość',
+		zalaczniki: 'Załączniki (każdy w nowej linii)',
 	},
 	testData: {
 		email: 'biuro@test-spedytor.pl',
@@ -168,6 +198,7 @@ export const ankietaSpedytorRokuConfig = {
 		kosztyDzialalnosciOperacyjnej_2024: '110 000 000 PLN',
 		zyskStrataZeSprzedazy_2024: '10 000 000 PLN',
 		wynikNaPozostalejDzialalnosci_2024: '500 000 PLN',
+		wynikNaDzialalnosciFinansowej_2024: '-200 000 PLN',
 		zyskStrataBrutto_2024: '10 500 000 PLN',
 		wartoscSprzedazyNaPracownika_2024: '800 000 PLN',
 		zyskZeSprzedazyNaPracownika_2024: '66 667 PLN',
@@ -176,10 +207,12 @@ export const ankietaSpedytorRokuConfig = {
 		sredniTerminRealizacjiZobowiazan_2024: '45',
 		wskaznikZadluzeniaDR_2024: '0.55',
 		wskaznikZadluzeniaCR_2024: '1.8',
+		sredniTerminRealizacjiNaleznosci_2024: '38',
 		liczbaPojazdowWlasnych_2024: '50',
 		liczbaPojazdowLeasing_2024: '100',
 		powierzchniaMagazynowWlasnych_2024: '1 - 10 000 m2',
 		powierzchniaMagazynowDzierżawionych_2024: '2 - 15 000 m2',
+		liczbaObsluzzonychZlecen_2024: '12 500',
 
 		zatrudnienieKoniecRoku_2025: '165',
 		pracownicyDyplomFIATA_2025: '30',
@@ -189,6 +222,7 @@ export const ankietaSpedytorRokuConfig = {
 		kosztyDzialalnosciOperacyjnej_2025: '122 000 000 PLN',
 		zyskStrataZeSprzedazy_2025: '13 000 000 PLN',
 		wynikNaPozostalejDzialalnosci_2025: '600 000 PLN',
+		wynikNaDzialalnosciFinansowej_2025: '-150 000 PLN',
 		zyskStrataBrutto_2025: '13 600 000 PLN',
 		wartoscSprzedazyNaPracownika_2025: '818 181 PLN',
 		zyskZeSprzedazyNaPracownika_2025: '78 787 PLN',
@@ -197,10 +231,12 @@ export const ankietaSpedytorRokuConfig = {
 		sredniTerminRealizacjiZobowiazan_2025: '42',
 		wskaznikZadluzeniaDR_2025: '0.52',
 		wskaznikZadluzeniaCR_2025: '2.1',
+		sredniTerminRealizacjiNaleznosci_2025: '35',
 		liczbaPojazdowWlasnych_2025: '60',
 		liczbaPojazdowLeasing_2025: '120',
 		powierzchniaMagazynowWlasnych_2025: '2 - 15 000 m2',
 		powierzchniaMagazynowDzierżawionych_2025: '2 - 15 000 m2',
+		liczbaObsluzzonychZlecen_2025: '14 200',
 
 		expandedServices: 'Tak',
 		implementedIT: 'Tak',
@@ -212,6 +248,9 @@ export const ankietaSpedytorRokuConfig = {
 			'Regularne ankiety NPS (Net Promoter Score), kwartalne spotkania z kluczowymi klientami (QBR), dedykowany system do zgłaszania reklamacji i sugestii.',
 		communityActivities:
 			'Tak, sponsorujemy lokalną drużynę piłkarską juniorów "Logi мяч" oraz organizujemy program płatnych praktyk letnich dla studentów kierunków logistycznych.',
+		signatoryName: 'Jan Kowalski',
+		signatoryPhone: '+48 500 100 200',
+		miejscowosc: 'Warszawa',
+		zalaczniki: 'Bilans za 2025 r.\nRachunek zysków i strat (wersja porównawcza) za 2025 r.',
 	},
-	isSurvey: true,
 }

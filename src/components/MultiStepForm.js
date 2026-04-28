@@ -8,7 +8,7 @@ import AdditionalDocumentsUpload from './AdditionalDocumentsUpload'
 import StepsIndicator from './StepsIndicator'
 
 export default function MultiStepForm({ formConfig }) {
-	const { formType, defaultValues, isSurvey, steps, PDFGeneratorComponent, sessionCookieName, testData, fieldLabels } =
+	const { formType, defaultValues, isSurvey, requiresSignature, steps, PDFGeneratorComponent, sessionCookieName, testData, fieldLabels } =
 		formConfig
 
 	const totalSteps = steps.length
@@ -33,7 +33,7 @@ export default function MultiStepForm({ formConfig }) {
 	const [additionalUploaded, setAdditionalUploaded] = useState(false)
 	const [isResetting, setIsResetting] = useState(false)
 
-	const showUploadSteps = currentStep === totalSteps && pdfGenerated && !isSurvey
+	const showUploadSteps = currentStep === totalSteps && pdfGenerated && (!isSurvey || requiresSignature)
 
 	useEffect(() => {
 		const savedSession = Cookies.get(sessionCookieName)
@@ -67,13 +67,27 @@ export default function MultiStepForm({ formConfig }) {
 		Cookies.set(sessionCookieName, JSON.stringify(sessionData), { expires: 1 })
 	}, [currentStep, isInitialized, isResetting, sessionCookieName, getValues])
 
-	const handleUploadSuccess = submission => {
+	const handleUploadSuccess = async submission => {
+		// Pobierz pliki PRZED resetem formularza (dla ankiet z requiresSignature)
+		const extraFiles = requiresSignature ? (getValues('zalacznikiFiles') || []) : []
+
 		setSubmissionId(submission.id)
 		setPdfUploaded(true)
 		setIsResetting(true)
 		Cookies.remove(sessionCookieName)
 		reset(defaultValues)
 		setTimeout(() => setIsResetting(false), 100)
+
+		for (const file of extraFiles) {
+			if (!(file instanceof File)) continue
+			const fd = new FormData()
+			fd.append('additionalFiles[]', file)
+			try {
+				await fetch(`/api/public/submissions/${submission.id}/attachments`, { method: 'POST', body: fd })
+			} catch (e) {
+				console.error('Błąd uploadu załącznika:', e)
+			}
+		}
 	}
 
 	const handleSurveyUploadSuccess = () => {
@@ -91,7 +105,9 @@ export default function MultiStepForm({ formConfig }) {
 	const CurrentStepComponent = steps[currentStep - 1]
 
 	// Krok akcji (1: pobierz, 2: prześlij PDF, 3: dodatkowe dok.)
-	const actionSteps = ['Pobierz PDF', 'Prześlij podpisany PDF', 'Prześlij dodatkowe dokumenty (opcjonalnie)']
+	const actionSteps = requiresSignature
+		? ['Pobierz PDF', 'Prześlij podpisany PDF']
+		: ['Pobierz PDF', 'Prześlij podpisany PDF', 'Prześlij dodatkowe dokumenty (opcjonalnie)']
 	let currentActionStep
 	if (!pdfGenerated) {
 		currentActionStep = 1
@@ -132,7 +148,17 @@ export default function MultiStepForm({ formConfig }) {
 					<span className='text-sm font-medium text-gray-700'>
 						Krok {currentStep} z {totalSteps}
 					</span>
-					<span className='text-sm text-gray-500'>{Math.round((currentStep / totalSteps) * 100)}% ukończone</span>
+					<div className='flex items-center gap-3'>
+						{testData && (
+							<button
+								type='button'
+								onClick={() => { reset(testData); setCurrentStep(totalSteps) }}
+								className='text-xs text-gray-400 hover:text-gray-600 underline'>
+								Wypełnij testowo
+							</button>
+						)}
+						<span className='text-sm text-gray-500'>{Math.round((currentStep / totalSteps) * 100)}% ukończone</span>
+					</div>
 				</div>
 				<div className='w-full bg-gray-200 rounded-full h-2'>
 					<div
@@ -192,7 +218,7 @@ export default function MultiStepForm({ formConfig }) {
 							onUploadSuccess={handleUploadSuccess}
 						/>
 					</div>
-					{pdfUploaded && (
+					{pdfUploaded && !requiresSignature && (
 						<div className='mt-8 pt-6 border-t border-gray-200'>
 							<AdditionalDocumentsUpload
 								ref={additionalDocsRef}

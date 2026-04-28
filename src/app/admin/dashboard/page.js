@@ -502,49 +502,43 @@ export default function AdminDashboard() {
                 />
               )}
               {activeTab === "surveys" && (
-                <div className="space-y-8">
-                  <section>
-                    <div className="flex items-center gap-3 mb-4 p-4 bg-gray-50 border rounded-lg">
-                      <DocumentDuplicateIcon className="h-6 w-6 text-[#005698]" />
-                      <h2 className="text-lg font-semibold text-[#005698]">
-                        Aktywne ankiety
-                      </h2>
+                <div className="divide-y divide-gray-100">
+                  <div>
+                    <div className="flex items-center gap-3 px-6 py-4 bg-gray-50 border-b">
+                      <DocumentDuplicateIcon className="h-5 w-5 text-[#005698]" />
+                      <h2 className="text-base font-semibold text-[#005698]">Aktywne ankiety</h2>
                     </div>
-                    <div className="bg-white rounded-lg shadow">
-                      <SubmissionsTable
-                        submissions={activeSurveys}
-                        onArchiveToggle={handleArchiveToggle}
-                        expanded={expanded}
-                        toggleExpanded={toggleExpanded}
-                        handleStatusChange={handleStatusChange}
-                        handleDownloadAttachment={handleDownloadAttachment}
-                        openAttachmentDeleteModal={openAttachmentDeleteModal}
-                        deletingAttachmentId={deletingAttachmentId}
-                        openDeleteModal={openDeleteModal}
-                      />
+                    <SubmissionsTable
+                      submissions={activeSurveys}
+                      onArchiveToggle={handleArchiveToggle}
+                      expanded={expanded}
+                      toggleExpanded={toggleExpanded}
+                      handleStatusChange={handleStatusChange}
+                      handleDownloadAttachment={handleDownloadAttachment}
+                      openAttachmentDeleteModal={openAttachmentDeleteModal}
+                      deletingAttachmentId={deletingAttachmentId}
+                      openDeleteModal={openDeleteModal}
+                      openAttachModal={openAttachModal}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-3 px-6 py-4 bg-gray-50 border-b">
+                      <ArchiveBoxIcon className="h-5 w-5 text-[#005698]" />
+                      <h2 className="text-base font-semibold text-[#005698]">Archiwum ankiet</h2>
                     </div>
-                  </section>
-                  <section>
-                    <div className="flex items-center gap-3 mb-4 p-4 bg-gray-50 border rounded-lg">
-                      <ArchiveBoxIcon className="h-6 w-6 text-[#005698]" />
-                      <h2 className="text-lg font-semibold text-[#005698]">
-                        Archiwum ankiet
-                      </h2>
-                    </div>
-                    <div className="bg-white rounded-lg shadow">
-                      <SubmissionsTable
-                        submissions={archivedSurveys}
-                        onArchiveToggle={handleArchiveToggle}
-                        expanded={expanded}
-                        toggleExpanded={toggleExpanded}
-                        handleStatusChange={handleStatusChange}
-                        handleDownloadAttachment={handleDownloadAttachment}
-                        openAttachmentDeleteModal={openAttachmentDeleteModal}
-                        deletingAttachmentId={deletingAttachmentId}
-                        openDeleteModal={openDeleteModal}
-                      />
-                    </div>
-                  </section>
+                    <SubmissionsTable
+                      submissions={archivedSurveys}
+                      onArchiveToggle={handleArchiveToggle}
+                      expanded={expanded}
+                      toggleExpanded={toggleExpanded}
+                      handleStatusChange={handleStatusChange}
+                      handleDownloadAttachment={handleDownloadAttachment}
+                      openAttachmentDeleteModal={openAttachmentDeleteModal}
+                      deletingAttachmentId={deletingAttachmentId}
+                      openDeleteModal={openDeleteModal}
+                      openAttachModal={openAttachModal}
+                    />
+                  </div>
                 </div>
               )}
 
