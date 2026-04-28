@@ -149,15 +149,7 @@ export default function MultiStepForm({ formConfig }) {
 						Krok {currentStep} z {totalSteps}
 					</span>
 					<div className='flex items-center gap-3'>
-						{testData && (
-							<button
-								type='button'
-								onClick={() => { reset(testData); setCurrentStep(totalSteps) }}
-								className='text-xs text-gray-400 hover:text-gray-600 underline'>
-								Wypełnij testowo
-							</button>
-						)}
-						<span className='text-sm text-gray-500'>{Math.round((currentStep / totalSteps) * 100)}% ukończone</span>
+	<span className='text-sm text-gray-500'>{Math.round((currentStep / totalSteps) * 100)}% ukończone</span>
 					</div>
 				</div>
 				<div className='w-full bg-gray-200 rounded-full h-2'>
