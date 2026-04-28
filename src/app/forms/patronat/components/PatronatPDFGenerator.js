@@ -4,6 +4,7 @@ import { useState } from 'react'
 import jsPDF from 'jspdf'
 import toast from 'react-hot-toast'
 import { sanitizeFilename } from '@/lib/utils'
+import { pdfRenderLines } from '@/lib/pdfUtils'
 
 const PatronatPDFGenerator = ({ formData, onGenerated, disabled }) => {
 	const [isGenerating, setIsGenerating] = useState(false)
@@ -18,15 +19,7 @@ const PatronatPDFGenerator = ({ formData, onGenerated, disabled }) => {
 	const wrapText = (pdf, text, x, y, maxWidth, lineHeight = 6) => {
 		const lines = pdf.splitTextToSize(text, maxWidth)
 		const pageH = pdf.internal.pageSize.getHeight()
-		for (const line of lines) {
-			if (y > pageH - 20) {
-				pdf.addPage()
-				y = 30
-			}
-			pdf.text(line, x, y)
-			y += lineHeight
-		}
-		return y
+		return pdfRenderLines(pdf, lines, x, y, lineHeight, pageH - 20, 30)
 	}
 
 	// Konwersja ArrayBuffer -> string dla czcionek

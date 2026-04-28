@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf'
+import { pdfRenderLines } from './pdfUtils'
 
 // Funkcja do konwersji ArrayBuffer na string, potrzebna do osadzenia czcionki
 const arrayBufferToString = buffer => {
@@ -72,26 +73,16 @@ export const generateSurveyResultsPDF = async (title, formData, fieldLabels = {}
 				yPosition = PAGE_TOP
 			}
 
-			// Jeśli sam blok przekracza całą stronę, renderuj linia po linii z podziałem
-			const renderLines = (lines, font, color) => {
-				doc.setFont('Roboto', font)
-				doc.setTextColor(...color)
-				for (const line of lines) {
-					if (yPosition > PAGE_BOTTOM) {
-						doc.addPage()
-						yPosition = PAGE_TOP
-					}
-					doc.text(line, margin, yPosition)
-					yPosition += LINE_H
-				}
-			}
-
 			// Pytanie
-			renderLines(questionLines, 'bold', [60, 60, 60])
+			doc.setFont('Roboto', 'bold')
+			doc.setTextColor(60, 60, 60)
+			yPosition = pdfRenderLines(doc, questionLines, margin, yPosition, LINE_H, PAGE_BOTTOM, PAGE_TOP)
 			yPosition += Q_GAP
 
 			// Odpowiedź
-			renderLines(answerLines, 'normal', [0, 0, 0])
+			doc.setFont('Roboto', 'normal')
+			doc.setTextColor(0, 0, 0)
+			yPosition = pdfRenderLines(doc, answerLines, margin, yPosition, LINE_H, PAGE_BOTTOM, PAGE_TOP)
 			yPosition += A_GAP
 		})
 
