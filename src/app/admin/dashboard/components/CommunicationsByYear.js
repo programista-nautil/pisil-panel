@@ -18,6 +18,7 @@ import {
   ClipboardDocumentListIcon,
   PaperClipIcon,
   PaperAirplaneIcon,
+  EllipsisVerticalIcon,
 } from "@heroicons/react/24/outline";
 
 const PER_PAGE = 10;
@@ -455,6 +456,81 @@ function YearRangePill({ value, minYear, maxYear, onChange }) {
   );
 }
 
+// items: Array<{ icon, label, onClick?, href?, danger?, primary?, separator?, disabled? }>
+function ActionMenu({ items }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onMouse = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onMouse);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onMouse);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+        title="Więcej akcji"
+      >
+        <EllipsisVerticalIcon className="h-5 w-5" />
+      </button>
+      {open && (
+        <div className="absolute right-0 z-30 mt-1 w-52 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+          {items.map((item, i) =>
+            item.separator ? (
+              <div key={i} className="my-1 border-t border-gray-100" />
+            ) : item.href ? (
+              <a
+                key={i}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <item.icon className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                {item.label}
+              </a>
+            ) : (
+              <button
+                key={i}
+                type="button"
+                onClick={() => { setOpen(false); item.onClick?.(); }}
+                disabled={item.disabled}
+                className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                  item.danger
+                    ? "text-red-600 hover:bg-red-50"
+                    : item.primary
+                    ? "text-green-700 hover:bg-green-50 font-medium"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <item.icon
+                  className={`h-4 w-4 flex-shrink-0 ${
+                    item.danger ? "text-red-400" : item.primary ? "text-green-500" : "text-gray-400"
+                  }`}
+                />
+                {item.label}
+              </button>
+            )
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CommunicationRow({
   comm,
   downloadUrl,
@@ -596,81 +672,38 @@ function CommunicationRow({
                 {isSent ? "WYSŁANY" : "SZKIC"}
               </span>
             )}
-            {onApprove && !isSent && (
-              <button
-                type="button"
-                onClick={() => onApprove(comm)}
-                className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
-                title="Zatwierdź komunikat"
-              >
-                <CheckCircleIcon className="h-5 w-5" />
-              </button>
-            )}
-            {onResend && isSent && (
-              <button
-                type="button"
-                onClick={() => onResend(comm)}
-                className="p-2 text-gray-500 hover:text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
-                title="Wyślij ponownie"
-              >
-                <PaperAirplaneIcon className="h-5 w-5" />
-              </button>
-            )}
-            {onEdit && !isPdfFile && (
-              <button
-                type="button"
-                onClick={() => onEdit(comm)}
-                className="p-2 text-gray-500 hover:text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
-                title="Edytuj komunikat"
-              >
-                <PencilSquareIcon className="h-5 w-5" />
-              </button>
-            )}
-            {showPreview && (
-              <a
-                href={previewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
-                title="Podgląd"
-              >
-                <ArrowTopRightOnSquareIcon className="h-5 w-5" />
-              </a>
-            )}
-            {docxUrl && !comm.isSubmission && (
-              <a
-                href={docxUrl}
-                className="p-2 text-gray-500 hover:text-[#005698] hover:bg-[#005698]/10 rounded-md transition-colors"
-                title="Pobierz DOCX"
-              >
-                <ArrowDownTrayIcon className="h-5 w-5" />
-              </a>
-            )}
             {hasAttachments && (
               <button
                 type="button"
                 onClick={() => setAttachmentsExpanded((v) => !v)}
-                className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                className={`p-2 rounded-md transition-colors ${attachmentsExpanded ? "text-[#005698] bg-[#005698]/10" : "text-gray-400 hover:text-gray-700 hover:bg-gray-100"}`}
                 title={attachmentsExpanded ? "Zwiń załączniki" : "Rozwiń załączniki"}
               >
                 <PaperClipIcon className="h-5 w-5" />
               </button>
             )}
-            {onDelete && !isSent && (
-              <button
-                type="button"
-                onClick={() => onDelete(comm.id, displayTitle)}
-                disabled={isDeleting}
-                className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
-                title="Usuń komunikat"
-              >
-                {isDeleting ? (
-                  <span className="text-xs text-gray-400">...</span>
-                ) : (
-                  <TrashIcon className="h-5 w-5" />
-                )}
-              </button>
-            )}
+            <ActionMenu
+              items={[
+                ...(onApprove && !isSent
+                  ? [{ icon: CheckCircleIcon, label: "Zatwierdź", onClick: () => onApprove(comm), primary: true }]
+                  : []),
+                ...(onEdit && !isPdfFile
+                  ? [{ icon: PencilSquareIcon, label: "Edytuj", onClick: () => onEdit(comm) }]
+                  : []),
+                ...(showPreview
+                  ? [{ icon: ArrowTopRightOnSquareIcon, label: "Podgląd", href: previewUrl }]
+                  : []),
+                ...(docxUrl && !comm.isSubmission
+                  ? [{ icon: ArrowDownTrayIcon, label: "Pobierz DOCX", href: docxUrl }]
+                  : []),
+                ...(onResend && isSent
+                  ? [{ separator: true }, { icon: PaperAirplaneIcon, label: "Wyślij ponownie", onClick: () => onResend(comm) }]
+                  : []),
+                ...(onDelete && !isSent
+                  ? [{ separator: true }, { icon: TrashIcon, label: "Usuń szkic", onClick: () => onDelete(comm.id, displayTitle), danger: true, disabled: isDeleting }]
+                  : []),
+              ]}
+            />
           </div>
         </div>
         {attachmentsExpanded && hasAttachments && (
