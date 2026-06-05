@@ -3,7 +3,7 @@ import path from 'path'
 
 const LIST_PATH = path.join(process.cwd(), 'src/config/publicMembersList.json')
 
-const parseAddressToParts = fullAddress => {
+export const parseAddressToParts = fullAddress => {
 	let ulica = fullAddress || ''
 	let kod = ''
 	let miasto = ''
