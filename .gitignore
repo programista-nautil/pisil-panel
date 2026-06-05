@@ -56,6 +56,8 @@ docker-compose.prod.yml
 
 /scripts/Członkowie.txt
 /scripts/czlonkowie_import.xlsx
+/scripts/backups/
+/scripts/reports/
 /src/config/mailingList.json
 src/config/publicMembersList.json
 
