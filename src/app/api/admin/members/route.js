@@ -16,8 +16,10 @@ export async function GET(request) {
 
 	const isNumericQuery = !isNaN(Number(query)) && query.length > 0
 
+	// Tylko aktywni członkowie (byli = deletedAt != null są ukryci)
 	const whereClause = query
 		? {
+				deletedAt: null,
 				OR: [
 					{ company: { contains: query, mode: 'insensitive' } },
 					{ name: { contains: query, mode: 'insensitive' } },
@@ -31,7 +33,7 @@ export async function GET(request) {
 					...(isNumericQuery ? [{ memberNumber: { equals: parseInt(query) } }] : []),
 				],
 			}
-		: {}
+		: { deletedAt: null }
 
 	try {
 		const [members, total] = await prisma.$transaction([

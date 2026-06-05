@@ -8,9 +8,13 @@ import {
 	ChevronRightIcon,
 	PencilSquareIcon,
 	PrinterIcon,
+	ArrowUturnLeftIcon,
+	ArchiveBoxXMarkIcon,
 } from '@heroicons/react/24/outline'
 import MemberFileEditor from './MemberFileEditor'
 import EditMemberModal from './EditMemberModal'
+import DeleteConfirmationModal from '@/components/DeleteConfirmationModal'
+import ConfirmationModal from '@/components/ConfirmationModal'
 import toast from 'react-hot-toast'
 
 function useDebounce(value, delay) {
@@ -41,6 +45,17 @@ export default function MemberBrowser() {
 	const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
 	const [isPrinting, setIsPrinting] = useState(false)
+
+	// Usuwanie z modalem + notatką
+	const [memberToDelete, setMemberToDelete] = useState(null)
+
+	// Sekcja "Byli członkowie" (lazy)
+	const [showFormer, setShowFormer] = useState(false)
+	const [formerMembers, setFormerMembers] = useState([])
+	const [formerLoaded, setFormerLoaded] = useState(false)
+	const [formerLoading, setFormerLoading] = useState(false)
+	const [restoringId, setRestoringId] = useState(null)
+	const [memberToRestore, setMemberToRestore] = useState(null)
 
 	const isInitialLoad = useRef(true)
 
@@ -78,27 +93,68 @@ export default function MemberBrowser() {
 		setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
 	}
 
-	const handleDeleteMember = async memberId => {
-		if (
-			confirm(
-				'Czy na pewno chcesz usunąć to konto członkowskie? Zgłoszenia historyczne zostaną zachowane, ale stracą powiązanie z tym kontem.'
-			)
-		) {
-			setDeletingId(memberId)
-			try {
-				const response = await fetch(`/api/admin/members/${memberId}`, {
-					method: 'DELETE',
-				})
-				if (!response.ok) throw new Error('Błąd podczas usuwania członka.')
+	const confirmDeleteMember = async note => {
+		if (!memberToDelete) return
+		const memberId = memberToDelete.id
+		setDeletingId(memberId)
+		try {
+			const response = await fetch(`/api/admin/members/${memberId}`, {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ note }),
+			})
+			if (!response.ok) throw new Error('Błąd podczas usuwania członka.')
 
-				await fetchMembers(currentPage)
-				toast.success('Członek został usunięty.')
-			} catch (error) {
-				console.error(error)
-				toast.error(error.message)
-			} finally {
-				setDeletingId(null)
-			}
+			setMemberToDelete(null)
+			await fetchMembers(currentPage, debouncedSearchQuery)
+			if (formerLoaded) await fetchFormerMembers()
+			toast.success('Członek przeniesiony do byłych członków.')
+		} catch (error) {
+			console.error(error)
+			toast.error(error.message)
+		} finally {
+			setDeletingId(null)
+		}
+	}
+
+	const fetchFormerMembers = async () => {
+		setFormerLoading(true)
+		try {
+			const response = await fetch('/api/admin/members/former')
+			if (!response.ok) throw new Error('Nie udało się pobrać byłych członków.')
+			const data = await response.json()
+			setFormerMembers(data.formerMembers)
+			setFormerLoaded(true)
+		} catch (error) {
+			console.error(error)
+			toast.error(error.message)
+		} finally {
+			setFormerLoading(false)
+		}
+	}
+
+	const toggleFormer = () => {
+		const next = !showFormer
+		setShowFormer(next)
+		if (next && !formerLoaded) fetchFormerMembers()
+	}
+
+	const confirmRestore = async () => {
+		if (!memberToRestore) return
+		setRestoringId(memberToRestore.id)
+		try {
+			const response = await fetch(`/api/admin/members/${memberToRestore.id}/restore`, { method: 'POST' })
+			if (!response.ok) throw new Error('Nie udało się przywrócić członka.')
+
+			setMemberToRestore(null)
+			await fetchFormerMembers()
+			await fetchMembers(currentPage, debouncedSearchQuery)
+			toast.success('Członek został przywrócony.')
+		} catch (error) {
+			console.error(error)
+			toast.error(error.message)
+		} finally {
+			setRestoringId(null)
 		}
 	}
 
@@ -235,7 +291,7 @@ export default function MemberBrowser() {
 										<PencilSquareIcon className='h-5 w-5 text-[#005698]' />
 									</button>
 									<button
-										onClick={() => handleDeleteMember(member.id)}
+										onClick={() => setMemberToDelete(member)}
 										disabled={deletingId === member.id || isLoading}
 										className='p-2 text-red-500 hover:bg-red-100 rounded-md disabled:opacity-50'
 										title='Usuń członka'>
@@ -288,11 +344,114 @@ export default function MemberBrowser() {
 				</div>
 			</div>
 
+			{/* Sekcja: Byli członkowie (rozwijana, renderowana dopiero po rozwinięciu) */}
+			<div className='mt-8 bg-white rounded-lg shadow'>
+				<button
+					type='button'
+					onClick={toggleFormer}
+					className='w-full flex items-center justify-between gap-3 px-4 py-4 text-left hover:bg-gray-50 rounded-lg transition-colors'>
+					<div className='flex items-center gap-3'>
+						<ArchiveBoxXMarkIcon className='h-6 w-6 text-gray-500' />
+						<h3 className='text-lg font-semibold text-gray-700'>
+							Byli członkowie{formerLoaded ? ` (${formerMembers.length})` : ''}
+						</h3>
+						{formerLoading && (
+							<svg className='animate-spin h-5 w-5 text-gray-400' fill='none' viewBox='0 0 24 24'>
+								<circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+								<path
+									className='opacity-75'
+									fill='currentColor'
+									d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+							</svg>
+						)}
+					</div>
+					<ChevronRightIcon
+						className={`h-5 w-5 transform transition-transform text-gray-500 ${showFormer ? 'rotate-90' : ''}`}
+					/>
+				</button>
+
+				{showFormer && (
+					<ul className='divide-y divide-gray-200 border-t border-gray-200'>
+						{!formerLoading && formerMembers.length === 0 && (
+							<li className='px-4 py-4 text-center text-sm text-gray-500'>Brak byłych członków.</li>
+						)}
+						{formerMembers.map(member => (
+							<li key={member.id} className='flex items-start justify-between gap-3 px-4 py-3'>
+								<div className='flex items-start gap-3 min-w-0'>
+									<span className='text-sm font-semibold text-gray-400 w-10 text-center mt-0.5'>
+										#{member.memberNumber ?? '—'}
+									</span>
+									<div className='h-10 border-l border-gray-200'></div>
+									<div className='min-w-0'>
+										<p className='text-sm font-semibold text-gray-600'>{member.company || 'Brak nazwy firmy'}</p>
+										<p className='text-sm text-gray-500'>{member.email}</p>
+										<p className='text-sm text-gray-500'>{member.phones || 'Brak telefonu'}</p>
+										{member.removalNote && (
+											<p className='mt-1 text-sm text-gray-600 italic bg-gray-50 border border-gray-200 rounded px-2 py-1'>
+												Powód: {member.removalNote}
+											</p>
+										)}
+									</div>
+								</div>
+								<div className='flex items-center gap-3 flex-shrink-0'>
+									<div className='text-right hidden sm:block'>
+										<p className='text-xs text-gray-400'>Usunięto:</p>
+										<p className='text-sm font-medium text-gray-600'>
+											{member.deletedAt ? new Date(member.deletedAt).toLocaleDateString('pl-PL') : '—'}
+										</p>
+									</div>
+									<button
+										onClick={() => setMemberToRestore(member)}
+										disabled={restoringId === member.id}
+										className='inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#005698] bg-white border border-[#005698]/30 rounded-md hover:bg-[#005698]/10 transition-colors disabled:opacity-50'
+										title='Przywróć członka'>
+										{restoringId === member.id ? (
+											<svg className='animate-spin h-4 w-4' fill='none' viewBox='0 0 24 24'>
+												<circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+												<path
+													className='opacity-75'
+													fill='currentColor'
+													d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+											</svg>
+										) : (
+											<ArrowUturnLeftIcon className='h-4 w-4' />
+										)}
+										Przywróć
+									</button>
+								</div>
+							</li>
+						))}
+					</ul>
+				)}
+			</div>
+
 			<EditMemberModal
 				isOpen={!!editingMember}
 				onClose={() => setEditingMember(null)}
 				member={editingMember}
 				onSuccess={handleEditSuccess}
+			/>
+
+			<DeleteConfirmationModal
+				isOpen={!!memberToDelete}
+				onClose={() => setMemberToDelete(null)}
+				onConfirm={confirmDeleteMember}
+				title='Usuń członka'
+				message={`Czy na pewno chcesz usunąć członka „${memberToDelete?.company || memberToDelete?.email || ''}"? Trafi do listy byłych członków — możesz go później przywrócić.`}
+				confirmButtonText='Usuń członka'
+				showNote
+				noteLabel='Powód usunięcia (opcjonalnie)'
+				notePlaceholder='np. rezygnacja z członkostwa, zaległości składkowe...'
+			/>
+
+			<ConfirmationModal
+				isOpen={!!memberToRestore}
+				onClose={() => setMemberToRestore(null)}
+				onConfirm={confirmRestore}
+				title='Przywróć członka'
+				message={`Przywrócić członka „${memberToRestore?.company || memberToRestore?.email || ''}"? Wróci do aktywnej listy, spisu publicznego i listy mailingowej.`}
+				confirmButtonText='Przywróć'
+				isLoading={!!restoringId}
 			/>
 		</div>
 	)

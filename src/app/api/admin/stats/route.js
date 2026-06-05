@@ -13,7 +13,9 @@ export async function GET(request) {
 			prisma.submission.count({
 				where: { isArchived: false },
 			}),
-			prisma.member.count(),
+			prisma.member.count({
+				where: { deletedAt: null },
+			}),
 
 			prisma.generalFile.count(),
 		])

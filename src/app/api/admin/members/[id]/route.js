@@ -12,15 +12,34 @@ export async function DELETE(request, { params }) {
 
 	const { id } = await params
 	try {
-		const memberToDelete = await prisma.member.findUnique({ where: { id } })
-
-		await prisma.member.delete({ where: { id } })
-
-		if (memberToDelete) {
-			await removeFromPublicList(memberToDelete.email)
+		// Opcjonalna notatka o powodzie usunięcia (body może być puste)
+		let note = null
+		try {
+			const body = await request.json()
+			note = body?.note?.trim() || null
+		} catch {
+			// brak body — OK
 		}
 
-		return NextResponse.json({ message: 'Członek został pomyślnie usunięty.' }, { status: 200 })
+		const memberToDelete = await prisma.member.findUnique({ where: { id } })
+		if (!memberToDelete) {
+			return NextResponse.json({ message: 'Nie znaleziono członka.' }, { status: 404 })
+		}
+
+		// Miękkie usuwanie — konto staje się "byłym członkiem"
+		await prisma.member.update({
+			where: { id },
+			data: {
+				deletedAt: new Date(),
+				removalNote: note,
+			},
+		})
+
+		// Usuń ze spisu publicznego i z listy mailingowej
+		await removeFromPublicList(memberToDelete.email)
+		await syncMailingList(memberToDelete.notificationEmails, '')
+
+		return NextResponse.json({ message: 'Członek został przeniesiony do byłych członków.' }, { status: 200 })
 	} catch (error) {
 		console.error('Błąd podczas usuwania członka:', error)
 		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })

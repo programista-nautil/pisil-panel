@@ -12,6 +12,7 @@ export async function GET() {
 
   try {
     const members = await prisma.member.findMany({
+      where: { deletedAt: null },
       select: {
         memberNumber: true,
         company: true,

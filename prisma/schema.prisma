@@ -160,6 +160,10 @@ model Member {
   fax     String?
   website String?
 
+  // Miękkie usuwanie (byli członkowie) — gdy deletedAt != null, konto jest "byłym członkiem"
+  deletedAt   DateTime?
+  removalNote String?
+
   submissions Submission[]
   files       MemberFile[]
 }

@@ -106,6 +106,9 @@ export async function processAcceptance(submission, acceptanceDate) {
 						notificationEmails: submission.notificationEmails,
 						fax: submission.fax,
 						website: submission.website,
+						// Ponowne przyjęcie byłego członka = reaktywacja konta
+						deletedAt: null,
+						removalNote: null,
 					},
 				})
 			} else {

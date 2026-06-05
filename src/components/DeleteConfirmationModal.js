@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function DeleteConfirmationModal({
 	isOpen,
@@ -11,15 +11,25 @@ export default function DeleteConfirmationModal({
 	title,
 	message,
 	confirmButtonText,
+	showNote = false,
+	noteLabel = 'Notatka (opcjonalnie)',
+	notePlaceholder = '',
 }) {
 	const [isDeleting, setIsDeleting] = useState(false)
+	const [note, setNote] = useState('')
+
+	// Wyczyść notatkę przy każdym otwarciu modala
+	useEffect(() => {
+		if (isOpen) setNote('')
+	}, [isOpen])
 
 	if (!isOpen) return null
 
 	const handleConfirm = async () => {
 		setIsDeleting(true)
 		try {
-			await onConfirm()
+			// Istniejący callerzy ignorują argument — pełna kompatybilność wsteczna
+			await onConfirm(note.trim())
 		} finally {
 			setIsDeleting(false)
 		}
@@ -60,7 +70,20 @@ export default function DeleteConfirmationModal({
 				onClick={(e) => e.stopPropagation()}
 			>
 				<h3 className='text-lg font-bold text-gray-800 mb-3'>{finalTitle}</h3>
-				<div className='mb-6'>{renderMessage()}</div>
+				<div className='mb-4'>{renderMessage()}</div>
+				{showNote && (
+					<div className='mb-6'>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>{noteLabel}</label>
+						<textarea
+							value={note}
+							onChange={e => setNote(e.target.value)}
+							disabled={isDeleting}
+							rows={3}
+							placeholder={notePlaceholder}
+							className='block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-700 disabled:opacity-50'
+						/>
+					</div>
+				)}
 				<div className='flex justify-end gap-3'>
 					<button
 						type='button'

@@ -57,6 +57,11 @@ export const {
 						return null
 					}
 
+					if (member.deletedAt) {
+						console.log('[Auth] Member soft-deleted (były członek) — logowanie zablokowane.')
+						return null
+					}
+
 					const isPasswordValid = await bcrypt.compare(credentials.password, member.password)
 
 					console.log('[Auth] Password validation result:', isPasswordValid) // LOG 3: Czy hasło pasuje?

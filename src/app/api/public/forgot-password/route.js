@@ -14,7 +14,8 @@ export async function POST(request) {
 			where: { email },
 		})
 
-		if (!member) {
+		// Były członek (soft-deleted) traktowany jak brak konta — nie wysyłamy linku
+		if (!member || member.deletedAt) {
 			return NextResponse.json({ message: 'Link do resetu został wysłany.' })
 		}
 
