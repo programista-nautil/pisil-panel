@@ -57,6 +57,11 @@ export async function GET(request) {
 					notificationEmails: true,
 					fax: true,
 					website: true,
+					nip: true,
+					correspondenceAddress: true,
+					eDeliveryConsent: true,
+					eDeliveryEmail: true,
+					eDeliveryAddress: true,
 				},
 			}),
 			prisma.member.count({

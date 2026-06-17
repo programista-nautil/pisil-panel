@@ -51,6 +51,7 @@ export async function POST(request) {
 		const recommendations = data.get('recommendations')
 		const fax = data.get('fax')
 		const website = data.get('website')
+		const nip = data.get('nip')
 
 		const acceptanceDate = data.get('acceptanceDate') || new Date().toISOString()
 
@@ -95,6 +96,7 @@ export async function POST(request) {
 					recommendations: recommendations || null,
 					fax: fax || null,
 					website: website || null,
+					nip: nip || null,
 				},
 			})
 

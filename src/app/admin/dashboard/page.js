@@ -184,6 +184,7 @@ export default function AdminDashboard() {
     }
     formData.append("fax", data.fax || "");
     formData.append("website", data.website || "");
+    formData.append("nip", data.nip || "");
 
     additionalFiles.forEach((file) => {
       formData.append("additionalFiles[]", file);

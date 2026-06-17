@@ -10,6 +10,8 @@ import {
 	PrinterIcon,
 	ArrowUturnLeftIcon,
 	ArchiveBoxXMarkIcon,
+	TableCellsIcon,
+	ChevronDownIcon,
 } from '@heroicons/react/24/outline'
 import MemberFileEditor from './MemberFileEditor'
 import EditMemberModal from './EditMemberModal'
@@ -45,6 +47,11 @@ export default function MemberBrowser() {
 	const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
 	const [isPrinting, setIsPrinting] = useState(false)
+
+	// Eksport Excel (dropdown)
+	const [showExportMenu, setShowExportMenu] = useState(false)
+	const [exportingType, setExportingType] = useState(null)
+	const exportMenuRef = useRef(null)
 
 	// Usuwanie z modalem + notatką
 	const [memberToDelete, setMemberToDelete] = useState(null)
@@ -88,6 +95,48 @@ export default function MemberBrowser() {
 		}
 		fetchMembers(1, debouncedSearchQuery)
 	}, [debouncedSearchQuery])
+
+	// Zamknięcie menu eksportu po kliknięciu poza nim
+	useEffect(() => {
+		if (!showExportMenu) return
+		const onMouse = e => {
+			if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) setShowExportMenu(false)
+		}
+		const onKey = e => e.key === 'Escape' && setShowExportMenu(false)
+		document.addEventListener('mousedown', onMouse)
+		document.addEventListener('keydown', onKey)
+		return () => {
+			document.removeEventListener('mousedown', onMouse)
+			document.removeEventListener('keydown', onKey)
+		}
+	}, [showExportMenu])
+
+	const handleExport = async type => {
+		setExportingType(type)
+		try {
+			const response = await fetch(`/api/admin/members/export?type=${type}`)
+			if (!response.ok) throw new Error('Nie udało się wygenerować listy Excel.')
+
+			const blob = await response.blob()
+			const d = new Date()
+			const stamp = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`
+			const base = type === 'invoicing' ? 'lista-fakturowa' : 'lista-wysylkowa'
+			const url = window.URL.createObjectURL(blob)
+			const a = document.createElement('a')
+			a.href = url
+			a.download = `${base}-${stamp}.xlsx`
+			document.body.appendChild(a)
+			a.click()
+			a.remove()
+			window.URL.revokeObjectURL(url)
+			setShowExportMenu(false)
+		} catch (error) {
+			console.error(error)
+			toast.error(error.message)
+		} finally {
+			setExportingType(null)
+		}
+	}
 
 	const toggleExpanded = id => {
 		setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
@@ -226,6 +275,47 @@ export default function MemberBrowser() {
 						)}
 						{isPrinting ? 'Generowanie...' : 'Drukuj listę'}
 					</button>
+
+					<div className='relative' ref={exportMenuRef}>
+						<button
+							type='button'
+							onClick={() => setShowExportMenu(o => !o)}
+							disabled={!!exportingType}
+							title='Eksport list do Excela'
+							className='inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#005698] bg-white border border-[#005698]/30 rounded-md hover:bg-[#005698]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
+							{exportingType ? (
+								<svg className='animate-spin h-4 w-4' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+									<circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+									<path
+										className='opacity-75'
+										fill='currentColor'
+										d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+								</svg>
+							) : (
+								<TableCellsIcon className='h-5 w-5' />
+							)}
+							{exportingType ? 'Generowanie...' : 'Eksport Excel'}
+							<ChevronDownIcon className='h-4 w-4' />
+						</button>
+						{showExportMenu && (
+							<div className='absolute left-0 z-30 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg py-1'>
+								<button
+									type='button'
+									onClick={() => handleExport('mailing')}
+									className='w-full flex items-center gap-2 px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors'>
+									<TableCellsIcon className='h-4 w-4 flex-shrink-0 text-gray-400' />
+									Lista wysyłkowa
+								</button>
+								<button
+									type='button'
+									onClick={() => handleExport('invoicing')}
+									className='w-full flex items-center gap-2 px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors'>
+									<TableCellsIcon className='h-4 w-4 flex-shrink-0 text-gray-400' />
+									Lista fakturowa
+								</button>
+							</div>
+						)}
+					</div>
 				</div>
 
 				<div className='w-full sm:max-w-xs'>

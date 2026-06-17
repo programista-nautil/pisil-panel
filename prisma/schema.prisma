@@ -110,6 +110,7 @@ model Submission {
   phones  String?
   fax     String?
   website String?
+  nip     String?  // przechwycony z formularza deklaracji (mapowany do Member przy akceptacji)
 
   recommendations String?
   communicationNumber    Int?    @unique
@@ -159,6 +160,13 @@ model Member {
 
   fax     String?
   website String?
+
+  // Dane wewnętrzne (NIE na liście publicznej): faktury / korespondencja / e-doręczenia
+  nip                   String?
+  correspondenceAddress String?  // adres do korespondencji (pusty = jak rejestrowy `address`)
+  eDeliveryConsent      Boolean  @default(false) // zgoda na wysyłkę elektroniczną
+  eDeliveryEmail        String?  // e-mail do e-wysyłki (pusty = główny `email`)
+  eDeliveryAddress      String?  // adres e-doręczeń (ADE)
 
   // Miękkie usuwanie (byli członkowie) — gdy deletedAt != null, konto jest "byłym członkiem"
   deletedAt   DateTime?

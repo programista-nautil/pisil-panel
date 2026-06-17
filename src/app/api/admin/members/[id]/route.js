@@ -54,8 +54,22 @@ export async function PATCH(request, { params }) {
 
 	const { id } = await params
 	try {
-		const { email, phones, company, name, address, invoiceEmail, notificationEmails, fax, website } =
-			await request.json()
+		const {
+			email,
+			phones,
+			company,
+			name,
+			address,
+			invoiceEmail,
+			notificationEmails,
+			fax,
+			website,
+			nip,
+			correspondenceAddress,
+			eDeliveryConsent,
+			eDeliveryEmail,
+			eDeliveryAddress,
+		} = await request.json()
 
 		if (email) {
 			const existingMember = await prisma.member.findUnique({
@@ -88,6 +102,11 @@ export async function PATCH(request, { params }) {
 				notificationEmails,
 				fax,
 				website,
+				nip,
+				correspondenceAddress,
+				eDeliveryConsent,
+				eDeliveryEmail,
+				eDeliveryAddress,
 			},
 		})
 

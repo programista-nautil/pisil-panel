@@ -106,6 +106,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 						notificationEmails: submission.notificationEmails,
 						fax: submission.fax,
 						website: submission.website,
+						nip: submission.nip,
 						// Ponowne przyjęcie byłego członka = reaktywacja konta
 						deletedAt: null,
 						removalNote: null,
@@ -130,6 +131,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 						notificationEmails: submission.notificationEmails,
 						fax: submission.fax,
 						website: submission.website,
+						nip: submission.nip,
 					},
 				})
 				memberId = newMember.id

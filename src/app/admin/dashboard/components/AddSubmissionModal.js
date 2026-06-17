@@ -34,6 +34,7 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 				ceoName: '',
 				address: '',
 				phones: '',
+				nip: '',
 				invoiceEmail: '',
 				notificationEmails: '',
 				recommendations: '',
@@ -192,6 +193,18 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 										className='mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-gray-500'
 									/>
 									{errors.address && <p className='text-red-500 text-xs mt-1'>{errors.address.message}</p>}
+								</div>
+								<div>
+									<label htmlFor='nip' className='block text-sm font-medium text-gray-700'>
+										NIP
+									</label>
+									<input
+										type='text'
+										id='nip'
+										{...register('nip')}
+										className='mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-gray-500'
+										placeholder='np. 123-456-78-90'
+									/>
 								</div>
 								<div>
 									<label htmlFor='invoiceEmail' className='block text-sm font-medium text-gray-700'>
