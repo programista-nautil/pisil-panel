@@ -9,6 +9,7 @@ import AddSubmissionModal from "./components/AddSubmissionModal";
 import NotificationModals from "./components/NotificationModals";
 import MemberManagement from "./components/MemberManagement";
 import CommunicationsManagement from "./components/CommunicationsManagement";
+import EventsManagement from "./components/EventsManagement";
 import AdminResourcesTab from "./components/AdminResourcesTab";
 import {
   DocumentDuplicateIcon,
@@ -473,6 +474,16 @@ export default function AdminDashboard() {
               Komunikaty
             </button>
             <button
+              onClick={() => setActiveTab("events")}
+              className={`${
+                activeTab === "events"
+                  ? "border-[#005698] text-[#005698]"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Wydarzenia
+            </button>
+            <button
               onClick={() => setActiveTab("resources")}
               className={`${
                 activeTab === "resources"
@@ -554,6 +565,12 @@ export default function AdminDashboard() {
               {activeTab === "communications" && (
                 <div className="p-4 sm:p-6">
                   <CommunicationsManagement />
+                </div>
+              )}
+
+              {activeTab === "events" && (
+                <div className="p-4 sm:p-6">
+                  <EventsManagement />
                 </div>
               )}
             </div>

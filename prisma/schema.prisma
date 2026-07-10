@@ -257,3 +257,109 @@ model CommunicationAuthor {
   label     String?
   createdAt DateTime @default(now())
 }
+
+// =====================================================================
+// Wydarzenia (szkolenia / konferencje) — rejestracje online
+// =====================================================================
+
+enum EventType {
+  SZKOLENIE
+  KONFERENCJA
+}
+
+enum EventMode {
+  ONLINE
+  STACJONARNE
+}
+
+enum EventStatus {
+  DRAFT       // szkic — niewidoczny publicznie
+  PUBLISHED   // opublikowane — widoczne, rejestracja otwarta (wg deadline/limitu)
+  CLOSED      // rejestracja zamknięta ręcznie
+  ARCHIVED    // zarchiwizowane
+}
+
+// Poziom cenowy zgłoszenia (liczony serwerowo, z możliwością nadpisania przez admina)
+enum RegistrationTier {
+  CZLONEK_GRATIS   // członek w ramach puli darmowej (konferencja)
+  CZLONEK_PLATNY   // członek płatny (cena członka)
+  NIECZLONEK       // nie-członek (cena nie-członka)
+}
+
+enum PaymentStatus {
+  ZWOLNIONY   // gratis — brak płatności
+  OCZEKUJE    // oczekuje na przelew
+  OPLACONE    // opłacone
+}
+
+enum RegistrationStatus {
+  POTWIERDZONA
+  LISTA_REZERWOWA
+  ANULOWANA
+}
+
+enum RegSource {
+  SELF    // zapis własny przez stronę
+  ADMIN   // dopisany ręcznie przez admina
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  slug        String    @unique // do URL-i (strona podglądu / WordPress)
+  typ         EventType
+  tryb        EventMode
+  title       String
+  description String?   @db.Text // krótki opis (marketing i tak w WP)
+
+  startAt             DateTime
+  endAt               DateTime?
+  prowadzacy          String?
+  address             String?   // adres (dla STACJONARNE) — pod mapkę
+  onlineUrl           String?   // link (dla ONLINE)
+  limitMiejsc         Int?
+  registrationDeadline DateTime?
+  bankAccount         String?   // nr konta do przelewu (pusty = domyślny z konfiguracji)
+
+  // Model cenowy 2-poziomowy
+  cenaCzlonek       Decimal? @db.Decimal(10, 2)
+  cenaNieczlonek    Decimal? @db.Decimal(10, 2)
+  pulaGratisNaFirme Int      @default(0) // konferencja=2, szkolenie=0
+
+  seriesName String?     // opcjonalne grupowanie "cyklu"
+  status     EventStatus @default(DRAFT)
+
+  registrations EventRegistration[]
+}
+
+model EventRegistration {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+
+  firstName  String
+  lastName   String
+  email      String
+  firmaNazwa String
+  firmaNip   String
+  firmaAdres String? // adres do faktury
+
+  tier            RegistrationTier
+  kwota           Decimal            @db.Decimal(10, 2)
+  statusPlatnosci PaymentStatus
+  statusRejestracji RegistrationStatus @default(POTWIERDZONA)
+
+  zgodaRodo   Boolean
+  zgodaRodoAt DateTime?
+  zrodlo      RegSource @default(SELF)
+
+  matchedMemberId String? // członek dopasowany po NIP (referencyjnie; bez FK)
+  notatka         String?
+
+  @@index([eventId])
+  @@index([eventId, firmaNip])
+}
