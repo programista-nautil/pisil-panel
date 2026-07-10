@@ -35,6 +35,7 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 				address: '',
 				phones: '',
 				nip: '',
+				czlonekStowarzyszony: false,
 				invoiceEmail: '',
 				notificationEmails: '',
 				recommendations: '',
@@ -169,6 +170,14 @@ export default function AddSubmissionModal({ isOpen, onClose, onFormSubmit }) {
 
 						{formType === 'DEKLARACJA_CZLONKOWSKA' && (
 							<>
+								<label className='flex items-center gap-2 text-sm font-medium text-gray-700'>
+									<input
+										type='checkbox'
+										{...register('czlonekStowarzyszony')}
+										className='h-4 w-4 text-blue-600 rounded'
+									/>
+									Członek stowarzyszony
+								</label>
 								<div>
 									<label htmlFor='ceoName' className='block text-sm font-medium text-gray-700'>
 										Imię i nazwisko prezesa/CEO

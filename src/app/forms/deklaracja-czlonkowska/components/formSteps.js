@@ -2,6 +2,21 @@ import { useEffect } from 'react'
 
 export const Step1 = ({ register, errors }) => (
 	<div className='space-y-6'>
+		<label className='flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer'>
+			<input
+				type='checkbox'
+				{...register('czlonekStowarzyszony')}
+				className='mt-0.5 h-5 w-5 text-blue-600 rounded'
+			/>
+			<span className='text-sm text-gray-800'>
+				<span className='font-semibold'>Składam deklarację jako CZŁONEK STOWARZYSZONY</span>
+				<br />
+				<span className='text-gray-600'>
+					Zaznacz, jeśli firma przystępuje jako członek stowarzyszony — formularz zostanie uproszczony.
+				</span>
+			</span>
+		</label>
+
 		<h2 className='text-xl font-semibold text-gray-900'>Dane podstawowe firmy</h2>
 		<div className='space-y-4'>
 			<div>
@@ -160,96 +175,129 @@ export const Step2 = ({ register, errors }) => (
 	</div>
 )
 
-export const Step3 = ({ register, errors }) => (
-	<div className='space-y-6'>
-		<h2 className='text-xl font-semibold text-gray-900'>Dane rejestracyjne i certyfikaty</h2>
-		<div className='space-y-4'>
-			<div>
-				<label className='block text-sm font-medium text-gray-700 mb-1'>
-					Data rejestracji firmy, sąd rejestrowy, nr rejestru <span className='text-red-500'>*</span>
-				</label>
-				<textarea
-					{...register('registrationData', { required: 'To pole jest wymagane.' })}
-					className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
-					rows='2'
-				/>
-				{errors.registrationData && <p className='text-red-500 text-xs mt-1'>{errors.registrationData.message}</p>}
-			</div>
-			<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+export const Step3 = ({ register, errors, watch, unregister }) => {
+	const isStow = watch('czlonekStowarzyszony')
+
+	// Członek stowarzyszony nie wypełnia pkt IV a/b/c — wyrejestruj, by nie blokowały walidacji
+	useEffect(() => {
+		if (isStow) unregister(['transportLicense', 'iso9002Certificate', 'insuranceOC'])
+	}, [isStow, unregister])
+
+	return (
+		<div className='space-y-6'>
+			<h2 className='text-xl font-semibold text-gray-900'>Dane rejestracyjne i certyfikaty</h2>
+			<div className='space-y-4'>
 				<div>
 					<label className='block text-sm font-medium text-gray-700 mb-1'>
-						Forma własności <span className='text-red-500'>*</span>
+						Data rejestracji firmy, sąd rejestrowy, nr rejestru <span className='text-red-500'>*</span>
 					</label>
-					<input
-						type='text'
-						{...register('ownershipForm', { required: 'To pole jest wymagane.' })}
+					<textarea
+						{...register('registrationData', { required: 'To pole jest wymagane.' })}
 						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+						rows='2'
 					/>
-					{errors.ownershipForm && <p className='text-red-500 text-xs mt-1'>{errors.ownershipForm.message}</p>}
+					{errors.registrationData && <p className='text-red-500 text-xs mt-1'>{errors.registrationData.message}</p>}
 				</div>
-				<div>
-					<label className='block text-sm font-medium text-gray-700 mb-1'>
-						Wielkość zatrudnienia <span className='text-red-500'>*</span>
-					</label>
-					<input
-						type='text'
-						{...register('employmentSize', { required: 'To pole jest wymagane.' })}
-						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
-					/>
-					{errors.employmentSize && <p className='text-red-500 text-xs mt-1'>{errors.employmentSize.message}</p>}
+				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+					<div>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>
+							Forma własności <span className='text-red-500'>*</span>
+						</label>
+						<input
+							type='text'
+							{...register('ownershipForm', { required: 'To pole jest wymagane.' })}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+						/>
+						{errors.ownershipForm && <p className='text-red-500 text-xs mt-1'>{errors.ownershipForm.message}</p>}
+					</div>
+					<div>
+						<label className='block text-sm font-medium text-gray-700 mb-1'>
+							Wielkość zatrudnienia <span className='text-red-500'>*</span>
+						</label>
+						<input
+							type='text'
+							{...register('employmentSize', { required: 'To pole jest wymagane.' })}
+							className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+						/>
+						{errors.employmentSize && <p className='text-red-500 text-xs mt-1'>{errors.employmentSize.message}</p>}
+					</div>
 				</div>
-			</div>
-			<div>
-				<label className='block text-sm font-medium text-gray-700 mb-1'>
-					Licencja na pośrednictwo przy przewozie rzeczy <span className='text-red-500'>*</span>
-				</label>
-				<textarea
-					{...register('transportLicense', { required: 'To pole jest wymagane.' })}
-					className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
-					rows='2'
-				/>
-				{errors.transportLicense && <p className='text-red-500 text-xs mt-1'>{errors.transportLicense.message}</p>}
-			</div>
-			<div>
-				<label className='block text-sm font-medium text-gray-700 mb-1'>
-					Certyfikat ISO 9002 (w jakim zakresie) <span className='text-red-500'>*</span>
-				</label>
-				<textarea
-					{...register('iso9002Certificate', { required: 'To pole jest wymagane.' })}
-					className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
-					rows='2'
-				/>
-				{errors.iso9002Certificate && <p className='text-red-500 text-xs mt-1'>{errors.iso9002Certificate.message}</p>}
-			</div>
-			<div>
-				<label className='block text-sm font-medium text-gray-700 mb-1'>
-					Ubezpieczenie o.c. spedytora (ubezpieczyciel) <span className='text-red-500'>*</span>
-				</label>
-				<textarea
-					{...register('insuranceOC', { required: 'To pole jest wymagane.' })}
-					className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
-					rows='2'
-				/>
-				{errors.insuranceOC && <p className='text-red-500 text-xs mt-1'>{errors.insuranceOC.message}</p>}
-			</div>
-			<div>
-				<label className='block text-sm font-medium text-gray-700 mb-1'>
-					Opis prowadzonej działalności firmy <span className='text-red-500'>*</span>
-				</label>
-				<textarea
-					{...register('businessDescription', { required: 'To pole jest wymagane.' })}
-					className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
-					rows='3'
-				/>
-				{errors.businessDescription && (
-					<p className='text-red-500 text-xs mt-1'>{errors.businessDescription.message}</p>
+				{!isStow && (
+					<>
+						<div>
+							<label className='block text-sm font-medium text-gray-700 mb-1'>
+								Licencja na pośrednictwo przy przewozie rzeczy <span className='text-red-500'>*</span>
+							</label>
+							<textarea
+								{...register('transportLicense', { required: 'To pole jest wymagane.' })}
+								className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+								rows='2'
+							/>
+							{errors.transportLicense && <p className='text-red-500 text-xs mt-1'>{errors.transportLicense.message}</p>}
+						</div>
+						<div>
+							<label className='block text-sm font-medium text-gray-700 mb-1'>
+								Certyfikat ISO 9002 (w jakim zakresie) <span className='text-red-500'>*</span>
+							</label>
+							<textarea
+								{...register('iso9002Certificate', { required: 'To pole jest wymagane.' })}
+								className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+								rows='2'
+							/>
+							{errors.iso9002Certificate && (
+								<p className='text-red-500 text-xs mt-1'>{errors.iso9002Certificate.message}</p>
+							)}
+						</div>
+						<div>
+							<label className='block text-sm font-medium text-gray-700 mb-1'>
+								Ubezpieczenie o.c. spedytora (ubezpieczyciel) <span className='text-red-500'>*</span>
+							</label>
+							<textarea
+								{...register('insuranceOC', { required: 'To pole jest wymagane.' })}
+								className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+								rows='2'
+							/>
+							{errors.insuranceOC && <p className='text-red-500 text-xs mt-1'>{errors.insuranceOC.message}</p>}
+						</div>
+					</>
 				)}
+				<div>
+					<label className='block text-sm font-medium text-gray-700 mb-1'>
+						Opis prowadzonej działalności firmy <span className='text-red-500'>*</span>
+					</label>
+					<textarea
+						{...register('businessDescription', { required: 'To pole jest wymagane.' })}
+						className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+						rows='3'
+					/>
+					{errors.businessDescription && (
+						<p className='text-red-500 text-xs mt-1'>{errors.businessDescription.message}</p>
+					)}
+				</div>
 			</div>
 		</div>
-	</div>
-)
+	)
+}
 
-export const Step4 = ({ register, errors, watch, setValue }) => {
+export const Step4 = ({ register, errors, watch, unregister }) => {
+	const isStow = watch('czlonekStowarzyszony')
+
+	// Członek stowarzyszony nie wypełnia pkt V — wyrejestruj wymagane pola, by nie blokowały walidacji
+	useEffect(() => {
+		if (isStow) unregister(['organizacjaPrzewozow', 'krajowaSiec', 'zagranicznaSSiec', 'inneFormy'])
+	}, [isStow, unregister])
+
+	if (isStow) {
+		return (
+			<div className='space-y-6'>
+				<h2 className='text-xl font-semibold text-gray-900'>Wachlarz świadczonych usług</h2>
+				<div className='p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600'>
+					Ta sekcja nie dotyczy członków stowarzyszonych — możesz przejść dalej.
+				</div>
+			</div>
+		)
+	}
+
 	return (
 		<div className='space-y-6'>
 			<h2 className='text-xl font-semibold text-gray-900'>Wachlarz świadczonych usług</h2>
@@ -370,33 +418,45 @@ export const Step4 = ({ register, errors, watch, setValue }) => {
 	)
 }
 
-export const Step5 = ({ register, errors }) => (
-	<div className='space-y-6'>
-		<h2 className='text-xl font-semibold text-gray-900'>Członkostwo i finalizacja</h2>
-		<div className='space-y-4'>
-			<div>
-				<label className='block text-sm font-medium text-gray-700 mb-1'>
-					Do jakich organizacji firma należy i od kiedy <span className='text-red-500'>*</span>
-				</label>
-				<textarea
-					{...register('organizacje', { required: 'To pole jest wymagane.' })}
-					className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
-					rows='3'
-				/>
-				{errors.organizacje && <p className='text-red-500 text-xs mt-1'>{errors.organizacje.message}</p>}
-			</div>
-			<div>
-				<label className='block text-sm font-medium text-gray-700 mb-1'>
-					Firmy-Członkowie Izby rekomendujący przystąpienie do PISiL <span className='text-red-500'>*</span>
-				</label>
-				<textarea
-					{...register('rekomendacje', { required: 'To pole jest wymagane.' })}
-					className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
-					rows='4'
-				/>
-				{errors.rekomendacje && <p className='text-red-500 text-xs mt-1'>{errors.rekomendacje.message}</p>}
-			</div>
-			<div className='border-t border-gray-200 pt-6'>
+export const Step5 = ({ register, errors, watch, unregister }) => {
+	const isStow = watch('czlonekStowarzyszony')
+
+	// Członek stowarzyszony nie podaje organizacji ani rekomendacji (pkt VI) — wyrejestruj
+	useEffect(() => {
+		if (isStow) unregister(['organizacje', 'rekomendacje'])
+	}, [isStow, unregister])
+
+	return (
+		<div className='space-y-6'>
+			<h2 className='text-xl font-semibold text-gray-900'>Członkostwo i finalizacja</h2>
+			<div className='space-y-4'>
+				{!isStow && (
+					<>
+						<div>
+							<label className='block text-sm font-medium text-gray-700 mb-1'>
+								Do jakich organizacji firma należy i od kiedy <span className='text-red-500'>*</span>
+							</label>
+							<textarea
+								{...register('organizacje', { required: 'To pole jest wymagane.' })}
+								className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+								rows='3'
+							/>
+							{errors.organizacje && <p className='text-red-500 text-xs mt-1'>{errors.organizacje.message}</p>}
+						</div>
+						<div>
+							<label className='block text-sm font-medium text-gray-700 mb-1'>
+								Firmy-Członkowie Izby rekomendujący przystąpienie do PISiL <span className='text-red-500'>*</span>
+							</label>
+							<textarea
+								{...register('rekomendacje', { required: 'To pole jest wymagane.' })}
+								className='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700'
+								rows='4'
+							/>
+							{errors.rekomendacje && <p className='text-red-500 text-xs mt-1'>{errors.rekomendacje.message}</p>}
+						</div>
+					</>
+				)}
+				<div className='border-t border-gray-200 pt-6'>
 				<h3 className='text-lg font-medium text-gray-900 mb-4'>Oświadczenie</h3>
 				<div className='flex items-start space-x-3 mb-6'>
 					<input
@@ -444,3 +504,4 @@ export const Step5 = ({ register, errors }) => (
 		</div>
 	</div>
 )
+}

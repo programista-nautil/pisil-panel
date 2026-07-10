@@ -81,6 +81,12 @@ enum FormType {
   MLODY_SPEDYTOR_ROKU
 }
 
+// Typ członka (zwyczajny vs stowarzyszony) — wspólna numeracja, inne dokumenty/uprawnienia
+enum MemberType {
+  ZWYCZAJNY
+  STOWARZYSZONY
+}
+
 // Model reprezentujący pojedyncze zgłoszenie formularza
 model Submission {
   id        String   @id @default(cuid())
@@ -89,6 +95,8 @@ model Submission {
 
   status    Status   @default(PENDING)
   formType  FormType
+
+  memberType MemberType @default(ZWYCZAJNY)
 
   createdByAdmin Boolean @default(false)
   isArchived     Boolean @default(false)
@@ -160,6 +168,9 @@ model Member {
 
   fax     String?
   website String?
+
+  // Typ członka (zwyczajny domyślnie / stowarzyszony)
+  memberType MemberType @default(ZWYCZAJNY)
 
   // Dane wewnętrzne (NIE na liście publicznej): faktury / korespondencja / e-doręczenia
   nip                   String?

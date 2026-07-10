@@ -185,6 +185,10 @@ export default function AdminDashboard() {
     formData.append("fax", data.fax || "");
     formData.append("website", data.website || "");
     formData.append("nip", data.nip || "");
+    formData.append(
+      "memberType",
+      data.czlonekStowarzyszony ? "STOWARZYSZONY" : "ZWYCZAJNY"
+    );
 
     additionalFiles.forEach((file) => {
       formData.append("additionalFiles[]", file);

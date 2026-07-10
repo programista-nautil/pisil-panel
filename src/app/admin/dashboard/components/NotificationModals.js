@@ -43,6 +43,10 @@ export default function NotificationModals({
 						? `Czy na pewno chcesz zatwierdzić wniosek o patronat dla: ${submissionToVerify?.companyName}?`
 						: successMessage
 						? successMessage
+						: submissionToVerify?.memberType === 'STOWARZYSZONY'
+						? shouldSendEmails
+							? `Potwierdzenie weryfikacji dla firmy "${submissionToVerify?.companyName}" (członek stowarzyszony) spowoduje:\n\n1. Wysłanie powiadomienia do kandydata.\n2. Zmianę statusu na Zweryfikowany.\n\nDla członków stowarzyszonych NIE generujemy komunikatu ani nie wysyłamy masowej wiadomości do pozostałych członków Izby.\n\nCzy chcesz kontynuować?`
+							: `Potwierdzenie weryfikacji dla firmy "${submissionToVerify?.companyName}" (członek stowarzyszony) spowoduje wyłącznie zmianę statusu na Zweryfikowany.\n\nNIE zostanie wysłane żadne powiadomienie ani komunikat.`
 						: shouldSendEmails
 						? `Potwierdzenie weryfikacji dla firmy "${submissionToVerify?.companyName}" spowoduje:\n\n1. Wygenerowanie oficjalnego Komunikatu.\n2. Wysłanie powiadomienia do kandydata.\n3. Rozpoczęcie masowej wysyłki maili do wszystkich członków Izby (proces w tle).\n\nCzy chcesz kontynuować?`
 						: `Potwierdzenie weryfikacji dla firmy "${submissionToVerify?.companyName}" spowoduje:\n\n1. Wygenerowanie oficjalnego Komunikatu (Tylko zapis w systemie).\n2. Zmianę statusu na Zweryfikowany.\n\nNIE zostaną wysłane żadne powiadomienia mailowe.`
@@ -69,7 +73,9 @@ export default function NotificationModals({
 									Wyślij powiadomienia e-mail
 								</label>
 								<p className='text-gray-500 text-xs mt-1'>
-									Jeśli odznaczone: tylko generuje dokument i zmienia status (bez wysyłki do kandydata i członków).
+									{submissionToVerify?.memberType === 'STOWARZYSZONY'
+										? 'Jeśli odznaczone: tylko zmienia status (bez powiadomienia do kandydata).'
+										: 'Jeśli odznaczone: tylko generuje dokument i zmienia status (bez wysyłki do kandydata i członków).'}
 								</p>
 							</div>
 						</div>

@@ -8,10 +8,11 @@ import Docxtemplater from 'docxtemplater'
 import JSZip from 'jszip'
 import { uploadFileToGCS } from '@/lib/gcs'
 import bcrypt from 'bcrypt'
-import { STATIC_ACCEPTANCE_DOCUMENTS } from '@/lib/staticDocuments'
+import { STATIC_ACCEPTANCE_DOCUMENTS, STATIC_ASSOCIATE_DOCUMENTS } from '@/lib/staticDocuments'
 import { syncMailingList } from '@/lib/mailingListUtils'
 import { addToPublicList } from '@/lib/publicListUtils'
 import { convertDocxToPdf } from './docxToPdfService'
+import { getMembershipFee } from '@/config/membershipFees'
 
 const SALT_ROUNDS = 10
 
@@ -62,6 +63,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 	const generatedDocsData = []
 
 	if (submission.formType === FormType.DEKLARACJA_CZLONKOWSKA) {
+		const isStow = submission.memberType === 'STOWARZYSZONY'
 		let docNumber
 		let memberId = submission.memberId
 		let plainPassword = null
@@ -93,7 +95,10 @@ export async function processAcceptance(submission, acceptanceDate) {
 
 			if (existingMember) {
 				memberId = existingMember.id
-				await syncMailingList(existingMember.notificationEmails, submission.notificationEmails)
+				// Stowarzyszeni nie dostają komunikatów — nie dodajemy ich do listy mailingowej
+				if (!isStow) {
+					await syncMailingList(existingMember.notificationEmails, submission.notificationEmails)
+				}
 				await prisma.member.update({
 					where: { id: memberId },
 					data: {
@@ -101,6 +106,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 						name: submission.ceoName,
 						address: submission.address,
 						memberNumber: docNumber,
+						memberType: submission.memberType,
 						phones: submission.phones,
 						invoiceEmail: submission.invoiceEmail,
 						notificationEmails: submission.notificationEmails,
@@ -116,7 +122,10 @@ export async function processAcceptance(submission, acceptanceDate) {
 				//plainPassword = generateRandomPassword()
 				plainPassword = '2015pisil'
 				const hashedPassword = await bcrypt.hash(plainPassword, SALT_ROUNDS)
-				await syncMailingList(null, submission.notificationEmails)
+				// Stowarzyszeni nie dostają komunikatów — nie dodajemy ich do listy mailingowej
+				if (!isStow) {
+					await syncMailingList(null, submission.notificationEmails)
+				}
 				const newMember = await prisma.member.create({
 					data: {
 						email: submission.email,
@@ -126,6 +135,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 						name: submission.ceoName,
 						address: submission.address,
 						memberNumber: docNumber,
+						memberType: submission.memberType,
 						phones: submission.phones,
 						invoiceEmail: submission.invoiceEmail,
 						notificationEmails: submission.notificationEmails,
@@ -167,7 +177,13 @@ export async function processAcceptance(submission, acceptanceDate) {
 		const formattedDate = `${day}.${month}.${year}`
 		const addressParts = splitAddress(submission.address)
 
-		const template1Path = path.join(process.cwd(), 'private', 'document-templates', 'pismo zaśw. przyjęcie.docx')
+		// Stawka składki zależna od roku daty przyjęcia i typu członka (zmiana od 2027)
+		const fee = getMembershipFee(year, submission.memberType)
+
+		// Wariant szablonów dla członka stowarzyszonego
+		const tpl = name => (isStow ? name.replace('.docx', ' STOW.docx') : name)
+
+		const template1Path = path.join(process.cwd(), 'private', 'document-templates', tpl('pismo zaśw. przyjęcie.docx'))
 		const template1Content = await fs.readFile(template1Path)
 		const doc1 = new Docxtemplater(new PizZip(template1Content))
 		doc1.render({
@@ -179,6 +195,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 			adres_linia2: addressParts.line2 ? `\n${addressParts.line2}` : '',
 			mail: submission.email,
 			haslo: plainPassword ? plainPassword : '(Hasło pozostaje bez zmian)',
+			rok_skladki: fee.rok,
 		})
 
 		const docxBuffer1 = doc1.getZip().generate({ type: 'nodebuffer' })
@@ -205,7 +222,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 
 		generatedDocsData.push(fileToSave1)
 
-		const template2Path = path.join(process.cwd(), 'private', 'document-templates', 'pismo w sprawie składek.docx')
+		const template2Path = path.join(process.cwd(), 'private', 'document-templates', tpl('pismo w sprawie składek.docx'))
 		const template2Content = await fs.readFile(template2Path)
 		const doc2 = new Docxtemplater(new PizZip(template2Content))
 		doc2.render({
@@ -215,6 +232,10 @@ export async function processAcceptance(submission, acceptanceDate) {
 			adres_linia1: addressParts.line1,
 			adres_linia2: addressParts.line2 ? `\n${addressParts.line2}` : '',
 			mail: submission.email,
+			// Stawka składki zależna od roku (do dodania jako tagi w szablonie DOCX)
+			kwota_skladki: fee.kwota,
+			rok_skladki: fee.rok,
+			data_uchwala_skladki: fee.dataUchwaly,
 		})
 		const docxBuffer2 = doc2.getZip().generate({ type: 'nodebuffer' })
 		const docxFilename2 = `pismo w sprawie składek_${docNumber}.docx`
@@ -240,7 +261,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 
 		generatedDocsData.push(fileToSave2)
 
-		const template3Path = path.join(process.cwd(), 'private', 'document-templates', 'zasw.docx')
+		const template3Path = path.join(process.cwd(), 'private', 'document-templates', tpl('zasw.docx'))
 		const template3Content = await fs.readFile(template3Path)
 		const doc3 = new Docxtemplater(new PizZip(template3Content))
 		doc3.render({
@@ -298,7 +319,8 @@ export async function processAcceptance(submission, acceptanceDate) {
 		})
 
 		const zip = new JSZip()
-		for (const filename of STATIC_ACCEPTANCE_DOCUMENTS) {
+		const staticDocs = isStow ? STATIC_ASSOCIATE_DOCUMENTS : STATIC_ACCEPTANCE_DOCUMENTS
+		for (const filename of staticDocs) {
 			const filePath = path.join(process.cwd(), 'private', 'acceptance-documents', filename)
 			const fileContent = await fs.readFile(filePath)
 			zip.file(filename, fileContent)
@@ -341,8 +363,12 @@ export async function processAcceptance(submission, acceptanceDate) {
 	const adminMailOptions = {
 		from: `"System PISiL" <${process.env.SMTP_USER}>`,
 		to: ADMIN_EMAIL,
-		subject: `Potwierdzenie przyjęcia członka: ${submission.companyName}`,
-		html: `Wygenerowano i wysłano dokumenty powitalne dla <strong>${submission.companyName}</strong>. Zostały one również zapisane jako załączniki do zgłoszenia w panelu.`,
+		subject: `Potwierdzenie przyjęcia członka: ${submission.companyName}${
+			submission.memberType === 'STOWARZYSZONY' ? ' (członek stowarzyszony)' : ''
+		}`,
+		html: `Wygenerowano i wysłano dokumenty powitalne dla <strong>${submission.companyName}</strong>${
+			submission.memberType === 'STOWARZYSZONY' ? ' (członek stowarzyszony)' : ''
+		}. Zostały one również zapisane jako załączniki do zgłoszenia w panelu.`,
 		attachments: generatedDocsData.map(doc => ({
 			filename: doc.filename,
 			content: doc.buffer,

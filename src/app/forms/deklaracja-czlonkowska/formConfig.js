@@ -5,6 +5,7 @@ export const deklaracjaFormConfig = {
 	formType: 'DEKLARACJA_CZLONKOWSKA',
 	sessionCookieName: 'formSession_deklaracja',
 	defaultValues: {
+		czlonekStowarzyszony: false,
 		companyName: '',
 		nip: '',
 		regon: '',
@@ -45,6 +46,7 @@ export const deklaracjaFormConfig = {
 		signatoryPosition: '',
 	},
 	testData: {
+		czlonekStowarzyszony: false,
 		companyName: 'TestLogistics Sp. z o.o.',
 		nip: '1234567890',
 		regon: '123456789',

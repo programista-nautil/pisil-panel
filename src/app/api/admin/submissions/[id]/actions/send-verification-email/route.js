@@ -36,6 +36,36 @@ export async function POST(request, { params }) {
 			return NextResponse.json({ message: 'Nieprawidłowy typ formularza' }, { status: 400 })
 		}
 
+		// Członkowie stowarzyszeni: NIE generujemy komunikatu ani nie wysyłamy masowej wysyłki do członków.
+		if (submission.memberType === 'STOWARZYSZONY') {
+			if (shouldSendEmails) {
+				const transporter = nodemailer.createTransport({
+					host: 'smtp.gmail.com',
+					port: 587,
+					secure: false,
+					auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+				})
+				await transporter.sendMail({
+					from: process.env.SMTP_USER,
+					to: submission.email,
+					subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
+					html: `
+                <p>Szanowni Państwo,</p>
+                <p>Informujemy, że Państwa deklaracja członkowska dla firmy <strong>${submission.companyName}</strong> została wstępnie zweryfikowana przez nasze biuro. O decyzji Rady poinformujemy Państwa w osobnej wiadomości.</p>
+                <p>Z poważaniem,<br>Biuro PISiL</p>
+            `,
+				})
+			}
+			return NextResponse.json(
+				{
+					message: shouldSendEmails
+						? 'Zgłoszenie zweryfikowane. Wysłano powiadomienie do kandydata (członek stowarzyszony — bez komunikatu do członków).'
+						: 'Zgłoszenie zweryfikowane (członek stowarzyszony — bez powiadomień).',
+				},
+				{ status: 200 },
+			)
+		}
+
 		let commNumber = submission.communicationNumber
 		if (!commNumber) {
 			const now = new Date()

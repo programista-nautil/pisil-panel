@@ -84,7 +84,10 @@ export async function PATCH(request, { params }) {
 		const oldMember = await prisma.member.findUnique({ where: { id } })
 
 		if (oldMember) {
-			await syncMailingList(oldMember.notificationEmails, notificationEmails)
+			// Stowarzyszeni nie są na liście mailingowej — nie synchronizujemy ich
+			if (oldMember.memberType !== 'STOWARZYSZONY') {
+				await syncMailingList(oldMember.notificationEmails, notificationEmails)
+			}
 			if (oldMember.email !== email) {
 				await removeFromPublicList(oldMember.email)
 			}

@@ -221,6 +221,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 			)
 			yPosition += 3
 
+			if (!formData.czlonekStowarzyszony) {
 			yPosition = wrapText(
 				pdf,
 				`Licencja na pośrednictwo przy przewozie rzeczy: ${formatText(formData.transportLicense)}`,
@@ -247,6 +248,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				contentWidth,
 			)
 			yPosition += 3
+			}
 
 			yPosition = wrapText(
 				pdf,
@@ -270,6 +272,17 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 
 			pdf.setFont('Roboto', 'normal')
 			pdf.setFontSize(10)
+
+			if (formData.czlonekStowarzyszony) {
+				yPosition = wrapText(
+					pdf,
+					'Ta sekcja nie dotyczy członków stowarzyszonych.',
+					margin,
+					yPosition,
+					contentWidth,
+				)
+				yPosition += 8
+			} else {
 
 			const transportServices = [
 				formData.transportMorski && 'Transport morski',
@@ -378,6 +391,7 @@ const PDFGenerator = ({ formData, onGenerated, disabled }) => {
 				contentWidth,
 			)
 			yPosition += 8
+			}
 
 			if (yPosition > 210) {
 				pdf.addPage()

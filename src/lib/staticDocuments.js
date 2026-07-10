@@ -11,3 +11,6 @@ export const STATIC_ACCEPTANCE_DOCUMENTS = [
 	'SA regulamin-pol.pdf',
 	'ubezp..pdf',
 ]
+
+// Członkowie stowarzyszeni dostają skrócony zestaw — tylko dwa regulaminy.
+export const STATIC_ASSOCIATE_DOCUMENTS = ['regulam ekspert.pdf', 'SA regulamin-pol.pdf']

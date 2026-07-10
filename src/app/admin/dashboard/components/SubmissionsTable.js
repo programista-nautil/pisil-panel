@@ -7,6 +7,7 @@ import {
   ArchiveBoxArrowDownIcon,
   ArrowUpOnSquareIcon,
   UserIcon,
+  UserGroupIcon,
   Cog8ToothIcon,
   TrashIcon,
   PaperClipIcon,
@@ -260,6 +261,12 @@ export default function SubmissionsTable({
                           className="flex-shrink-0"
                         >
                           <PencilSquareIcon className="h-5 w-5 text-gray-400" />
+                        </span>
+                      )}
+
+                      {submission.memberType === "STOWARZYSZONY" && (
+                        <span title="Członek stowarzyszony" className="flex-shrink-0">
+                          <UserGroupIcon className="h-5 w-5 text-gray-400" />
                         </span>
                       )}
                     </div>

@@ -52,6 +52,7 @@ export async function POST(request) {
 		const fax = data.get('fax')
 		const website = data.get('website')
 		const nip = data.get('nip')
+		const memberType = data.get('memberType') === 'STOWARZYSZONY' ? 'STOWARZYSZONY' : 'ZWYCZAJNY'
 
 		const acceptanceDate = data.get('acceptanceDate') || new Date().toISOString()
 
@@ -97,6 +98,7 @@ export async function POST(request) {
 					fax: fax || null,
 					website: website || null,
 					nip: nip || null,
+					memberType,
 				},
 			})
 

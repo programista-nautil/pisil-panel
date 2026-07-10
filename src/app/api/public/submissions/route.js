@@ -96,6 +96,7 @@ export async function POST(request) {
 				address: userData.address,
 				phones: userData.phones,
 				nip: userData.nip || null,
+				memberType: userData.czlonekStowarzyszony ? 'STOWARZYSZONY' : 'ZWYCZAJNY',
 				recommendations: userData.rekomendacje || userData.recommendations || null,
 			},
 		})
@@ -113,12 +114,13 @@ export async function POST(request) {
 		const supportEmail = isDeclaration ? EMAILS.DEKLARACJE : formType === 'PATRONAT' ? EMAILS.PATRONATY : EMAILS.DEFAULT
 
 		const isSurvey = formType === 'ANKIETA_SPEDYTOR_ROKU' || formType === 'MLODY_SPEDYTOR_ROKU'
+		const stowSuffix = userData.czlonekStowarzyszony ? ' (członek stowarzyszony)' : ''
 
 		const adminMailOptions = {
 			from: `"System PISiL" <${process.env.SMTP_USER || 'programista@nautil.pl'}>`,
 			to: supportEmail,
 			subject: isDeclaration
-				? `Nowa deklaracja członkowska - ${displayCompanyOrOrg}`
+				? `Nowa deklaracja członkowska${stowSuffix} - ${displayCompanyOrOrg}`
 				: formType === 'PATRONAT'
 					? `Nowy wniosek o patronat - ${displayCompanyOrOrg}`
 					: isSurvey
@@ -126,7 +128,7 @@ export async function POST(request) {
 						: `Nowe zgłoszenie - ${displayCompanyOrOrg}`,
 			html: isDeclaration
 				? `
-        <h2>Nowa deklaracja członkowska</h2>
+        <h2>Nowa deklaracja członkowska${stowSuffix}</h2>
         <p><strong>Firma:</strong> ${displayCompanyOrOrg}</p>
         <p><strong>Email:</strong> ${userData.email}</p>
 		<p><strong>Telefon:</strong> ${userData.phones || 'Nie podano'}</p>

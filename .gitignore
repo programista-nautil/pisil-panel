@@ -67,3 +67,7 @@ src/config/publicMembersList.json
 
 # Lokalne notatki z sekretami (dostępy do VPS itp.)
 .deploy-notes.md
+
+# Plan/oferta wewnętrzna (zakres, wycena) — nie do publicznego repo
+/PLAN-szkolenia-konferencje.md
+/OFERTA-szkolenia-konferencje.md

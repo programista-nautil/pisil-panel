@@ -15,6 +15,7 @@ export default function MultiStepForm({ formConfig }) {
 
 	const {
 		register,
+		unregister,
 		watch,
 		formState: { errors, isValid },
 		reset,
@@ -160,7 +161,7 @@ export default function MultiStepForm({ formConfig }) {
 			</div>
 
 			<div className='min-h-[400px]'>
-				<CurrentStepComponent register={register} errors={errors} watch={watch} setValue={setValue} />
+				<CurrentStepComponent register={register} errors={errors} watch={watch} setValue={setValue} unregister={unregister} />
 			</div>
 
 			{/* Stepper akcji nad przyciskami nawigacyjnymi */}

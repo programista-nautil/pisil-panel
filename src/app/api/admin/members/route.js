@@ -51,6 +51,7 @@ export async function GET(request) {
 					company: true,
 					createdAt: true,
 					memberNumber: true,
+					memberType: true,
 					phones: true,
 					address: true,
 					invoiceEmail: true,
