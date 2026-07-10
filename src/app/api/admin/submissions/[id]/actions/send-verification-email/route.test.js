@@ -1,0 +1,84 @@
+/**
+ * @jest-environment node
+ *
+ * Test integracyjny endpointu weryfikacji zgłoszenia.
+ * Kluczowe: dla członka stowarzyszonego NIE generujemy komunikatu
+ * i NIE uruchamiamy masowej wysyłki do członków.
+ */
+jest.mock('@/auth', () => ({ auth: jest.fn().mockResolvedValue({ user: { role: 'admin' } }) }))
+jest.mock('@/lib/prisma', () => ({
+	__esModule: true,
+	default: {
+		submission: { findUnique: jest.fn(), update: jest.fn(), aggregate: jest.fn() },
+		communication: { aggregate: jest.fn() },
+	},
+}))
+jest.mock('@/lib/queue', () => ({ emailQueue: { add: jest.fn() } }))
+jest.mock('nodemailer', () => ({ createTransport: jest.fn() }))
+jest.mock('@/lib/services/communicationService', () => ({
+	generateCommunicationDoc: jest.fn().mockResolvedValue({ buffer: Buffer.from('x'), fileName: 'Komunikat.docx' }),
+}))
+jest.mock('@/lib/gcs', () => ({ uploadFileToGCS: jest.fn().mockResolvedValue('communications/x.docx') }))
+
+import prisma from '@/lib/prisma'
+import { emailQueue } from '@/lib/queue'
+import nodemailer from 'nodemailer'
+import { generateCommunicationDoc } from '@/lib/services/communicationService'
+import { POST } from './route'
+
+const sendMail = jest.fn().mockResolvedValue({})
+
+const req = (body = { shouldSendEmails: true }) => ({ json: jest.fn().mockResolvedValue(body) })
+const ctx = { params: { id: 'sub1' } }
+
+const sub = overrides => ({
+	id: 'sub1',
+	formType: 'DEKLARACJA_CZLONKOWSKA',
+	memberType: 'ZWYCZAJNY',
+	companyName: 'Firma X',
+	email: 'x@firma.pl',
+	communicationNumber: null,
+	...overrides,
+})
+
+describe('POST send-verification-email — wyjątek stowarzyszonego', () => {
+	beforeEach(() => {
+		jest.clearAllMocks()
+		nodemailer.createTransport.mockReturnValue({ sendMail })
+		prisma.submission.update.mockResolvedValue({})
+		prisma.communication.aggregate.mockResolvedValue({ _max: { number: 0 } })
+		prisma.submission.aggregate.mockResolvedValue({ _max: { communicationNumber: 0 } })
+	})
+
+	test('STOWARZYSZONY: bez komunikatu, bez masowej wysyłki, sam mail do kandydata', async () => {
+		prisma.submission.findUnique.mockResolvedValue(sub({ memberType: 'STOWARZYSZONY' }))
+
+		const res = await POST(req({ shouldSendEmails: true }), ctx)
+
+		expect(res.status).toBe(200)
+		expect(generateCommunicationDoc).not.toHaveBeenCalled()
+		expect(emailQueue.add).not.toHaveBeenCalled()
+		expect(sendMail).toHaveBeenCalledTimes(1) // tylko kandydat
+	})
+
+	test('STOWARZYSZONY + shouldSendEmails=false: bez żadnych maili', async () => {
+		prisma.submission.findUnique.mockResolvedValue(sub({ memberType: 'STOWARZYSZONY' }))
+
+		const res = await POST(req({ shouldSendEmails: false }), ctx)
+
+		expect(res.status).toBe(200)
+		expect(generateCommunicationDoc).not.toHaveBeenCalled()
+		expect(emailQueue.add).not.toHaveBeenCalled()
+		expect(sendMail).not.toHaveBeenCalled()
+	})
+
+	test('ZWYCZAJNY: generuje komunikat i uruchamia masową wysyłkę', async () => {
+		prisma.submission.findUnique.mockResolvedValue(sub({ memberType: 'ZWYCZAJNY' }))
+
+		const res = await POST(req({ shouldSendEmails: true }), ctx)
+
+		expect(res.status).toBe(200)
+		expect(generateCommunicationDoc).toHaveBeenCalled()
+		expect(emailQueue.add).toHaveBeenCalledWith('notify-members', expect.any(Object), expect.any(Object))
+	})
+})
