@@ -36,8 +36,21 @@ export async function POST(request, { params }) {
 			return NextResponse.json({ message: 'Nieprawidłowy typ formularza' }, { status: 400 })
 		}
 
-		// Członkowie stowarzyszeni: NIE generujemy komunikatu ani nie wysyłamy masowej wysyłki do członków.
+		// Członkowie stowarzyszeni: nadajemy numer okólnika (żeby trafili do spisu jak zwyczajni),
+		// ale NIE generujemy komunikatu i NIE wysyłamy masowej wysyłki do członków.
 		if (submission.memberType === 'STOWARZYSZONY') {
+			if (!submission.communicationNumber) {
+				// Numer wspólny z pozostałymi okólnikami. Submission.communicationNumber jest
+				// globalnie @unique, a numeracja rośnie globalnie (nie resetuje się co miesiąc),
+				// więc bierzemy globalny max z obu tabel + 1 (bezpieczne wobec unikalności).
+				const [subMax, commMax] = await Promise.all([
+					prisma.submission.aggregate({ _max: { communicationNumber: true } }),
+					prisma.communication.aggregate({ _max: { number: true } }),
+				])
+				const commNumber = Math.max(subMax._max.communicationNumber ?? 0, commMax._max.number ?? 0) + 1
+				await prisma.submission.update({ where: { id }, data: { communicationNumber: commNumber } })
+			}
+
 			if (shouldSendEmails) {
 				const transporter = nodemailer.createTransport({
 					host: 'smtp.gmail.com',

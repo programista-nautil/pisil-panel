@@ -2,8 +2,8 @@
  * @jest-environment node
  *
  * Test integracyjny endpointu weryfikacji zgłoszenia.
- * Kluczowe: dla członka stowarzyszonego NIE generujemy komunikatu
- * i NIE uruchamiamy masowej wysyłki do członków.
+ * Kluczowe: dla członka stowarzyszonego nadajemy numer okólnika (żeby trafił do spisu),
+ * ale NIE generujemy komunikatu i NIE uruchamiamy masowej wysyłki do członków.
  */
 jest.mock('@/auth', () => ({ auth: jest.fn().mockResolvedValue({ user: { role: 'admin' } }) }))
 jest.mock('@/lib/prisma', () => ({
@@ -50,26 +50,43 @@ describe('POST send-verification-email — wyjątek stowarzyszonego', () => {
 		prisma.submission.aggregate.mockResolvedValue({ _max: { communicationNumber: 0 } })
 	})
 
-	test('STOWARZYSZONY: bez komunikatu, bez masowej wysyłki, sam mail do kandydata', async () => {
+	test('STOWARZYSZONY: nadaje numer (spis), bez komunikatu, bez masowej wysyłki, sam mail do kandydata', async () => {
 		prisma.submission.findUnique.mockResolvedValue(sub({ memberType: 'STOWARZYSZONY' }))
 
 		const res = await POST(req({ shouldSendEmails: true }), ctx)
 
 		expect(res.status).toBe(200)
+		// numer okólnika nadany (trafia do spisu jak zwykli)
+		expect(prisma.submission.update).toHaveBeenCalledWith(
+			expect.objectContaining({ data: expect.objectContaining({ communicationNumber: 1 }) }),
+		)
 		expect(generateCommunicationDoc).not.toHaveBeenCalled()
 		expect(emailQueue.add).not.toHaveBeenCalled()
 		expect(sendMail).toHaveBeenCalledTimes(1) // tylko kandydat
 	})
 
-	test('STOWARZYSZONY + shouldSendEmails=false: bez żadnych maili', async () => {
+	test('STOWARZYSZONY + shouldSendEmails=false: numer nadany, ale bez żadnych maili', async () => {
 		prisma.submission.findUnique.mockResolvedValue(sub({ memberType: 'STOWARZYSZONY' }))
 
 		const res = await POST(req({ shouldSendEmails: false }), ctx)
 
 		expect(res.status).toBe(200)
+		// numer nadajemy niezależnie od wysyłki maili (to sprawa spisu, nie powiadomień)
+		expect(prisma.submission.update).toHaveBeenCalledWith(
+			expect.objectContaining({ data: expect.objectContaining({ communicationNumber: 1 }) }),
+		)
 		expect(generateCommunicationDoc).not.toHaveBeenCalled()
 		expect(emailQueue.add).not.toHaveBeenCalled()
 		expect(sendMail).not.toHaveBeenCalled()
+	})
+
+	test('STOWARZYSZONY z istniejącym numerem: nie nadaje ponownie', async () => {
+		prisma.submission.findUnique.mockResolvedValue(sub({ memberType: 'STOWARZYSZONY', communicationNumber: 42 }))
+
+		const res = await POST(req({ shouldSendEmails: false }), ctx)
+
+		expect(res.status).toBe(200)
+		expect(prisma.submission.update).not.toHaveBeenCalled()
 	})
 
 	test('ZWYCZAJNY: generuje komunikat i uruchamia masową wysyłkę', async () => {

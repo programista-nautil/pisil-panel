@@ -17,13 +17,16 @@ export function submissionToComm(sub, { includeDownloadUrls = false, downloadUrl
       ? `${downloadUrlBase}/submissions/${sub.id}/communication`
       : null;
 
+  // Oznaczenie członka stowarzyszonego w spisie okólników
+  const stowSuffix = sub.memberType === "STOWARZYSZONY" ? " (członek stowarzyszony)" : "";
+
   return {
     id: sub.id,
     year,
     month,
     number: sub.communicationNumber,
-    subject: `Deklaracja członkowska do PISiL (${sub.companyName || "nieznana firma"})`,
-    title: `Deklaracja członkowska do PISiL (${sub.companyName || "nieznana firma"})`,
+    subject: `Deklaracja członkowska do PISiL (${sub.companyName || "nieznana firma"})${stowSuffix}`,
+    title: `Deklaracja członkowska do PISiL (${sub.companyName || "nieznana firma"})${stowSuffix}`,
     body: null,
     authorInitials: null,
     sentAt: sub.createdAt,

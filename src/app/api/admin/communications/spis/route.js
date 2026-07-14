@@ -64,7 +64,11 @@ export async function GET(request) {
 
     return new NextResponse(html, {
       status: 200,
-      headers: { "Content-Type": "text/html; charset=utf-8" },
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        // Podgląd zawsze świeży — bez cache przeglądarki (inaczej stary widok po ponownym otwarciu)
+        "Cache-Control": "no-store, must-revalidate",
+      },
     });
   } catch (error) {
     console.error("Błąd generowania spisu:", error);

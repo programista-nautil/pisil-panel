@@ -134,76 +134,105 @@ export async function POST(request) {
 
 		if (formType === 'DEKLARACJA_CZLONKOWSKA') {
 			if (initialStatus === 'APPROVED') {
-				const maxResult = await prisma.submission.aggregate({ _max: { communicationNumber: true } })
-				const commNumber = (maxResult._max.communicationNumber || 0) + 1
+				// Numer wspólny z pozostałymi okólnikami: globalny max z obu tabel + 1
+				// (Submission.communicationNumber jest @unique, numeracja rośnie globalnie).
+				const [subMax, commMax] = await Promise.all([
+					prisma.submission.aggregate({ _max: { communicationNumber: true } }),
+					prisma.communication.aggregate({ _max: { number: true } }),
+				])
+				const commNumber = Math.max(subMax._max.communicationNumber ?? 0, commMax._max.number ?? 0) + 1
 
 				await prisma.submission.update({
 					where: { id: newSubmission.id },
 					data: { status: 'APPROVED', communicationNumber: commNumber },
 				})
 
-				// Generuj dokument komunikatu
-				const { buffer: commBuffer, fileName: commFileName } = await generateCommunicationDoc(
-					{ ...newSubmission, communicationNumber: commNumber },
-					commNumber,
-				)
-				const commGcsPath = await uploadFileToGCS(commBuffer, `communications/${commFileName}`)
+				if (memberType === 'STOWARZYSZONY') {
+					// Stowarzyszony: numer okólnika nadany wyżej (trafia do spisu),
+					// ale BEZ generowania komunikatu i BEZ masowej wysyłki do członków.
+					if (shouldSendEmails) {
+						await transporter.sendMail({
+							from: process.env.SMTP_USER,
+							to: newSubmission.email,
+							replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
+							bcc: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
+							subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
+							html: `
+                            <p>Szanowni Państwo,</p>
+                            <p>Informujemy, że Państwa deklaracja członkowska dla firmy <strong>${companyName}</strong> została wstępnie zweryfikowana przez nasze biuro. O decyzji Rady poinformujemy Państwa w osobnej wiadomości.</p>
+                            <p>Z poważaniem,<br>Biuro PISiL</p>
+                        `,
+						})
+					}
+				} else {
+					// Generuj dokument komunikatu
+					const { buffer: commBuffer, fileName: commFileName } = await generateCommunicationDoc(
+						{ ...newSubmission, communicationNumber: commNumber },
+						commNumber,
+					)
+					const commGcsPath = await uploadFileToGCS(commBuffer, `communications/${commFileName}`)
 
-				await transporter.sendMail({
-					from: process.env.SMTP_USER,
-					to: newSubmission.email,
-					replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
-					bcc: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
-					subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
-					html: `
+					await transporter.sendMail({
+						from: process.env.SMTP_USER,
+						to: newSubmission.email,
+						replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
+						bcc: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
+						subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
+						html: `
                             <p>Szanowni Państwo,</p>
                             <p>Informujemy, że Państwa deklaracja członkowska dla firmy <strong>${companyName}</strong> została wstępnie zweryfikowana przez nasze biuro. Informacja o Państwa kandydaturze na członka Polskiej Izby Spedycji i Logistyki zostanie przekazana do wszystkich członków.</p>
                             <p>Kolejnym krokiem będzie przedstawienie Państwa kandydatury na najbliższym posiedzeniu Rady Izby. O decyzji Rady poinformujemy Państwa w osobnej wiadomości.</p>
                             <p>Z poważaniem,<br>Biuro PISiL</p>
                         `,
-				})
+					})
 
-				if (shouldSendEmails) {
-					await emailQueue.add(
-						'notify-members',
-						{
-							submissionId: newSubmission.id,
-							companyName: companyName,
-							attachmentGcsPath: commGcsPath,
-							attachmentFileName: commFileName,
-							adminEmail: process.env.ADMIN_EMAIL,
-						},
-						{ attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
-					)
-				}
-				const adminStatusText = shouldSendEmails
-					? 'Wysłano powiadomienie do kandydata oraz URUCHOMIONO wysyłkę masową do członków (w tle).'
-					: 'Wysłano powiadomienie do kandydata, ale POMINIĘTO wysyłkę masową do członków.'
+					if (shouldSendEmails) {
+						await emailQueue.add(
+							'notify-members',
+							{
+								submissionId: newSubmission.id,
+								companyName: companyName,
+								attachmentGcsPath: commGcsPath,
+								attachmentFileName: commFileName,
+								adminEmail: process.env.ADMIN_EMAIL,
+							},
+							{ attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
+						)
+					}
+					const adminStatusText = shouldSendEmails
+						? 'Wysłano powiadomienie do kandydata oraz URUCHOMIONO wysyłkę masową do członków (w tle).'
+						: 'Wysłano powiadomienie do kandydata, ale POMINIĘTO wysyłkę masową do członków.'
 
-				await transporter.sendMail({
-					from: process.env.SMTP_USER,
-					to: process.env.ADMIN_EMAIL,
-					subject: `[SYSTEM] Wygenerowano komunikat: ${companyName}`,
-					html: `
+					await transporter.sendMail({
+						from: process.env.SMTP_USER,
+						to: process.env.ADMIN_EMAIL,
+						subject: `[SYSTEM] Wygenerowano komunikat: ${companyName}`,
+						html: `
                         <h3>Zgłoszenie zweryfikowane</h3>
                         <p>Dla firmy <strong>${companyName}</strong> został wygenerowany komunikat nr <strong>${commNumber}</strong>.</p>
                         <p><strong>Status wysyłki:</strong> ${adminStatusText}</p>
                         <p>Wygenerowany plik znajduje się w załączniku.</p>
                     `,
-					attachments: [
-						{
-							filename: commFileName,
-							content: commBuffer,
-							contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-						},
-					],
-				})
+						attachments: [
+							{
+								filename: commFileName,
+								content: commBuffer,
+								contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+							},
+						],
+					})
+				}
 			}
 
 			// 2. PRZYJĘTY (ACCEPTED)
 			else if (initialStatus === 'ACCEPTED') {
-				const maxResult = await prisma.submission.aggregate({ _max: { communicationNumber: true } })
-				const commNumber = (maxResult._max.communicationNumber || 0) + 1
+				// Numer wspólny z pozostałymi okólnikami: globalny max z obu tabel + 1
+				// (Submission.communicationNumber jest @unique, numeracja rośnie globalnie).
+				const [subMax, commMax] = await Promise.all([
+					prisma.submission.aggregate({ _max: { communicationNumber: true } }),
+					prisma.communication.aggregate({ _max: { number: true } }),
+				])
+				const commNumber = Math.max(subMax._max.communicationNumber ?? 0, commMax._max.number ?? 0) + 1
 
 				await prisma.submission.update({
 					where: { id: newSubmission.id },
