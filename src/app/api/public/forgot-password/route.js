@@ -33,14 +33,14 @@ export async function POST(request) {
 		const resetUrl = `${process.env.NEXTAUTH_URL}/zmiana-hasla?token=${token}`
 
 		const transporter = nodemailer.createTransport({
-			host: 'smtp.gmail.com',
+			host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
 			port: 587,
 			secure: false,
 			auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
 		})
 
 		await transporter.sendMail({
-			from: process.env.SMTP_USER,
+			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 			to: email,
 			subject: 'Reset hasła do Panelu Członka PISiL',
 			html: `

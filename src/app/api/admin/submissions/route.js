@@ -126,7 +126,7 @@ export async function POST(request) {
 		})
 
 		const transporter = nodemailer.createTransport({
-			host: 'smtp.gmail.com',
+			host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
 			port: 587,
 			secure: false,
 			auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
@@ -152,7 +152,7 @@ export async function POST(request) {
 					// ale BEZ generowania komunikatu i BEZ masowej wysyłki do członków.
 					if (shouldSendEmails) {
 						await transporter.sendMail({
-							from: process.env.SMTP_USER,
+							from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 							to: newSubmission.email,
 							replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
 							bcc: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
@@ -173,7 +173,7 @@ export async function POST(request) {
 					const commGcsPath = await uploadFileToGCS(commBuffer, `communications/${commFileName}`)
 
 					await transporter.sendMail({
-						from: process.env.SMTP_USER,
+						from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 						to: newSubmission.email,
 						replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
 						bcc: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
@@ -204,7 +204,7 @@ export async function POST(request) {
 						: 'Wysłano powiadomienie do kandydata, ale POMINIĘTO wysyłkę masową do członków.'
 
 					await transporter.sendMail({
-						from: process.env.SMTP_USER,
+						from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 						to: process.env.ADMIN_EMAIL,
 						subject: `[SYSTEM] Wygenerowano komunikat: ${companyName}`,
 						html: `
@@ -247,7 +247,7 @@ export async function POST(request) {
 			// 3. W TRAKCIE (PENDING)
 			else {
 				await transporter.sendMail({
-					from: process.env.SMTP_USER,
+					from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 					to: newSubmission.email,
 					replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
 					bcc: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
@@ -270,7 +270,7 @@ export async function POST(request) {
             `
 
 			await transporter.sendMail({
-				from: process.env.SMTP_USER,
+				from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 				to: newSubmission.email,
 				replyTo: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,
 				bcc: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,

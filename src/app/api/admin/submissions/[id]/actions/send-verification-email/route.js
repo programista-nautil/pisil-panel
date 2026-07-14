@@ -53,13 +53,13 @@ export async function POST(request, { params }) {
 
 			if (shouldSendEmails) {
 				const transporter = nodemailer.createTransport({
-					host: 'smtp.gmail.com',
+					host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
 					port: 587,
 					secure: false,
 					auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
 				})
 				await transporter.sendMail({
-					from: process.env.SMTP_USER,
+					from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 					to: submission.email,
 					subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
 					html: `
@@ -113,7 +113,7 @@ export async function POST(request, { params }) {
 		})
 
 		const transporter = nodemailer.createTransport({
-			host: 'smtp.gmail.com',
+			host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
 			port: 587,
 			secure: false,
 			auth: {
@@ -123,7 +123,7 @@ export async function POST(request, { params }) {
 		})
 
 		const mailOptions = {
-			from: process.env.SMTP_USER,
+			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 			to: submission.email,
 			subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
 			html: `
@@ -161,7 +161,7 @@ export async function POST(request, { params }) {
 			: 'Wysłano powiadomienie do kandydata, ale POMINIĘTO wysyłkę masową do członków.'
 
 		await transporter.sendMail({
-			from: process.env.SMTP_USER,
+			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 			to: process.env.ADMIN_EMAIL,
 			subject: `[SYSTEM] Wygenerowano komunikat: ${submission.companyName}`,
 			replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,

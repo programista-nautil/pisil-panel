@@ -40,7 +40,7 @@ export async function POST(request, { params }) {
 
     // Wyślij email na ADMIN_EMAIL (do podglądu)
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
+      host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
       port: 587,
       secure: false,
       auth: {
@@ -55,7 +55,7 @@ export async function POST(request, { params }) {
         : comm.title;
 
     await transporter.sendMail({
-      from: `"System PISiL" <${process.env.SMTP_USER}>`,
+      from: `"PISiL Info" <${process.env.SMTP_USER}>`,
       to: process.env.ADMIN_EMAIL,
       subject: `[Komunikat ${numDisplay}] ${comm.subject || comm.title}`,
       html,

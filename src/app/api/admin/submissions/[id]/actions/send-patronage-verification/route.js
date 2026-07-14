@@ -32,7 +32,7 @@ export async function POST(request, { params }) {
 		const logoBuffer = await fs.readFile(logoPath)
 
 		const transporter = nodemailer.createTransport({
-			host: 'smtp.gmail.com',
+			host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
 			port: 587,
 			secure: false,
 			auth: {
@@ -42,7 +42,7 @@ export async function POST(request, { params }) {
 		})
 
 		await transporter.sendMail({
-			from: process.env.SMTP_USER,
+			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 			to: submission.email,
 			subject: `Patronat PISiL został przyznany: ${submission.companyName}`,
 			replyTo: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,

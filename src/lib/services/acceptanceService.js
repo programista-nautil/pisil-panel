@@ -336,14 +336,14 @@ export async function processAcceptance(submission, acceptanceDate) {
 	}
 
 	const transporter = nodemailer.createTransport({
-		host: 'smtp.gmail.com',
+		host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
 		port: 587,
 		secure: false,
 		auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
 	})
 
 	const userMailOptions = {
-		from: process.env.SMTP_USER,
+		from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 		to: submission.email,
 		subject: `Potwierdzenie członkostwa w Polskiej Izbie Spedycji i Logistyki`,
 		replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
@@ -361,7 +361,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 	await transporter.sendMail(userMailOptions)
 
 	const adminMailOptions = {
-		from: `"System PISiL" <${process.env.SMTP_USER}>`,
+		from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 		to: ADMIN_EMAIL,
 		subject: `Potwierdzenie przyjęcia członka: ${submission.companyName}${
 			submission.memberType === 'STOWARZYSZONY' ? ' (członek stowarzyszony)' : ''

@@ -102,7 +102,7 @@ export async function POST(request) {
 		})
 
 		const transporter = nodemailer.createTransport({
-			host: 'smtp.gmail.com',
+			host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
 			port: 587,
 			secure: false,
 			auth: {
@@ -117,7 +117,7 @@ export async function POST(request) {
 		const stowSuffix = userData.czlonekStowarzyszony ? ' (członek stowarzyszony)' : ''
 
 		const adminMailOptions = {
-			from: `"System PISiL" <${process.env.SMTP_USER || 'programista@nautil.pl'}>`,
+			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 			to: supportEmail,
 			subject: isDeclaration
 				? `Nowa deklaracja członkowska${stowSuffix} - ${displayCompanyOrOrg}`
@@ -161,7 +161,7 @@ export async function POST(request) {
 		}
 
 		const userMailOptions = {
-			from: `"Polska Izba Spedycji i Logistyki" <${process.env.SMTP_USER || 'programista@nautil.pl'}>`,
+			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 			to: userData.email,
 			replyTo: supportEmail,
 			subject: isDeclaration

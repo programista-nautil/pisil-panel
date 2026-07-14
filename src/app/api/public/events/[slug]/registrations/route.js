@@ -180,7 +180,7 @@ function publicRegistration(r) {
 
 async function sendConfirmationEmail(event, registration) {
 	const transporter = nodemailer.createTransport({
-		host: 'smtp.gmail.com',
+		host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
 		port: 587,
 		secure: false,
 		auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
@@ -224,7 +224,7 @@ async function sendConfirmationEmail(event, registration) {
 
 	// Potwierdzenie dla uczestnika
 	await transporter.sendMail({
-		from: `"Polska Izba Spedycji i Logistyki" <${process.env.SMTP_USER}>`,
+		from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 		to: registration.email,
 		replyTo: ADMIN_EVENTS_EMAIL,
 		subject: `Potwierdzenie zgłoszenia — ${event.title}`,
@@ -233,7 +233,7 @@ async function sendConfirmationEmail(event, registration) {
 
 	// Powiadomienie dla organizatora (Pani Teresa)
 	await transporter.sendMail({
-		from: `"System PISiL" <${process.env.SMTP_USER}>`,
+		from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 		to: ADMIN_EVENTS_EMAIL,
 		subject: `Nowe zgłoszenie — ${event.title}`,
 		html: `

@@ -66,7 +66,7 @@ const worker = new Worker(
 				}
 
 				const transporter = nodemailer.createTransport({
-					host: 'smtp.gmail.com',
+					host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
 					port: 587,
 					secure: false,
 					pool: true,
@@ -92,7 +92,7 @@ const worker = new Worker(
 						batch.map(async emailAddress => {
 							try {
 								await transporter.sendMail({
-									from: `"Polska Izba Spedycji i Logistyki" <${process.env.SMTP_USER}>`,
+									from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 									to: emailAddress,
 									replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
 									subject: `Nowy kandydat na członka PISiL: ${companyName}`,
@@ -133,7 +133,7 @@ const worker = new Worker(
 				if (adminEmail) {
 					try {
 						await transporter.sendMail({
-							from: process.env.SMTP_USER,
+							from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 							to: adminEmail,
 							subject: `[RAPORT] Zakończono wysyłkę komunikatu: ${companyName}`,
 							html: `
@@ -168,14 +168,14 @@ const worker = new Worker(
 					try {
 						// Tworzymy transporter tutaj awaryjnie, bo błąd mógł wystąpić ZANIM zdefiniowaliśmy go w bloku try
 						const emergencyTransporter = nodemailer.createTransport({
-							host: 'smtp.gmail.com',
+							host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
 							port: 587,
 							secure: false,
 							auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
 						})
 
 						await emergencyTransporter.sendMail({
-							from: process.env.SMTP_USER,
+							from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 							to: adminEmail,
 							subject: `[BŁĄD KRYTYCZNY] Niepowodzenie wysyłki komunikatów: ${companyName}`,
 							html: `

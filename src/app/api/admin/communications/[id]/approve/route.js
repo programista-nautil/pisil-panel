@@ -89,7 +89,7 @@ export async function POST(request, { params }) {
     ).filter(Boolean);
 
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
+      host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
       port: 587,
       secure: false,
       auth: {
@@ -99,7 +99,7 @@ export async function POST(request, { params }) {
     });
 
     await transporter.sendMail({
-      from: `"System PISiL" <${process.env.SMTP_USER}>`,
+      from: `"PISiL Info" <${process.env.SMTP_USER}>`,
       to: process.env.DEKLARACJE_EMAIL,
       subject: `[Komunikat ${numLabel}] ${comm.subject || comm.title}`,
       html,
