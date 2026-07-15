@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { InformationCircleIcon, PaperClipIcon } from "@heroicons/react/24/outline";
 
 // ISO / Date → wartość dla <input type="datetime-local"> (lokalny czas, bez sekund)
 function toLocalInput(value) {
@@ -16,6 +16,35 @@ function toLocalInput(value) {
 const inputCls =
   "block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#005698] focus:ring-[#005698] sm:text-sm text-gray-700";
 const labelCls = "block text-sm font-medium text-gray-700 mb-1";
+
+// Rozwijane bloki na stronie wydarzenia — odwzorowanie tego, co dotąd było dodawane ręcznie
+// w Elementorze. Kolejność jak na pisil.pl: najpierw informacje, potem program, a galeria
+// i relacja dochodzą po wydarzeniu.
+const SEKCJE_DEF = [
+  {
+    klucz: "INFORMACJE",
+    tytul: "Informacje",
+    placeholder:
+      "Zostaw puste, a pokażemy tutaj opis wydarzenia z sekcji „Podstawowe informacje”. Wpisz coś, żeby go zastąpić.",
+  },
+  {
+    klucz: "PROGRAM",
+    tytul: "Program",
+    placeholder: "Np. ramowy plan dnia. Możesz zamiast tego (albo dodatkowo) dołączyć plik z programem.",
+  },
+  {
+    klucz: "GALERIA",
+    tytul: "Galeria zdjęć",
+    placeholder: "Zwykle uzupełniane po wydarzeniu — np. link do galerii zdjęć.",
+  },
+  {
+    klucz: "RELACJA",
+    tytul: "Relacja wideo",
+    placeholder: "Zwykle uzupełniane po wydarzeniu — np. link do playlisty na YouTube.",
+  },
+];
+
+const sekcjaPusta = (s) => !s.tekst.trim() && !s.link.trim() && !s.plikNazwa && !s.nowyPlik;
 
 // Formularz ma kilkanaście pól — bez podziału jest ścianą. Sekcja = jedna decyzja do podjęcia.
 function Sekcja({ tytul, opis, children }) {
@@ -47,15 +76,33 @@ export default function EventFormModal({ isOpen, event, onClose, onSaved }) {
     cenaNieczlonek: event?.cenaNieczlonek ?? "",
     pulaGratisNaFirme: event?.pulaGratisNaFirme ?? (event?.typ === "KONFERENCJA" ? 2 : 0),
     status: event?.status || "DRAFT",
-    // UWAGA: `bankAccount` i `seriesName` celowo NIE są w formularzu — pola zostają w bazie,
-    // ale nie zaśmiecają okna (numer konta będzie stały i pójdzie z konfiguracji, nazwa cyklu
-    // na razie nie jest potrzebna). Nie wysyłamy ich, więc PATCH ich nie rusza, a POST da null.
+    // UWAGA: `bankAccount` celowo NIE jest w formularzu — pole zostaje w bazie, ale numer konta
+    // będzie stały i pójdzie z konfiguracji. Nie wysyłamy go, więc PATCH go nie rusza, a POST da null.
   }));
+
+  // Treści rozwijanych bloków. Plik trzymamy jako obiekt do wysłania — wyślemy go dopiero,
+  // gdy wydarzenie ma już swój identyfikator (przy nowym powstaje dopiero po zapisie).
+  const [sekcje, setSekcje] = useState(() => {
+    const stan = {};
+    for (const d of SEKCJE_DEF) {
+      const istniejaca = (event?.sections || []).find((s) => s.klucz === d.klucz);
+      stan[d.klucz] = {
+        tekst: istniejaca?.tekst || "",
+        link: istniejaca?.link || "",
+        plikNazwa: istniejaca?.plikNazwa || "",
+        nowyPlik: null,
+        usunPlik: false,
+      };
+    }
+    return stan;
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   if (!isOpen) return null;
 
   const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
+  const setSekcja = (klucz, pole, wartosc) =>
+    setSekcje((s) => ({ ...s, [klucz]: { ...s[klucz], [pole]: wartosc } }));
 
   const handleTypChange = (typ) => {
     setForm((f) => {
@@ -90,13 +137,46 @@ export default function EventFormModal({ isOpen, event, onClose, onSaved }) {
         throw new Error(d.message || "Błąd zapisu wydarzenia.");
       }
       const saved = await res.json();
+
+      // Bloki dopiero teraz — przy nowym wydarzeniu identyfikator (a więc i miejsce na plik)
+      // powstaje razem z nim.
+      const zapisaneSekcje = await zapiszSekcje(saved.id);
+
       toast.success(isEdit ? "Zapisano zmiany." : "Utworzono wydarzenie.");
-      onSaved(saved);
+      onSaved({ ...saved, sections: zapisaneSekcje });
     } catch (error) {
       toast.error(error.message);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Zapis idzie blok po bloku (jeden na raz) — bloki niosą pliki, więc nie ma po co
+  // zasypywać serwera równoległymi wysyłkami.
+  const zapiszSekcje = async (eventId) => {
+    const wynik = [];
+    for (const d of SEKCJE_DEF) {
+      const s = sekcje[d.klucz];
+      const istniala = (event?.sections || []).some((x) => x.klucz === d.klucz);
+      if (!istniala && sekcjaPusta(s)) continue; // nic nie było i nic nie ma — nie ruszamy serwera
+
+      const fd = new FormData();
+      fd.append("tekst", s.tekst);
+      fd.append("link", s.link);
+      if (s.nowyPlik) fd.append("file", s.nowyPlik);
+      if (s.usunPlik) fd.append("usunPlik", "1");
+
+      // eslint-disable-next-line no-await-in-loop
+      const odp = await fetch(`/api/admin/events/${eventId}/sections/${d.klucz.toLowerCase()}`, {
+        method: "PUT",
+        body: fd,
+      });
+      if (!odp.ok) throw new Error(`Nie udało się zapisać bloku „${d.tytul}”.`);
+      // eslint-disable-next-line no-await-in-loop
+      const zapisana = await odp.json();
+      if (!zapisana.pusty) wynik.push(zapisana);
+    }
+    return wynik;
   };
 
   return (
@@ -310,6 +390,99 @@ export default function EventFormModal({ isOpen, event, onClose, onSaved }) {
                     className={inputCls}
                   />
                 </div>
+              </div>
+            </Sekcja>
+
+            <Sekcja
+              tytul="Treści na stronie (rozwijane bloki)"
+              opis="Wypełnij tylko to, co chcesz pokazać — pusty blok NIE pojawi się na pisil.pl. Każdy blok może mieć tekst, plik i link (dowolnie, także wszystko naraz). Treści można dokładać stopniowo: program przed wydarzeniem, galerię i relację po nim."
+            >
+              <div className="space-y-3">
+                {SEKCJE_DEF.map((d) => {
+                  const s = sekcje[d.klucz];
+                  const pusty = sekcjaPusta(s);
+                  return (
+                    <div key={d.klucz} className="rounded-md border border-gray-200 p-3 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-gray-800">{d.tytul}</span>
+                        {/* Od razu widać, co wyląduje na stronie, a co nie — bez zgadywania. */}
+                        <span
+                          className={`text-[10px] rounded-full px-2 py-0.5 font-medium whitespace-nowrap ${
+                            pusty
+                              ? "bg-gray-100 text-gray-500"
+                              : "bg-[#005698]/10 text-[#005698]"
+                          }`}
+                        >
+                          {pusty
+                            ? d.klucz === "INFORMACJE"
+                              ? "pokażemy opis wydarzenia"
+                              : "nie pojawi się"
+                            : "będzie widoczny"}
+                        </span>
+                      </div>
+
+                      <textarea
+                        value={s.tekst}
+                        onChange={(e) => setSekcja(d.klucz, "tekst", e.target.value)}
+                        rows={2}
+                        placeholder={d.placeholder}
+                        className={inputCls}
+                      />
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input
+                          type="url"
+                          value={s.link}
+                          onChange={(e) => setSekcja(d.klucz, "link", e.target.value)}
+                          placeholder="Link (opcjonalnie), np. https://…"
+                          className={inputCls}
+                        />
+
+                        {s.nowyPlik ? (
+                          <div className="flex items-center gap-2 text-sm text-gray-700 border border-gray-300 rounded-md p-2">
+                            <PaperClipIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                            <span className="truncate flex-1">{s.nowyPlik.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => setSekcja(d.klucz, "nowyPlik", null)}
+                              className="text-xs text-gray-500 hover:text-gray-700"
+                            >
+                              Cofnij
+                            </button>
+                          </div>
+                        ) : s.plikNazwa && !s.usunPlik ? (
+                          <div className="flex items-center gap-2 text-sm text-gray-700 border border-gray-300 rounded-md p-2">
+                            <PaperClipIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                            <span className="truncate flex-1">{s.plikNazwa}</span>
+                            <button
+                              type="button"
+                              onClick={() => setSekcja(d.klucz, "usunPlik", true)}
+                              className="text-xs text-red-600 hover:text-red-800"
+                            >
+                              Usuń
+                            </button>
+                          </div>
+                        ) : (
+                          <div>
+                            <input
+                              type="file"
+                              onChange={(e) => {
+                                setSekcja(d.klucz, "nowyPlik", e.target.files?.[0] || null);
+                                setSekcja(d.klucz, "usunPlik", false);
+                              }}
+                              className="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-[#005698]/10 file:text-[#005698] hover:file:bg-[#005698]/20"
+                            />
+                            {s.usunPlik && (
+                              <p className="text-[11px] text-red-600 mt-1">
+                                Dotychczasowy plik zostanie usunięty przy zapisie.
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </Sekcja>
 

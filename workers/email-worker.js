@@ -116,7 +116,14 @@ const worker = new Worker(
 								await sleep(100)
 								sentCount++
 							} catch (err) {
-								console.error(`❌ Błąd wysyłki do ${member.email}:`, err.message)
+								// UWAGA: zmienna pętli nazywa się `emailAddress`. Wcześniej było tu `member.email`,
+								// czyli zmienna, która w tym zakresie NIE ISTNIEJE. Skutek był odwrotny do zamierzonego:
+								// jeden zły adres → sendMail rzuca → ten catch (mający go wyciszyć) sam rzucał
+								// ReferenceError → odrzucona obietnica w Promise.all zabijała CAŁĄ partię → zewnętrzny
+								// catch robił `throw` → BullMQ ponawiał zadanie od zera i wysyłał komunikat wszystkim
+								// PONOWNIE (attempts: 3). Mechanizm chroniący przed jednym zepsutym adresem gwarantował,
+								// że ten adres położy całą wysyłkę.
+								console.error(`❌ Błąd wysyłki do ${emailAddress}:`, err.message)
 							}
 						}),
 					)

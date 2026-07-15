@@ -51,7 +51,6 @@ export async function PATCH(request, { params }) {
 			data.cenaNieczlonek = b.cenaNieczlonek != null && b.cenaNieczlonek !== '' ? b.cenaNieczlonek : null
 		if (b.pulaGratisNaFirme !== undefined)
 			data.pulaGratisNaFirme = b.pulaGratisNaFirme != null && b.pulaGratisNaFirme !== '' ? parseInt(b.pulaGratisNaFirme, 10) : 0
-		if (b.seriesName !== undefined) data.seriesName = b.seriesName || null
 		if (b.status !== undefined) data.status = b.status
 
 		// Spójność: adres tylko dla stacjonarnych, link tylko dla online

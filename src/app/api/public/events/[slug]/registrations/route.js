@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer'
 import prisma from '@/lib/prisma'
 import { isValidNip, normalizeNip } from '@/lib/nip'
 import { computeRegistration } from '@/lib/services/eventPricing'
-import { isRegistrationOpen } from '@/lib/events'
+import { powodZamknieciaZapisow } from '@/lib/events'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 
 const CORS = {
@@ -74,12 +74,11 @@ export async function POST(request, { params }) {
 				where: { eventId: event.id, statusRejestracji: 'POTWIERDZONA' },
 			})
 
-			if (!isRegistrationOpen(event, confirmedCount, now)) {
-				// Rejestracja zamknięta (deadline / status). Limit obsługujemy niżej jako lista rezerwowa.
-				const closedByStatus = event.status !== 'PUBLISHED'
-				const closedByDeadline = event.registrationDeadline && new Date(event.registrationDeadline) < now
-				if (closedByStatus || closedByDeadline) return { error: 'closed' }
-			}
+			// Powód liczymy JEDNĄ funkcją współdzieloną z resztą aplikacji — wcześniej trasa powielała
+			// tę regułę u siebie i rozjechała się ze źródłem (patrz komentarz w src/lib/events.js).
+			const powodZamkniecia = powodZamknieciaZapisow(event, confirmedCount, now)
+			// STATUS i TERMIN = odmowa. LIMIT = wpuszczamy na listę rezerwową (obsługa niżej).
+			if (powodZamkniecia === 'STATUS' || powodZamkniecia === 'TERMIN') return { error: 'closed' }
 
 			// Wykrycie członka po NIP (odporne na formatowanie — porównanie samych cyfr)
 			const memberRows = await tx.$queryRaw`
@@ -104,9 +103,8 @@ export async function POST(request, { params }) {
 
 			const { tier, kwota, statusPlatnosci } = computeRegistration(event, { isMember, gratisUsed })
 
-			// Limit miejsc → lista rezerwowa
-			const pelnaSala = event.limitMiejsc != null && confirmedCount >= event.limitMiejsc
-			const statusRejestracji = pelnaSala ? 'LISTA_REZERWOWA' : 'POTWIERDZONA'
+			// Limit miejsc → lista rezerwowa (ten sam powód, ta sama funkcja — bez powielania warunku)
+			const statusRejestracji = powodZamkniecia === 'LIMIT' ? 'LISTA_REZERWOWA' : 'POTWIERDZONA'
 
 			const registration = await tx.eventRegistration.create({
 				data: {
@@ -190,16 +188,22 @@ async function sendConfirmationEmail(event, registration) {
 	const bankAccount = event.bankAccount || DEFAULT_BANK_ACCOUNT
 	const naLiscieRezerwowej = registration.statusRejestracji === 'LISTA_REZERWOWA'
 
-	const miejsce =
-		event.tryb === 'ONLINE'
-			? `Online${event.onlineUrl ? ` — ${event.onlineUrl}` : ''}`
-			: event.address || 'Do potwierdzenia'
+	// Link do spotkania NIE trafia do maila potwierdzającego. Wcześniej doklejaliśmy go do „Miejsca”,
+	// przez co dostawał go KAŻDY zapisany — także z listy rezerwowej i bez wpłaty — natychmiast po
+	// wysłaniu formularza. Link wysyła Pani Teresa świadomą akcją z panelu, do wybranych osób.
+	const miejsce = event.tryb === 'ONLINE' ? 'Online' : event.address || 'Do potwierdzenia'
 
-	const platnoscHtml = platne
-		? `<p><strong>Do zapłaty:</strong> ${formatPln(registration.kwota)}</p>
-		   <p><strong>Płatność:</strong> przelew na konto${bankAccount ? `: <strong>${bankAccount}</strong>` : ' (numer konta prześlemy w osobnej wiadomości)'}<br>
-		   W tytule przelewu prosimy podać nazwę wydarzenia i firmę.</p>`
-		: `<p><strong>Udział bezpłatny.</strong></p>`
+	// Na liście rezerwowej NIE dajemy ŻADNEJ informacji o płatności. Wcześniej mail mówił jednocześnie
+	// „trafiło na listę rezerwową” i „Do zapłaty: 500 zł, konto: …” — ludzie płacili za miejsca, których
+	// nie mają, a biuro musiało robić zwroty. Kwota i konto pojawiają się dopiero w mailu o zwolnionym
+	// miejscu, gdy zgłoszenie ma już status POTWIERDZONA.
+	const platnoscHtml = naLiscieRezerwowej
+		? ''
+		: platne
+			? `<p><strong>Do zapłaty:</strong> ${formatPln(registration.kwota)}</p>
+			   <p><strong>Płatność:</strong> przelew na konto${bankAccount ? `: <strong>${bankAccount}</strong>` : ' (numer konta prześlemy w osobnej wiadomości)'}<br>
+			   W tytule przelewu prosimy podać nazwę wydarzenia i firmę.</p>`
+			: `<p><strong>Udział bezpłatny.</strong></p>`
 
 	const rezerwowaHtml = naLiscieRezerwowej
 		? `<p style="color:#b45309"><strong>Uwaga:</strong> limit miejsc został wyczerpany — Państwa zgłoszenie trafiło na <strong>listę rezerwową</strong>. Poinformujemy o zwolnieniu się miejsca.</p>`

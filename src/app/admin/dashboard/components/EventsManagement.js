@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { CalendarDaysIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import {
+  CalendarDaysIcon,
+  ChevronDownIcon,
+  ArrowTopRightOnSquareIcon,
+} from "@heroicons/react/24/outline";
 import EventFormModal from "./EventFormModal";
 import EventRegistrationsView from "./EventRegistrationsView";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
@@ -23,6 +27,9 @@ const BADGE = {
 
 const TYP_LABEL = { SZKOLENIE: "Szkolenie", KONFERENCJA: "Konferencja" };
 const TRYB_LABEL = { ONLINE: "Online", STACJONARNE: "Stacjonarnie" };
+
+// Adres strony wydarzenia powstaje automatycznie z tytułu, więc administrator nie ma go skąd znać.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://pisil.pl";
 
 const formatDate = (d) =>
   new Date(d).toLocaleString("pl-PL", { dateStyle: "medium", timeStyle: "short" });
@@ -180,6 +187,23 @@ export default function EventsManagement() {
             {event.limitMiejsc != null && ` · limit ${event.limitMiejsc}`}
             {` · zgłoszeń: ${zgloszen}`}
           </p>
+          {/* Adres strony wydarzenia — szkic nie istnieje publicznie, więc nie udajemy działającego linku. */}
+          {event.status === "DRAFT" ? (
+            <p className="text-xs text-gray-400 mt-1" title={`${SITE_URL}/wydarzenia/${event.slug}`}>
+              Adres: /wydarzenia/{event.slug} — zadziała po opublikowaniu
+            </p>
+          ) : (
+            <a
+              href={`${SITE_URL}/wydarzenia/${event.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={`${SITE_URL}/wydarzenia/${event.slug}`}
+              className="text-xs text-[#005698] hover:underline inline-flex items-center gap-1 mt-1"
+            >
+              Zobacz na stronie
+              <ArrowTopRightOnSquareIcon className="h-3 w-3" />
+            </a>
+          )}
           {poTerminie && event.status !== "ARCHIVED" && event.status !== "DRAFT" && (
             <p className="text-xs text-gray-400 mt-1">
               Termin minął — możesz zarchiwizować, żeby uporządkować listę.

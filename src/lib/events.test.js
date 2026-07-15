@@ -1,4 +1,4 @@
-import { isRegistrationOpen, sortPublicEvents } from './events'
+import { isRegistrationOpen, sortPublicEvents, powodZamknieciaZapisow } from './events'
 
 // Bazowe wydarzenie: opublikowane, bez limitu, start w przyszłości.
 const bazowe = {
@@ -51,6 +51,41 @@ describe('isRegistrationOpen', () => {
 		expect(isRegistrationOpen(zLimitem, 2, TERAZ)).toBe(false)
 		expect(isRegistrationOpen(zLimitem, 3, TERAZ)).toBe(false)
 		expect(isRegistrationOpen({ ...bazowe, limitMiejsc: null }, 999, TERAZ)).toBe(true)
+	})
+})
+
+// Powód zamknięcia decyduje o CZYM INNYM niż samo „otwarte/zamknięte”: STATUS i TERMIN to odmowa
+// zapisu, a LIMIT kieruje na listę rezerwową. Trasa zapisu opiera się na tym rozróżnieniu.
+describe('powodZamknieciaZapisow', () => {
+	it('otwarte → null', () => {
+		expect(powodZamknieciaZapisow(bazowe, 0, TERAZ)).toBeNull()
+	})
+
+	it('rozpoznaje powód: STATUS / TERMIN / LIMIT', () => {
+		expect(powodZamknieciaZapisow({ ...bazowe, status: 'CLOSED' }, 0, TERAZ)).toBe('STATUS')
+		expect(
+			powodZamknieciaZapisow({ ...bazowe, registrationDeadline: new Date('2026-07-01T00:00:00Z') }, 0, TERAZ)
+		).toBe('TERMIN')
+		expect(powodZamknieciaZapisow({ ...bazowe, limitMiejsc: 2 }, 2, TERAZ)).toBe('LIMIT')
+	})
+
+	// REGRESJA: reguła „brak terminu → zapisy do startu” była w isRegistrationOpen, ale trasa zapisu
+	// powielała warunek u siebie i sprawdzała TYLKO registrationDeadline. Efekt: na wydarzenie bez
+	// podanego terminu, którego data minęła, dało się zapisać. Powód MUSI wyjść jako TERMIN.
+	it('bez terminu, po dacie wydarzenia → TERMIN (nie null)', () => {
+		const poFakcie = { ...bazowe, registrationDeadline: null, startAt: new Date('2026-07-01T10:00:00Z') }
+		expect(powodZamknieciaZapisow(poFakcie, 0, TERAZ)).toBe('TERMIN')
+	})
+
+	it('STATUS ma pierwszeństwo przed LIMIT (szkic z pełną salą to nie lista rezerwowa)', () => {
+		const szkicPelny = { ...bazowe, status: 'DRAFT', limitMiejsc: 1 }
+		expect(powodZamknieciaZapisow(szkicPelny, 5, TERAZ)).toBe('STATUS')
+	})
+
+	it('jest spójny z isRegistrationOpen', () => {
+		expect(isRegistrationOpen(bazowe, 0, TERAZ)).toBe(powodZamknieciaZapisow(bazowe, 0, TERAZ) === null)
+		const pelny = { ...bazowe, limitMiejsc: 1 }
+		expect(isRegistrationOpen(pelny, 1, TERAZ)).toBe(powodZamknieciaZapisow(pelny, 1, TERAZ) === null)
 	})
 })
 

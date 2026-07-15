@@ -14,7 +14,7 @@ export async function GET(request, { params }) {
 	try {
 		const { slug } = await params
 
-		const event = await prisma.event.findUnique({ where: { slug } })
+		const event = await prisma.event.findUnique({ where: { slug }, include: { sections: true } })
 		if (!event || event.status === 'DRAFT') {
 			return NextResponse.json({ error: 'Nie znaleziono wydarzenia' }, { status: 404, headers: CORS })
 		}

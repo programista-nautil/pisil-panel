@@ -24,7 +24,7 @@ export async function GET() {
 	try {
 		const events = await prisma.event.findMany({
 			orderBy: [{ startAt: 'desc' }],
-			include: { _count: { select: { registrations: true } } },
+			include: { _count: { select: { registrations: true } }, sections: true },
 		})
 		return NextResponse.json(events, { status: 200 })
 	} catch (error) {
@@ -68,7 +68,6 @@ export async function POST(request) {
 				cenaCzlonek: b.cenaCzlonek != null && b.cenaCzlonek !== '' ? b.cenaCzlonek : null,
 				cenaNieczlonek: b.cenaNieczlonek != null && b.cenaNieczlonek !== '' ? b.cenaNieczlonek : null,
 				pulaGratisNaFirme: b.pulaGratisNaFirme != null && b.pulaGratisNaFirme !== '' ? parseInt(b.pulaGratisNaFirme, 10) : 0,
-				seriesName: b.seriesName || null,
 				status: b.status || 'DRAFT',
 			},
 		})

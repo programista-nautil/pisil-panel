@@ -27,7 +27,7 @@ const WYDARZENIA = [
 		prowadzacy: 'dr Anna Kowalska, PISiL', address: 'ul. Świętokrzyska 20, 00-002 Warszawa',
 		limitMiejsc: 100, registrationDeadline: new Date('2026-09-10T23:59:00'),
 		bankAccount: KONTO, cenaCzlonek: '350.00', cenaNieczlonek: '700.00',
-		pulaGratisNaFirme: 2, seriesName: 'Konferencje Noworoczne',
+		pulaGratisNaFirme: 2,
 	},
 	{
 		slug: 'test-konferencja-online',

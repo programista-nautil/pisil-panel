@@ -1,23 +1,35 @@
 // Wspólne helpery domenowe dla wydarzeń (współdzielone przez publiczne API).
 
 /**
- * Czy rejestracja na wydarzenie jest otwarta. Liczone na żywo przy każdym zapytaniu —
- * po minięciu granicy wydarzenie samo przełącza się na „rejestracja zakończona”.
+ * DLACZEGO zapisy są zamknięte — jedyne źródło prawdy o tej regule.
+ * Rozróżnienie powodu jest istotne, bo każdy znaczy co innego: STATUS i TERMIN to odmowa zapisu,
+ * a LIMIT to skierowanie na listę rezerwową. Wcześniej trasa zapisu powielała ten warunek u siebie
+ * i rozjechał się z tym plikiem (sprawdzała tylko `registrationDeadline`, pomijając regułę
+ * „brak terminu → zapisy do startu”), przez co na wydarzenie po terminie dało się zapisać.
  * @param {object} event rekord Event (status, registrationDeadline, startAt, limitMiejsc)
  * @param {number} confirmedCount liczba potwierdzonych zgłoszeń
  * @param {Date} now
+ * @returns {'STATUS'|'TERMIN'|'LIMIT'|null} null = zapisy otwarte
  */
-export function isRegistrationOpen(event, confirmedCount, now = new Date()) {
-	if (event.status !== 'PUBLISHED') return false
+export function powodZamknieciaZapisow(event, confirmedCount, now = new Date()) {
+	if (event.status !== 'PUBLISHED') return 'STATUS'
 	// Granica zapisów: podany termin ma pierwszeństwo. Gdy go NIE podano — zapisy zamykają się
 	// z chwilą rozpoczęcia wydarzenia (bez tego wydarzenie bez terminu przyjmowałoby zgłoszenia
 	// w nieskończoność, także długo po fakcie). To tylko reguła wyliczania — pola
 	// `registrationDeadline` NIE podstawiamy, żeby na stronie nie pojawiał się sztuczny
 	// znacznik „Zapisy do …” dla wydarzeń, przy których terminu świadomie nie ustawiono.
 	const granicaZapisow = event.registrationDeadline || event.startAt
-	if (granicaZapisow && new Date(granicaZapisow) < now) return false
-	if (event.limitMiejsc != null && confirmedCount >= event.limitMiejsc) return false
-	return true
+	if (granicaZapisow && new Date(granicaZapisow) < now) return 'TERMIN'
+	if (event.limitMiejsc != null && confirmedCount >= event.limitMiejsc) return 'LIMIT'
+	return null
+}
+
+/**
+ * Czy rejestracja na wydarzenie jest otwarta. Liczone na żywo przy każdym zapytaniu —
+ * po minięciu granicy wydarzenie samo przełącza się na „rejestracja zakończona”.
+ */
+export function isRegistrationOpen(event, confirmedCount, now = new Date()) {
+	return powodZamknieciaZapisow(event, confirmedCount, now) === null
 }
 
 /**
@@ -70,9 +82,21 @@ export function serializePublicEvent(event, confirmedCount = 0) {
 		cenaCzlonek: toNum(event.cenaCzlonek),
 		cenaNieczlonek: toNum(event.cenaNieczlonek),
 		pulaGratisNaFirme: event.pulaGratisNaFirme,
-		seriesName: event.seriesName,
 		zapisani: confirmedCount,
 		dostepneMiejsca,
 		rejestracjaOtwarta: isRegistrationOpen(event, confirmedCount),
+		// Rozwijane bloki strony wydarzenia. Pusty blok nie istnieje w bazie, więc tu nie trafia —
+		// WordPress renderuje dokładnie to, co dostanie, i nic więcej.
+		sekcje: (event.sections || []).map(s => ({
+			klucz: s.klucz,
+			tekst: s.tekst || null,
+			link: s.link || null,
+			plikNazwa: s.plikNazwa || null,
+			// Ścieżka WZGLĘDNA — WordPress dokleja adres panelu. Nie wystawiamy publicznych URL-i
+			// z chmury; plik idzie zawsze przez naszą trasę.
+			plikUrl: s.plikPath
+				? `/api/public/events/${event.slug}/sections/${s.klucz.toLowerCase()}/plik`
+				: null,
+		})),
 	}
 }

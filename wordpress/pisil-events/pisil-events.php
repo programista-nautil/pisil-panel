@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PISiL — Wydarzenia (integracja z panelem)
  * Description: Lista i zapisy na szkolenia/konferencje pobierane na żywo z panelu PISiL (panel.pisil.pl). Skrót [pisil_wydarzenia] + strony /wydarzenia/{slug}.
- * Version: 1.7.1
+ * Version: 1.8.0
  * Author: PISiL / Nautil
  */
 
@@ -302,16 +302,57 @@ function pisil_render_event($ev) {
 // tekst, ikona +/− po lewej, cienki separator #d5d8dc. „Informacje" = opis wydarzenia z panelu; pozostałe
 // zakładki na razie z tekstem testowym (docelowo załączane z panelu — program, zdjęcia, wideo — tak jak
 // wcześniej wrzucała Pani Teresa). Natywne <details>/<summary> → działa bez JavaScriptu.
-function pisil_render_accordion($ev) {
-	$opis = !empty($ev['description'])
-		? nl2br(esc_html($ev['description']))
-		: '<em>Szczegółowe informacje pojawią się wkrótce.</em>';
-	$items = array(
-		array('Informacje',    $opis),
-		array('Program',       '<p><em>[tekst testowy]</em> Program wydarzenia zostanie opublikowany wkrótce.</p>'),
-		array('Galeria zdjęć', '<p><em>[tekst testowy]</em> Galeria zdjęć pojawi się po wydarzeniu.</p>'),
-		array('Relacja wideo', '<p><em>[tekst testowy]</em> Relacja wideo pojawi się po wydarzeniu.</p>'),
+// Etykiety belek + podpis linku dopasowany do bloku (tak, jak nazywa to strona: „Przejdź do relacji”).
+function pisil_acc_def() {
+	return array(
+		'INFORMACJE' => array('Informacje',    'Więcej informacji'),
+		'PROGRAM'    => array('Program',       'Otwórz program'),
+		'GALERIA'    => array('Galeria zdjęć', 'Przejdź do galerii'),
+		'RELACJA'    => array('Relacja wideo', 'Przejdź do relacji'),
 	);
+}
+
+// Treść jednego bloku: tekst, plik i link — dowolna kombinacja, każde opcjonalne.
+function pisil_sekcja_html($s, $etykieta_linku) {
+	$out = '';
+	if (!empty($s['tekst'])) {
+		$out .= '<p>' . nl2br(esc_html($s['tekst'])) . '</p>';
+	}
+	if (!empty($s['plikUrl'])) {
+		// Panel oddaje ścieżkę względną — plik idzie przez jego trasę, nie przez publiczny adres chmury.
+		$nazwa = !empty($s['plikNazwa']) ? $s['plikNazwa'] : 'Pobierz plik';
+		$out .= '<p><a class="pisil-acc-plik" href="' . esc_url(PISIL_API . $s['plikUrl']) . '" target="_blank" rel="noopener">' . esc_html($nazwa) . '</a></p>';
+	}
+	if (!empty($s['link'])) {
+		$out .= '<p><a class="pisil-acc-link" href="' . esc_url($s['link']) . '" target="_blank" rel="noopener">' . esc_html($etykieta_linku) . '</a></p>';
+	}
+	return $out;
+}
+
+function pisil_render_accordion($ev) {
+	// Bloki uzupełnia Pani Teresa w panelu, gdy treści są gotowe (program przed, galeria i relacja po).
+	// Blok bez treści nie przychodzi z API → belka się nie pojawia. Zero pustych belek na stronie.
+	$sekcje = array();
+	if (!empty($ev['sekcje']) && is_array($ev['sekcje'])) {
+		foreach ($ev['sekcje'] as $s) {
+			if (!empty($s['klucz'])) $sekcje[$s['klucz']] = $s;
+		}
+	}
+
+	$items = array();
+	foreach (pisil_acc_def() as $klucz => $d) {
+		list($tytul, $etykieta_linku) = $d;
+		$html = isset($sekcje[$klucz]) ? pisil_sekcja_html($sekcje[$klucz], $etykieta_linku) : '';
+
+		// „Informacje” bez własnej treści pokazują opis wydarzenia — żeby blok nigdy nie był pusty.
+		if ($klucz === 'INFORMACJE' && $html === '' && !empty($ev['description'])) {
+			$html = '<p>' . nl2br(esc_html($ev['description'])) . '</p>';
+		}
+		if ($html === '') continue;
+		$items[] = array($tytul, $html);
+	}
+	if (empty($items)) return '';
+
 	ob_start();
 	echo '<div class="pisil-acc">';
 	foreach ($items as $it) {
@@ -466,6 +507,9 @@ function pisil_style() {
 	.pisil-acc-item[open]>.pisil-acc-title .pisil-acc-ico::before{content:"\2212"}
 	.pisil-acc-body{padding:16px 18px;background:#fff;border:1px solid #d5d8dc;border-top:0;color:#333;line-height:1.7;font-size:16px}
 	.pisil-acc-body p{margin:0 0 10px}.pisil-acc-body p:last-child{margin:0}
+	.pisil-acc-plik,.pisil-acc-link{display:inline-block;color:#0a284f;font-weight:700;
+		text-decoration:underline;text-underline-offset:3px}
+	.pisil-acc-plik:hover,.pisil-acc-link:hover{color:#14315c}
 
 	@media(max-width:900px){
 		.pisil-grid{grid-template-columns:1fr;gap:24px}

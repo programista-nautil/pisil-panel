@@ -11,14 +11,17 @@ const bucket = storage.bucket(bucketName)
  * Przesyła plik do Google Cloud Storage.
  * @param {Buffer} buffer - Bufor pliku do przesłania.
  * @param {string} destination - Nazwa pliku docelowego w GCS.
- * @returns {Promise<string>} Publiczny URL do przesłanego pliku.
+ * @param {string} [contentType] - Typ pliku. Domyślnie PDF — zdecydowana większość plików w projekcie
+ *   (deklaracje, pisma, załączniki komunikatów) to PDF-y, a domyślna wartość zachowuje zachowanie
+ *   sprzed dodania tego parametru. Podaj jawnie tam, gdzie plik może być czymkolwiek (np. zdjęcia).
+ * @returns {Promise<string>} Ścieżka pliku w GCS (plik jest prywatny — serwujemy go własną trasą).
  */
-export const uploadFileToGCS = (buffer, destination) => {
+export const uploadFileToGCS = (buffer, destination, contentType = 'application/pdf') => {
 	return new Promise((resolve, reject) => {
 		const file = bucket.file(destination)
 		const stream = file.createWriteStream({
 			metadata: {
-				contentType: 'application/pdf',
+				contentType,
 			},
 			resumable: false,
 		})

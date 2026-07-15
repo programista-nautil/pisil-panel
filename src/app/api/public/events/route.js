@@ -17,6 +17,7 @@ export async function GET() {
 		const events = await prisma.event.findMany({
 			where: { status: { not: 'DRAFT' } },
 			orderBy: { startAt: 'asc' },
+			include: { sections: true },
 		})
 
 		// Liczba potwierdzonych zgłoszeń per wydarzenie (do wolnych miejsc)

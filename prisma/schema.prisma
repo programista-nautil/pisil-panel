@@ -303,6 +303,16 @@ enum RegSource {
   ADMIN   // dopisany ręcznie przez admina
 }
 
+// Rozwijane bloki na stronie wydarzenia (pisil.pl) — odwzorowanie tego, co Pani Teresa dotąd
+// dodawała ręcznie w Elementorze. Treści dochodzą w czasie: najpierw informacje, potem program,
+// a galeria i relacja dopiero po wydarzeniu.
+enum EventSectionKey {
+  INFORMACJE
+  PROGRAM
+  GALERIA
+  RELACJA
+}
+
 model Event {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -328,10 +338,30 @@ model Event {
   cenaNieczlonek    Decimal? @db.Decimal(10, 2)
   pulaGratisNaFirme Int      @default(0) // konferencja=2, szkolenie=0
 
-  seriesName String?     // opcjonalne grupowanie "cyklu"
-  status     EventStatus @default(DRAFT)
+  status EventStatus @default(DRAFT)
 
   registrations EventRegistration[]
+  sections      EventSection[]
+}
+
+// Jeden rozwijany blok na stronie wydarzenia. Każdy może mieć tekst, plik i/lub link — dowolna
+// kombinacja. Pusty blok (wszystko puste) NIE jest zapisywany i nie pojawia się na stronie.
+model EventSection {
+  id      String @id @default(cuid())
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+
+  klucz EventSectionKey
+
+  tekst     String? @db.Text
+  link      String?
+  plikPath  String? // ścieżka w GCS (nie publiczny URL — plik serwujemy własną trasą)
+  plikNazwa String? // oryginalna nazwa, pokazywana użytkownikowi
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, klucz])
+  @@index([eventId])
 }
 
 model EventRegistration {
@@ -356,6 +386,15 @@ model EventRegistration {
   zgodaRodo   Boolean
   zgodaRodoAt DateTime?
   zrodlo      RegSource @default(SELF)
+
+  // Admin sprawdził poprawność poziomu/kwoty. Poziom liczymy automatycznie po NIP-ie, ale Pani Teresa
+  // i tak weryfikuje ręcznie (bywają wyjątki, np. większa pula gratisów dla firm z komisji) —
+  // ten znacznik pozwala odróżnić „zweryfikowane” od „jeszcze nietknięte”.
+  zweryfikowane   Boolean   @default(false)
+  zweryfikowaneAt DateTime?
+
+  oplaconeAt DateTime? // kiedy wpłynął przelew (ustawiane przy przejściu na OPLACONE)
+  obecny     Boolean? // obecność na wydarzeniu; null = jeszcze nieoznaczona. Podstawa certyfikatu.
 
   matchedMemberId String? // członek dopasowany po NIP (referencyjnie; bez FK)
   notatka         String?
