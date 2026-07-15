@@ -7,13 +7,15 @@ const CORS = {
 	'Access-Control-Allow-Methods': 'GET, OPTIONS',
 }
 
-// Szczegóły pojedynczego opublikowanego wydarzenia.
+// Szczegóły pojedynczego wydarzenia widocznego publicznie.
+// Ukrywamy wyłącznie szkice — zamknięte i zarchiwizowane zostają dostępne pod swoim adresem
+// (z informacją „Rejestracja zakończona”), żeby nie psuć linków rozesłanych wcześniej mailem.
 export async function GET(request, { params }) {
 	try {
 		const { slug } = await params
 
 		const event = await prisma.event.findUnique({ where: { slug } })
-		if (!event || event.status !== 'PUBLISHED') {
+		if (!event || event.status === 'DRAFT') {
 			return NextResponse.json({ error: 'Nie znaleziono wydarzenia' }, { status: 404, headers: CORS })
 		}
 

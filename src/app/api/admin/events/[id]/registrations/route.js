@@ -37,6 +37,7 @@ export async function POST(request, { params }) {
 		const email = (b.email || '').trim()
 		const firmaNazwa = (b.firmaNazwa || '').trim()
 		const nip = normalizeNip(b.firmaNip || '')
+		const zgodaOdebrana = b.zgodaRodo === true || b.zgodaRodo === 'true'
 
 		if (!firstName || !lastName || !firmaNazwa) {
 			return NextResponse.json({ message: 'Imię, nazwisko i nazwa firmy są wymagane.' }, { status: 400 })
@@ -45,8 +46,13 @@ export async function POST(request, { params }) {
 		const event = await prisma.event.findUnique({ where: { id } })
 		if (!event) return NextResponse.json({ message: 'Nie znaleziono wydarzenia' }, { status: 404 })
 
-		// Automatyczne wyliczenie (jeśli admin nie nadpisał tier)
-		let computed = { tier: 'NIECZLONEK', kwota: 0, statusPlatnosci: 'OCZEKUJE' }
+		// Automatyczne wyliczenie (jeśli admin nie nadpisał tier).
+		// Bez NIP-u nie da się potwierdzić członkostwa → traktujemy jak nie-członka i liczymy cenę
+		// nie-członka. (Wcześniej kwota była zaszyta na 0 zł, przez co uczestnik bez NIP-u na płatnym
+		// szkoleniu dostawał „oczekuje na przelew 0 zł" i wypadał z rozliczeń.)
+		let isMember = false
+		let gratisUsed = 0
+		let matchedMemberId = null
 		if (nip) {
 			const memberRows = await prisma.$queryRaw`
 				SELECT id FROM "Member"
@@ -54,12 +60,13 @@ export async function POST(request, { params }) {
 				  AND "deletedAt" IS NULL
 				LIMIT 1
 			`
-			const isMember = memberRows.length > 0
-			const gratisUsed = await prisma.eventRegistration.count({
+			isMember = memberRows.length > 0
+			matchedMemberId = isMember ? memberRows[0].id : null
+			gratisUsed = await prisma.eventRegistration.count({
 				where: { eventId: id, firmaNip: nip, tier: 'CZLONEK_GRATIS', statusRejestracji: { not: 'ANULOWANA' } },
 			})
-			computed = computeRegistration(event, { isMember, gratisUsed })
 		}
+		const computed = computeRegistration(event, { isMember, gratisUsed })
 
 		const registration = await prisma.eventRegistration.create({
 			data: {
@@ -74,9 +81,13 @@ export async function POST(request, { params }) {
 				kwota: b.kwota != null && b.kwota !== '' ? b.kwota : computed.kwota,
 				statusPlatnosci: b.statusPlatnosci || computed.statusPlatnosci,
 				statusRejestracji: b.statusRejestracji || 'POTWIERDZONA',
-				zgodaRodo: true,
-				zgodaRodoAt: new Date(),
+				// Zgoda RODO: osoba dopisana ręcznie (telefonicznie/mailem) NICZEGO nie kliknęła, więc
+				// domyślnie zapisujemy BRAK zgody. Admin może zaznaczyć, że zgodę odebrał — wtedy i tylko
+				// wtedy stawiamy znacznik czasu. Rejestr zgód ma odzwierciedlać stan faktyczny.
+				zgodaRodo: zgodaOdebrana,
+				zgodaRodoAt: zgodaOdebrana ? new Date() : null,
 				zrodlo: 'ADMIN',
+				matchedMemberId,
 				notatka: b.notatka || null,
 			},
 		})

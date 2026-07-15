@@ -262,6 +262,7 @@ function AddParticipantModal({ eventId, onClose, onAdded }) {
     firmaNip: "",
     firmaAdres: "",
     notatka: "",
+    zgodaRodo: false,
   });
   const [isSaving, setIsSaving] = useState(false);
   const set = (f, v) => setForm((s) => ({ ...s, [f]: v }));
@@ -362,6 +363,22 @@ function AddParticipantModal({ eventId, onClose, onAdded }) {
             onChange={(e) => set("notatka", e.target.value)}
             className={inputCls}
           />
+          {/* Zgoda RODO: osoba dopisana telefonicznie niczego nie kliknęła — rejestr zgód ma
+              odzwierciedlać stan faktyczny, więc admin musi to potwierdzić świadomie. */}
+          <label className="flex items-start gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={form.zgodaRodo}
+              onChange={(e) => set("zgodaRodo", e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#005698] focus:ring-[#005698]"
+            />
+            <span>
+              Uczestnik wyraził zgodę RODO (odebrana telefonicznie lub mailem).
+              <span className="block text-xs text-gray-500">
+                Niezaznaczone = w rejestrze zapiszemy brak zgody. Zgodę trzeba odebrać osobno.
+              </span>
+            </span>
+          </label>
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"

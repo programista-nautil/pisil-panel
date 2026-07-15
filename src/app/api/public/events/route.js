@@ -1,17 +1,21 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { serializePublicEvent } from '@/lib/events'
+import { serializePublicEvent, sortPublicEvents } from '@/lib/events'
 
 const CORS = {
 	'Access-Control-Allow-Origin': '*',
 	'Access-Control-Allow-Methods': 'GET, OPTIONS',
 }
 
-// Lista opublikowanych wydarzeń (dla strony podglądu / WordPress).
+// Lista wydarzeń widocznych publicznie (dla strony podglądu / WordPress).
+// Publicznie NIE pokazujemy wyłącznie szkiców. Wydarzenia z zamkniętą rejestracją i zarchiwizowane
+// zostają na stronie z informacją „Rejestracja zakończona” (o zamknięciu decyduje `rejestracjaOtwarta`):
+//   - CLOSED   = rejestracja zamknięta ręcznie, wydarzenie nadal widoczne,
+//   - ARCHIVED = porządek w panelu (znika z listy aktywnych), a nie ukrywanie przed odwiedzającymi.
 export async function GET() {
 	try {
 		const events = await prisma.event.findMany({
-			where: { status: 'PUBLISHED' },
+			where: { status: { not: 'DRAFT' } },
 			orderBy: { startAt: 'asc' },
 		})
 
@@ -26,7 +30,8 @@ export async function GET() {
 		})
 		const countMap = Object.fromEntries(counts.map(c => [c.eventId, c._count._all]))
 
-		const payload = events.map(e => serializePublicEvent(e, countMap[e.id] || 0))
+		// Najpierw nadchodzące (od najbliższego), potem minione (od najnowszego).
+		const payload = sortPublicEvents(events.map(e => serializePublicEvent(e, countMap[e.id] || 0)))
 
 		return new NextResponse(JSON.stringify(payload), {
 			status: 200,

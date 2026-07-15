@@ -14,6 +14,11 @@ export default function DeleteConfirmationModal({
 	showNote = false,
 	noteLabel = 'Notatka (opcjonalnie)',
 	notePlaceholder = '',
+	// Wariant przycisku potwierdzenia. Domyślnie 'danger' (czerwony) — zachowanie jak dotąd.
+	// 'brand' dla potwierdzeń, które NIE są usuwaniem (np. archiwizacja, zamknięcie rejestracji),
+	// żeby czerwień pozostała zarezerwowana dla operacji nieodwracalnych.
+	variant = 'danger',
+	busyText = 'Usuwam…',
 }) {
 	const [isDeleting, setIsDeleting] = useState(false)
 	const [note, setNote] = useState('')
@@ -97,9 +102,13 @@ export default function DeleteConfirmationModal({
 						type='button'
 						onClick={handleConfirm}
 						disabled={isDeleting}
-						className='px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50'
+						className={`px-4 py-2 text-sm font-medium text-white rounded-md disabled:opacity-50 ${
+							variant === 'brand'
+								? 'bg-[#005698] hover:bg-[#005698]/90'
+								: 'bg-red-600 hover:bg-red-700'
+						}`}
 					>
-						{isDeleting ? 'Usuwam…' : finalButtonText}
+						{isDeleting ? busyText : finalButtonText}
 					</button>
 				</div>
 			</div>
