@@ -9,9 +9,9 @@
  * @param {object} event rekord Event (status, registrationDeadline, startAt, limitMiejsc)
  * @param {number} confirmedCount liczba potwierdzonych zgłoszeń
  * @param {Date} now
- * @returns {'STATUS'|'TERMIN'|'LIMIT'|null} null = zapisy otwarte
+ * @returns {'STATUS'|'DEADLINE'|'LIMIT'|null} null = zapisy otwarte
  */
-export function powodZamknieciaZapisow(event, confirmedCount, now = new Date()) {
+export function registrationClosedReason(event, confirmedCount, now = new Date()) {
 	if (event.status !== 'PUBLISHED') return 'STATUS'
 	// Granica zapisów: podany termin ma pierwszeństwo. Gdy go NIE podano — zapisy zamykają się
 	// z chwilą rozpoczęcia wydarzenia (bez tego wydarzenie bez terminu przyjmowałoby zgłoszenia
@@ -19,7 +19,7 @@ export function powodZamknieciaZapisow(event, confirmedCount, now = new Date()) 
 	// `registrationDeadline` NIE podstawiamy, żeby na stronie nie pojawiał się sztuczny
 	// znacznik „Zapisy do …” dla wydarzeń, przy których terminu świadomie nie ustawiono.
 	const granicaZapisow = event.registrationDeadline || event.startAt
-	if (granicaZapisow && new Date(granicaZapisow) < now) return 'TERMIN'
+	if (granicaZapisow && new Date(granicaZapisow) < now) return 'DEADLINE'
 	if (event.limitMiejsc != null && confirmedCount >= event.limitMiejsc) return 'LIMIT'
 	return null
 }
@@ -29,7 +29,7 @@ export function powodZamknieciaZapisow(event, confirmedCount, now = new Date()) 
  * po minięciu granicy wydarzenie samo przełącza się na „rejestracja zakończona”.
  */
 export function isRegistrationOpen(event, confirmedCount, now = new Date()) {
-	return powodZamknieciaZapisow(event, confirmedCount, now) === null
+	return registrationClosedReason(event, confirmedCount, now) === null
 }
 
 /**

@@ -4,7 +4,7 @@
  * CommonJS — używany przez worker BullMQ (`require`). Zależności (prisma, sendToOne, sleep) są
  * WSTRZYKIWANE, żeby dało się to przetestować bez Redisa i bez SMTP.
  *
- * Idempotencja: dla każdego odbiorcy zakładamy znacznik w bazie PRZED wysyłką. Naruszenie unikalności
+ * Idempotencja: dla każdego recipients zakładamy znacznik w bazie PRZED wysyłką. Naruszenie unikalności
  * (P2002) znaczy „do tej osoby już poszło" → pomijamy. Kolejność „zapis → wysyłka" jest celowa: SMTP
  * nie jest transakcyjny, więc któraś kolejność musi być ryzykowna. Wolimy mail NIEWYSŁANY (widać go
  * w logu jako brak/BLAD, można ponowić) niż wysłany DWA razy. Baza przeżywa restart procesu — pamięć nie.
@@ -14,23 +14,23 @@
  * @param {object} opcje
  * @param {string} opcje.scope   rodzaj wysyłki, np. "notify-members"
  * @param {string} opcje.refId   czego dotyczy (submissionId / eventId / communicationId)
- * @param {string[]} opcje.odbiorcy  adresy e-mail
- * @param {(email:string)=>object} opcje.budujWiadomosc  buduje wiadomość dla `sendToOne`
+ * @param {string[]} opcje.recipients  adresy e-mail
+ * @param {(email:string)=>object} opcje.buildMessage  buduje wiadomość dla `sendToOne`
  * @param {number} [opcje.batchSize=25]  ile maili na partię
  * @param {number} [opcje.delayMs=60000] przerwa między partiami (limit Exchange: 30 wiadomości/min)
  * @param {object} deps { prisma, sendToOne, sleep, logger }
- * @returns {Promise<{wyslano:number, pominieto:number, bledy:Array<{email:string,error:string}>}>}
+ * @returns {Promise<{sent:number, skipped:number, errors:Array<{email:string,error:string}>}>}
  */
-async function wyslijMasowoIdempotentnie(opcje, deps) {
-	const { scope, refId, odbiorcy, budujWiadomosc, batchSize = 25, delayMs = 60000 } = opcje
+async function sendBulkIdempotent(opcje, deps) {
+	const { scope, refId, recipients, buildMessage, batchSize = 25, delayMs = 60000 } = opcje
 	const { prisma, sendToOne, sleep, logger = console } = deps
 
-	let wyslano = 0
-	let pominieto = 0
-	const bledy = []
+	let sent = 0
+	let skipped = 0
+	const errors = []
 
-	for (let i = 0; i < odbiorcy.length; i += batchSize) {
-		const batch = odbiorcy.slice(i, i + batchSize)
+	for (let i = 0; i < recipients.length; i += batchSize) {
+		const batch = recipients.slice(i, i + batchSize)
 
 		await Promise.all(
 			batch.map(async email => {
@@ -39,7 +39,7 @@ async function wyslijMasowoIdempotentnie(opcje, deps) {
 					await prisma.mailSendLog.create({ data: { scope, refId, email } })
 				} catch (e) {
 					if (e.code === 'P2002') {
-						pominieto++
+						skipped++
 						return
 					}
 					throw e
@@ -47,11 +47,11 @@ async function wyslijMasowoIdempotentnie(opcje, deps) {
 
 				// 2) Wysyłka. Błąd jednego adresu NIE zabija partii — oznaczamy go i lecimy dalej.
 				try {
-					await sendToOne(budujWiadomosc(email))
-					wyslano++
+					await sendToOne(buildMessage(email))
+					sent++
 				} catch (sendErr) {
 					const msg = String(sendErr && sendErr.message ? sendErr.message : sendErr)
-					bledy.push({ email, error: msg })
+					errors.push({ email, error: msg })
 					logger.error(`❌ Błąd wysyłki do ${email}: ${msg}`)
 					// Znacznik zostaje (nie kasujemy) — status BLAD zasila listę „kto nie dostał".
 					// Ponowne uruchomienie zadania NIE wyśle tu drugi raz; nieudane dosyła się świadomie.
@@ -66,10 +66,10 @@ async function wyslijMasowoIdempotentnie(opcje, deps) {
 		)
 
 		// Pacing pod limit Exchange Online (30 wiadomości/min): odczekujemy między partiami.
-		if (i + batchSize < odbiorcy.length) await sleep(delayMs)
+		if (i + batchSize < recipients.length) await sleep(delayMs)
 	}
 
-	return { wyslano, pominieto, bledy }
+	return { sent, skipped, errors }
 }
 
-module.exports = { wyslijMasowoIdempotentnie }
+module.exports = { sendBulkIdempotent }

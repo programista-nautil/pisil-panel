@@ -178,7 +178,7 @@ test('link do spotkania NIE trafia do maila potwierdzającego', async () => {
 })
 
 // REGRESJA: wydarzenie BEZ podanego terminu zapisów, którego data już minęła. Reguła „brak terminu →
-// zapisy do startu” żyje w powodZamknieciaZapisow; wcześniej trasa powielała warunek i sprawdzała
+// zapisy do startu” żyje w registrationClosedReason; wcześniej trasa powielała warunek i sprawdzała
 // tylko registrationDeadline, przez co przyjmowała zgłoszenia na wydarzenia sprzed roku.
 test('wydarzenie bez terminu zapisów, po dacie → odmowa (nie lista rezerwowa)', async () => {
 	mockTx.event.findUnique.mockResolvedValue({

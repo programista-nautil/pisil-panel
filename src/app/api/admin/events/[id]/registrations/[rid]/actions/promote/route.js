@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { wyslijZwolnioneMiejsce } from '@/lib/services/eventMails'
+import { sendSpotFreedEmail } from '@/lib/services/eventMails'
 
 // Przeniesienie zgłoszenia z listy rezerwowej na POTWIERDZONA (gdy admin robi to bez anulowania kogoś,
 // np. po zwiększeniu limitu). Status zmienia się OD RAZU — miejsce przestaje być wolne, więc nikt
@@ -13,7 +13,7 @@ export async function POST(request, { params }) {
 	try {
 		const { id, rid } = await params
 		const body = await request.json().catch(() => ({}))
-		const { powiadom = false } = body
+		const { notify = false } = body
 
 		const event = await prisma.event.findUnique({ where: { id } })
 		if (!event) return NextResponse.json({ message: 'Nie znaleziono wydarzenia' }, { status: 404 })
@@ -23,18 +23,18 @@ export async function POST(request, { params }) {
 			return NextResponse.json({ message: 'Nie znaleziono zgłoszenia' }, { status: 404 })
 		}
 
-		const przeniesiony = await prisma.eventRegistration.update({
+		const promoted = await prisma.eventRegistration.update({
 			where: { id: rid },
 			data: { statusRejestracji: 'POTWIERDZONA' },
 		})
 
-		const wynik = { przeniesiony, mail: null }
-		if (powiadom) {
-			const termin = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-			wynik.mail = await wyslijZwolnioneMiejsce(event, przeniesiony, { termin })
+		const result = { promoted, email: null }
+		if (notify) {
+			const deadline = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+			result.email = await sendSpotFreedEmail(event, promoted, { deadline })
 		}
 
-		return NextResponse.json(wynik, { status: 200 })
+		return NextResponse.json(result, { status: 200 })
 	} catch (error) {
 		console.error('Błąd przenoszenia zgłoszenia z listy rezerwowej:', error)
 		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })

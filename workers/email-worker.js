@@ -3,7 +3,7 @@ const IORedis = require('ioredis')
 // Brama wysyłkowa (CommonJS) — ten sam kod, przez który idą maile z tras Next.js.
 // Wymusza „jeden adres w DO" i blokuje wysyłkę poza produkcją bez MAIL_CATCH_ALL/ALLOW_REAL_SMTP.
 const { sendToOne } = require('../src/lib/mailer')
-const { wyslijMasowoIdempotentnie } = require('../src/lib/mailBatch')
+const { sendBulkIdempotent } = require('../src/lib/mailBatch')
 const { PrismaClient } = require('@prisma/client')
 const path = require('path')
 const fs = require('fs')
@@ -73,7 +73,7 @@ const worker = new Worker(
 					return
 				}
 
-				const zalaczniki = attachmentBuffer
+				const attachments = attachmentBuffer
 					? [
 							{
 								filename: attachmentFileName,
@@ -86,12 +86,12 @@ const worker = new Worker(
 				// Wysyłka masowa: idempotentna (znacznik per odbiorca w bazie) + pacing pod limit Exchange
 				// Online (30 wiadomości/min → partie po 25 z przerwą 60 s). Ponowienie zadania NIE wyśle
 				// nikomu drugi raz. Logika i testy: src/lib/mailBatch.js.
-				const { wyslano, pominieto, bledy } = await wyslijMasowoIdempotentnie(
+				const { sent, skipped, errors } = await sendBulkIdempotent(
 					{
 						scope: 'notify-members',
 						refId,
-						odbiorcy: recipients,
-						budujWiadomosc: emailAddress => ({
+						recipients: recipients,
+						buildMessage: emailAddress => ({
 							to: emailAddress,
 							replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
 							subject: `Nowy kandydat na członka PISiL: ${companyName}`,
@@ -101,7 +101,7 @@ const worker = new Worker(
 								<p>W załączniku przesyłamy komunikat ze szczegółami zgłoszenia.</p>
 								<p>Pozdrawiamy,<br>Biuro PISiL</p>
 							`,
-							attachments: zalaczniki,
+							attachments: attachments,
 						}),
 						batchSize: 25,
 						delayMs: 60000,
@@ -109,9 +109,9 @@ const worker = new Worker(
 					{ prisma, sendToOne, sleep, logger: console }
 				)
 
-				sentCount = wyslano
+				sentCount = sent
 				console.log(
-					`✅ Zakończono zadanie. Wysłano ${wyslano}, pominięto (już wysłane) ${pominieto}, błędów ${bledy.length} z ${totalRecipients}.`
+					`✅ Zakończono zadanie. Wysłano ${sent}, pominięto (już wysłane) ${skipped}, błędów ${errors.length} z ${totalRecipients}.`
 				)
 
 				if (adminEmail) {
@@ -125,13 +125,13 @@ const worker = new Worker(
                                 <p>Zadanie wysyłki komunikatu dotyczącego firmy <strong>${companyName}</strong> zostało zakończone.</p>
                                 <ul>
                                     <li>Liczba odbiorców w bazie: <strong>${totalRecipients}</strong></li>
-                                    <li>Pomyślnie wysłano: <strong>${wyslano}</strong></li>
-                                    <li>Pominięto (już wysłane wcześniej): <strong>${pominieto}</strong></li>
-                                    <li>Błędy: <strong>${bledy.length}</strong></li>
+                                    <li>Pomyślnie wysłano: <strong>${sent}</strong></li>
+                                    <li>Pominięto (już wysłane wcześniej): <strong>${skipped}</strong></li>
+                                    <li>Błędy: <strong>${errors.length}</strong></li>
                                 </ul>
                                 ${
-									bledy.length
-										? `<p><strong>Nie dotarło do:</strong></p><ul>${bledy
+									errors.length
+										? `<p><strong>Nie dotarło do:</strong></p><ul>${errors
 												.map(b => `<li>${b.email} — ${b.error}</li>`)
 												.join('')}</ul><p>Do tych osób można wysłać ponownie ręcznie.</p>`
 										: ''

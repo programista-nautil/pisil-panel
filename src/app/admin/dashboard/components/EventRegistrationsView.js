@@ -138,7 +138,7 @@ export default function EventRegistrationsView({ event, onBack }) {
   };
 
   // Pierwsza osoba z listy rezerwowej = najstarsze zgłoszenie (tak samo liczy serwer).
-  const pierwszyRezerwowy = useMemo(() => {
+  const firstWaitlisted = useMemo(() => {
     return registrations
       .filter((r) => r.statusRejestracji === "LISTA_REZERWOWA")
       .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))[0] || null;
@@ -146,7 +146,7 @@ export default function EventRegistrationsView({ event, onBack }) {
 
   // Zmiana statusu w tabeli. Dwa przejścia niosą maila i wymagają decyzji, więc otwierają modal
   // zamiast zapisywać po cichu: ANULOWANA (+ ewentualne przeniesienie rezerwowego) oraz
-  // LISTA_REZERWOWA → POTWIERDZONA (mail „zwolniło się miejsce"). Reszta zapisuje się od razu.
+  // LISTA_REZERWOWA → POTWIERDZONA (email „zwolniło się miejsce"). Reszta zapisuje się od razu.
   const handleStatusChange = (reg, nowy) => {
     if (nowy === reg.statusRejestracji) return;
     if (nowy === "ANULOWANA") {
@@ -372,7 +372,7 @@ export default function EventRegistrationsView({ event, onBack }) {
         <CancelModal
           eventId={event.id}
           reg={cancelTarget}
-          pierwszyRezerwowy={pierwszyRezerwowy}
+          firstWaitlisted={firstWaitlisted}
           onClose={() => setCancelTarget(null)}
           onDone={() => {
             setCancelTarget(null);
@@ -530,7 +530,7 @@ function EditRegistrationModal({ event, registration, onClose, onSaved }) {
                   </div>
                 </div>
                 <div>
-                  <label className={labelCls}>E-mail</label>
+                  <label className={labelCls}>E-email</label>
                   <input
                     type="email"
                     value={form.email}
@@ -818,7 +818,7 @@ function AddParticipantModal({ eventId, onClose, onAdded }) {
               </div>
             </div>
             <div>
-              <label className={labelCls}>E-mail</label>
+              <label className={labelCls}>E-email</label>
               <input
                 type="email"
                 value={form.email}
@@ -909,34 +909,34 @@ function AddParticipantModal({ eventId, onClose, onAdded }) {
 }
 
 // -------- Modal anulowania (z dynamicznym przeniesieniem pierwszej osoby z listy rezerwowej) --------
-function CancelModal({ eventId, reg, pierwszyRezerwowy, onClose, onDone }) {
+function CancelModal({ eventId, reg, firstWaitlisted, onClose, onDone }) {
   // Nie proponujemy przeniesienia osoby, którą właśnie anulujemy (gdy sama jest na liście rezerwowej).
-  const rezerwa = pierwszyRezerwowy && pierwszyRezerwowy.id !== reg.id ? pierwszyRezerwowy : null;
+  const waitlisted = firstWaitlisted && firstWaitlisted.id !== reg.id ? firstWaitlisted : null;
 
-  const [powiadomAnulowanego, setPowiadomAnulowanego] = useState(!!reg.email);
-  const [przeniesRezerwowego, setPrzeniesRezerwowego] = useState(!!rezerwa);
-  const [powiadomRezerwowego, setPowiadomRezerwowego] = useState(true);
+  const [notifyCancelled, setNotifyCancelled] = useState(!!reg.email);
+  const [promoteWaitlisted, setPromoteWaitlisted] = useState(!!waitlisted);
+  const [notifyWaitlisted, setNotifyWaitlisted] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const potwierdz = async () => {
+  const handleConfirm = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/admin/events/${eventId}/registrations/${reg.id}/actions/anuluj`, {
+      const res = await fetch(`/api/admin/events/${eventId}/registrations/${reg.id}/actions/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          powiadomAnulowanego,
-          przeniesRezerwowego: !!rezerwa && przeniesRezerwowego,
-          powiadomRezerwowego,
+          notifyCancelled,
+          promoteWaitlisted: !!waitlisted && promoteWaitlisted,
+          notifyWaitlisted,
         }),
       });
       if (!res.ok) throw new Error("Nie udało się anulować.");
       const w = await res.json();
-      const czesci = ["Anulowano zgłoszenie"];
-      if (w.maile?.anulowanego?.wyslano) czesci.push("wysłano powiadomienie");
-      if (w.przeniesiony)
-        czesci.push(`przeniesiono ${w.przeniesiony.firstName} ${w.przeniesiony.lastName} z listy rezerwowej`);
-      toast.success(czesci.join(", ") + ".");
+      const parts = ["Anulowano zgłoszenie"];
+      if (w.emails?.cancelled?.sent) parts.push("wysłano powiadomienie");
+      if (w.promoted)
+        parts.push(`przeniesiono ${w.promoted.firstName} ${w.promoted.lastName} z listy rezerwowej`);
+      toast.success(parts.join(", ") + ".");
       onDone();
     } catch (e) {
       toast.error(e.message);
@@ -956,37 +956,37 @@ function CancelModal({ eventId, reg, pierwszyRezerwowy, onClose, onDone }) {
         <label className="flex items-start gap-2 text-sm text-gray-700">
           <input
             type="checkbox"
-            checked={powiadomAnulowanego}
+            checked={notifyCancelled}
             disabled={!reg.email}
-            onChange={(e) => setPowiadomAnulowanego(e.target.checked)}
+            onChange={(e) => setNotifyCancelled(e.target.checked)}
             className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#005698] focus:ring-[#005698]"
           />
-          <span>Wyślij mail o anulowaniu {reg.email ? `do ${reg.email}` : "(brak e-maila — nie wyślemy)"}</span>
+          <span>Wyślij email o anulowaniu {reg.email ? `do ${reg.email}` : "(brak e-maila — nie wyślemy)"}</span>
         </label>
 
-        {rezerwa && (
+        {waitlisted && (
           <div className="rounded-md border border-gray-200 bg-gray-50 p-3 space-y-2">
             <p className="text-sm text-gray-700">
               Na liście rezerwowej pierwsza:{" "}
-              <span className="font-medium">{rezerwa.firstName} {rezerwa.lastName}</span>
-              <span className="text-gray-500"> (zapisana {formatDzien(rezerwa.createdAt)})</span>
+              <span className="font-medium">{waitlisted.firstName} {waitlisted.lastName}</span>
+              <span className="text-gray-500"> (zapisana {formatDzien(waitlisted.createdAt)})</span>
             </p>
             <label className="flex items-start gap-2 text-sm text-gray-700">
               <input
                 type="checkbox"
-                checked={przeniesRezerwowego}
-                onChange={(e) => setPrzeniesRezerwowego(e.target.checked)}
+                checked={promoteWaitlisted}
+                onChange={(e) => setPromoteWaitlisted(e.target.checked)}
                 className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#005698] focus:ring-[#005698]"
               />
               <span>Przenieś ją na zwolnione miejsce (status → Potwierdzona)</span>
             </label>
-            {przeniesRezerwowego && (
+            {promoteWaitlisted && (
               <label className="flex items-start gap-2 text-sm text-gray-700 pl-6">
                 <input
                   type="checkbox"
-                  checked={powiadomRezerwowego}
-                  disabled={!rezerwa.email}
-                  onChange={(e) => setPowiadomRezerwowego(e.target.checked)}
+                  checked={notifyWaitlisted}
+                  disabled={!waitlisted.email}
+                  onChange={(e) => setNotifyWaitlisted(e.target.checked)}
                   className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#005698] focus:ring-[#005698]"
                 />
                 <span>i wyślij jej „zwolniło się miejsce" (kwota, konto, prośba o potwierdzenie)</span>
@@ -1006,7 +1006,7 @@ function CancelModal({ eventId, reg, pierwszyRezerwowy, onClose, onDone }) {
           </button>
           <button
             type="button"
-            onClick={potwierdz}
+            onClick={handleConfirm}
             disabled={isSaving}
             className="px-4 py-2 text-sm font-medium text-white bg-[#005698] rounded-md hover:bg-[#005698]/90 disabled:opacity-50"
           >
@@ -1020,20 +1020,20 @@ function CancelModal({ eventId, reg, pierwszyRezerwowy, onClose, onDone }) {
 
 // -------- Modal przeniesienia z listy rezerwowej na potwierdzone --------
 function PromoteModal({ eventId, reg, onClose, onDone }) {
-  const [powiadom, setPowiadom] = useState(!!reg.email);
+  const [notify, setNotify] = useState(!!reg.email);
   const [isSaving, setIsSaving] = useState(false);
 
-  const potwierdz = async () => {
+  const handleConfirm = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/admin/events/${eventId}/registrations/${reg.id}/actions/przenies`, {
+      const res = await fetch(`/api/admin/events/${eventId}/registrations/${reg.id}/actions/promote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ powiadom }),
+        body: JSON.stringify({ notify }),
       });
       if (!res.ok) throw new Error("Nie udało się przenieść.");
       const w = await res.json();
-      toast.success(w.mail?.wyslano ? "Przeniesiono i wysłano powiadomienie." : "Przeniesiono na miejsce potwierdzone.");
+      toast.success(w.email?.sent ? "Przeniesiono i wysłano powiadomienie." : "Przeniesiono na miejsce potwierdzone.");
       onDone();
     } catch (e) {
       toast.error(e.message);
@@ -1052,13 +1052,13 @@ function PromoteModal({ eventId, reg, onClose, onDone }) {
         <label className="flex items-start gap-2 text-sm text-gray-700">
           <input
             type="checkbox"
-            checked={powiadom}
+            checked={notify}
             disabled={!reg.email}
-            onChange={(e) => setPowiadom(e.target.checked)}
+            onChange={(e) => setNotify(e.target.checked)}
             className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#005698] focus:ring-[#005698]"
           />
           <span>
-            Wyślij mail „zwolniło się miejsce" (kwota, konto, prośba o potwierdzenie w ciągu 3 dni)
+            Wyślij email „zwolniło się miejsce" (kwota, konto, prośba o potwierdzenie w ciągu 3 dni)
             {!reg.email && " — brak e-maila, nie wyślemy"}
           </span>
         </label>
@@ -1073,7 +1073,7 @@ function PromoteModal({ eventId, reg, onClose, onDone }) {
           </button>
           <button
             type="button"
-            onClick={potwierdz}
+            onClick={handleConfirm}
             disabled={isSaving}
             className="px-4 py-2 text-sm font-medium text-white bg-[#005698] rounded-md hover:bg-[#005698]/90 disabled:opacity-50"
           >

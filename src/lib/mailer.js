@@ -37,21 +37,21 @@ function getTransporter() {
 	return _transporter
 }
 
-function domyslnyFrom() {
+function defaultFrom() {
 	return `"PISiL Info" <${process.env.SMTP_USER}>`
 }
 
 // Przecinek albo średnik w polu adresu = próba wpisania wielu adresów.
-function assertPojedynczyAdres(pole, wartosc) {
-	if (wartosc == null || wartosc === '') return
-	if (Array.isArray(wartosc)) {
+function assertSingleAddress(field, value) {
+	if (value == null || value === '') return
+	if (Array.isArray(value)) {
 		throw new Error(
-			`mailer: pole "${pole}" musi być jednym adresem — dostało tablicę. ` +
+			`mailer: field "${field}" musi być jednym adresem — dostało tablicę. ` +
 				'Wyślij osobną wiadomość do każdego odbiorcy (jeden adres = jeden mail).'
 		)
 	}
-	if (typeof wartosc !== 'string' || /[,;]/.test(wartosc)) {
-		throw new Error(`mailer: pole "${pole}" musi być dokładnie jednym adresem (dostało: ${JSON.stringify(wartosc)}).`)
+	if (typeof value !== 'string' || /[,;]/.test(value)) {
+		throw new Error(`mailer: field "${field}" musi być dokładnie jednym adresem (dostało: ${JSON.stringify(value)}).`)
 	}
 }
 
@@ -64,11 +64,11 @@ function assertPojedynczyAdres(pole, wartosc) {
  */
 async function sendToOne(msg = {}) {
 	if (!msg.to) throw new Error('mailer: brak adresu "to".')
-	assertPojedynczyAdres('to', msg.to)
+	assertSingleAddress('to', msg.to)
 	if (msg.cc != null && msg.cc !== '') {
-		throw new Error('mailer: pole "cc" jest zakazane (ujawnia adresy). Użyj bcc na skrzynkę biura albo osobnej wiadomości.')
+		throw new Error('mailer: field "cc" jest zakazane (ujawnia adresy). Użyj bcc na skrzynkę biura albo osobnej wiadomości.')
 	}
-	assertPojedynczyAdres('bcc', msg.bcc)
+	assertSingleAddress('bcc', msg.bcc)
 
 	const prod = process.env.NODE_ENV === 'production'
 	const test = process.env.NODE_ENV === 'test'
@@ -85,7 +85,7 @@ async function sendToOne(msg = {}) {
 		)
 	}
 
-	let finalMsg = { from: domyslnyFrom(), ...msg }
+	let finalMsg = { from: defaultFrom(), ...msg }
 
 	// Catch-all (poza produkcją): przekieruj wszystko na jeden adres, zachowując w temacie
 	// i nagłówku informację, do kogo mail POWINIEN był pójść.

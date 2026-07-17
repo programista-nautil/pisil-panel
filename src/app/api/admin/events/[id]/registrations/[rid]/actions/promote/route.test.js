@@ -9,11 +9,11 @@ jest.mock('@/lib/prisma', () => ({
 	},
 }))
 jest.mock('@/lib/services/eventMails', () => ({
-	wyslijZwolnioneMiejsce: jest.fn().mockResolvedValue({ wyslano: true }),
+	sendSpotFreedEmail: jest.fn().mockResolvedValue({ sent: true }),
 }))
 
 import prisma from '@/lib/prisma'
-import { wyslijZwolnioneMiejsce } from '@/lib/services/eventMails'
+import { sendSpotFreedEmail } from '@/lib/services/eventMails'
 import { POST } from './route'
 
 const req = body => ({ json: jest.fn().mockResolvedValue(body) })
@@ -27,17 +27,17 @@ beforeEach(() => {
 	prisma.eventRegistration.update.mockResolvedValue({ ...rez, statusRejestracji: 'POTWIERDZONA' })
 })
 
-test('przeniesienie ustawia POTWIERDZONA i (z powiadom) wysyła „zwolniło się miejsce"', async () => {
-	const res = await POST(req({ powiadom: true }), ctx)
+test('przeniesienie ustawia POTWIERDZONA i (z notify) wysyła „zwolniło się miejsce"', async () => {
+	const res = await POST(req({ notify: true }), ctx)
 	expect(res.status).toBe(200)
 	expect(prisma.eventRegistration.update).toHaveBeenCalledWith(
 		expect.objectContaining({ where: { id: 'rez1' }, data: { statusRejestracji: 'POTWIERDZONA' } })
 	)
-	expect(wyslijZwolnioneMiejsce).toHaveBeenCalledTimes(1)
+	expect(sendSpotFreedEmail).toHaveBeenCalledTimes(1)
 })
 
-test('bez powiadom: status zmieniony, mail NIE wychodzi', async () => {
-	await POST(req({ powiadom: false }), ctx)
+test('bez notify: status zmieniony, email NIE wychodzi', async () => {
+	await POST(req({ notify: false }), ctx)
 	expect(prisma.eventRegistration.update).toHaveBeenCalled()
-	expect(wyslijZwolnioneMiejsce).not.toHaveBeenCalled()
+	expect(sendSpotFreedEmail).not.toHaveBeenCalled()
 })

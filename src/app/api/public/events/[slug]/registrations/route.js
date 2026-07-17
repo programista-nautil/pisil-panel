@@ -3,7 +3,7 @@ import { sendToOne } from '@/lib/mailer'
 import prisma from '@/lib/prisma'
 import { isValidNip, normalizeNip } from '@/lib/nip'
 import { computeRegistration } from '@/lib/services/eventPricing'
-import { powodZamknieciaZapisow } from '@/lib/events'
+import { registrationClosedReason } from '@/lib/events'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 
 const CORS = {
@@ -76,9 +76,9 @@ export async function POST(request, { params }) {
 
 			// Powód liczymy JEDNĄ funkcją współdzieloną z resztą aplikacji — wcześniej trasa powielała
 			// tę regułę u siebie i rozjechała się ze źródłem (patrz komentarz w src/lib/events.js).
-			const powodZamkniecia = powodZamknieciaZapisow(event, confirmedCount, now)
+			const powodZamkniecia = registrationClosedReason(event, confirmedCount, now)
 			// STATUS i TERMIN = odmowa. LIMIT = wpuszczamy na listę rezerwową (obsługa niżej).
-			if (powodZamkniecia === 'STATUS' || powodZamkniecia === 'TERMIN') return { error: 'closed' }
+			if (powodZamkniecia === 'STATUS' || powodZamkniecia === 'DEADLINE') return { error: 'closed' }
 
 			// Wykrycie członka po NIP (odporne na formatowanie — porównanie samych cyfr)
 			const memberRows = await tx.$queryRaw`

@@ -2,7 +2,7 @@
 
 // Testujemy CZYSTE szablony — bez wysyłki. Każda asercja negatywna w parze z pozytywną (bez tego
 // test jest zielony także wtedy, gdy html nie powstał). Negatywnie sprawdzamy WZORCE, nie wartości.
-import { budujMailAnulowania, budujMailZwolnioneMiejsce } from './eventMails'
+import { buildCancellationEmail, buildSpotFreedEmail } from './eventMails'
 
 const WZORZEC_KWOTY = /\d+[.,]\d{2}\s*zł/i
 const WZORZEC_KONTA = /\d{2}(\s?\d{4}){6}/
@@ -18,7 +18,7 @@ const event = {
 
 describe('#6 mail anulowania', () => {
 	it('mówi o anulowaniu i daje kontakt (pozytyw), ale NIE zawiera kwoty, konta ani linku (negatyw)', () => {
-		const { subject, html } = budujMailAnulowania(event, { email: 'jan@firma.pl', kwota: 500 })
+		const { subject, html } = buildCancellationEmail(event, { email: 'jan@firma.pl', kwota: 500 })
 		const t = `${subject} ${html}`
 
 		expect(t).toContain(event.title) // pozytyw: treść powstała
@@ -33,22 +33,22 @@ describe('#6 mail anulowania', () => {
 })
 
 describe('#4 mail „zwolniło się miejsce"', () => {
-	it('PŁATNE: zawiera kwotę, konto i termin (pozytyw); nie zawiera linku (negatyw)', () => {
-		const termin = new Date('2026-09-10T00:00:00Z')
-		const { subject, html } = budujMailZwolnioneMiejsce(event, { email: 'jan@firma.pl', kwota: 500 }, { termin })
+	it('PŁATNE: zawiera kwotę, konto i deadline (pozytyw); nie zawiera linku (negatyw)', () => {
+		const deadline = new Date('2026-09-10T00:00:00Z')
+		const { subject, html } = buildSpotFreedEmail(event, { email: 'jan@firma.pl', kwota: 500 }, { deadline })
 		const t = `${subject} ${html}`
 
 		expect(t).toContain(event.title)
 		expect(t).toMatch(/potwierdz/i) // prośba o potwierdzenie udziału
 		expect(t).toMatch(WZORZEC_KWOTY) // kwota JEST (dopiero teraz człowiek ma za co płacić)
 		expect(t).toContain(event.bankAccount) // konto JEST
-		expect(t).toMatch(/10\.09\.2026|10 wrz/i) // termin JEST
+		expect(t).toMatch(/10\.09\.2026|10 wrz/i) // deadline JEST
 
 		expect(t).not.toContain(LINK) // link idzie osobno, świadomą akcją
 	})
 
 	it('BEZPŁATNE: mówi „udział bezpłatny", bez kwoty i konta', () => {
-		const { html } = budujMailZwolnioneMiejsce(event, { email: 'x@x.pl', kwota: 0 }, {})
+		const { html } = buildSpotFreedEmail(event, { email: 'x@x.pl', kwota: 0 }, {})
 		expect(html).toMatch(/bezpłatn/i) // pozytyw
 		expect(html).not.toMatch(WZORZEC_KWOTY) // brak „500,00 zł"
 		expect(html).not.toContain(event.bankAccount)
