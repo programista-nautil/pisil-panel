@@ -15,10 +15,9 @@ jest.mock('@/lib/prisma', () => ({
 	__esModule: true,
 	default: { $transaction: jest.fn(async cb => cb(mockTx)) },
 }))
-jest.mock('nodemailer', () => ({
-	__esModule: true,
-	default: { createTransport: () => ({ sendMail: mockSendMail }) },
-}))
+// Mockujemy BRAMĘ, nie nodemailera — to jest seam wysyłki. mockSendMail dostaje dokładnie
+// obiekt przekazany do sendToOne (bez wstrzykniętego `from`, bo brama jest zamockowana).
+jest.mock('@/lib/mailer', () => ({ sendToOne: (...args) => mockSendMail(...args) }))
 jest.mock('@/lib/rateLimit', () => ({
 	checkRateLimit: jest.fn().mockResolvedValue(true),
 	getClientIp: jest.fn(() => '1.2.3.4'),

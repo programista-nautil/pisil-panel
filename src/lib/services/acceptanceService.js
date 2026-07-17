@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma'
-import nodemailer from 'nodemailer'
+import { sendToOne } from '@/lib/mailer'
 import { FormType, Status } from '@prisma/client'
 import fs from 'fs/promises'
 import path from 'path'
@@ -335,15 +335,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 		})
 	}
 
-	const transporter = nodemailer.createTransport({
-		host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-		port: 587,
-		secure: false,
-		auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-	})
-
 	const userMailOptions = {
-		from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 		to: submission.email,
 		subject: `Potwierdzenie członkostwa w Polskiej Izbie Spedycji i Logistyki`,
 		replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
@@ -358,7 +350,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 		attachments: userNodemailerAttachments,
 	}
 
-	await transporter.sendMail(userMailOptions)
+	await sendToOne(userMailOptions)
 
 	const adminMailOptions = {
 		from: `"PISiL Info" <${process.env.SMTP_USER}>`,
@@ -376,7 +368,7 @@ export async function processAcceptance(submission, acceptanceDate) {
 		})),
 	}
 
-	await transporter.sendMail(adminMailOptions)
+	await sendToOne(adminMailOptions)
 
 	const updatedSubmission = await prisma.submission.findUnique({
 		where: { id: submission.id },

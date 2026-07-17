@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { uploadFileToGCS, downloadFileFromGCS } from "@/lib/gcs";
-import nodemailer from "nodemailer";
+import { sendToOne } from "@/lib/mailer";
 import { buildCommunicationHtml } from "@/lib/communicationHtml";
 
 function padMonth(m) {
@@ -88,18 +88,7 @@ export async function POST(request, { params }) {
       )
     ).filter(Boolean);
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: `"PISiL Info" <${process.env.SMTP_USER}>`,
+    await sendToOne({
       to: process.env.DEKLARACJE_EMAIL,
       subject: `[Komunikat ${numLabel}] ${comm.subject || comm.title}`,
       html,

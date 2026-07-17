@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { emailQueue } from '@/lib/queue'
-import nodemailer from 'nodemailer'
+import { sendToOne } from '@/lib/mailer'
 import { FormType } from '@prisma/client'
 import { generateCommunicationDoc } from '@/lib/services/communicationService' // Import serwisu
 import { uploadFileToGCS } from '@/lib/gcs'
@@ -52,14 +52,7 @@ export async function POST(request, { params }) {
 			}
 
 			if (shouldSendEmails) {
-				const transporter = nodemailer.createTransport({
-					host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-					port: 587,
-					secure: false,
-					auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-				})
-				await transporter.sendMail({
-					from: `"PISiL Info" <${process.env.SMTP_USER}>`,
+				await sendToOne({
 					to: submission.email,
 					subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
 					html: `
@@ -112,18 +105,7 @@ export async function POST(request, { params }) {
 			},
 		})
 
-		const transporter = nodemailer.createTransport({
-			host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-			port: 587,
-			secure: false,
-			auth: {
-				user: process.env.SMTP_USER,
-				pass: process.env.SMTP_PASS,
-			},
-		})
-
 		const mailOptions = {
-			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 			to: submission.email,
 			subject: `Twoja deklaracja członkowska PISiL została zweryfikowana`,
 			html: `
@@ -134,7 +116,7 @@ export async function POST(request, { params }) {
             `,
 		}
 
-		await transporter.sendMail(mailOptions)
+		await sendToOne(mailOptions)
 
 		if (shouldSendEmails) {
 			await emailQueue.add(
@@ -160,7 +142,7 @@ export async function POST(request, { params }) {
 			? 'Wysłano powiadomienie do kandydata oraz URUCHOMIONO wysyłkę masową do członków (w tle).'
 			: 'Wysłano powiadomienie do kandydata, ale POMINIĘTO wysyłkę masową do członków.'
 
-		await transporter.sendMail({
+		await sendToOne({
 			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 			to: process.env.ADMIN_EMAIL,
 			subject: `[SYSTEM] Wygenerowano komunikat: ${submission.companyName}`,

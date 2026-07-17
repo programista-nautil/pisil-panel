@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import nodemailer from 'nodemailer'
+import { sendToOne } from '@/lib/mailer'
 import fs from 'fs/promises'
 import path from 'path'
 
@@ -31,18 +31,7 @@ export async function POST(request, { params }) {
 		const logoPath = path.join(process.cwd(), 'private', 'assets', 'pisil-logo.png')
 		const logoBuffer = await fs.readFile(logoPath)
 
-		const transporter = nodemailer.createTransport({
-			host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-			port: 587,
-			secure: false,
-			auth: {
-				user: process.env.SMTP_USER,
-				pass: process.env.SMTP_PASS,
-			},
-		})
-
-		await transporter.sendMail({
-			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
+		await sendToOne({
 			to: submission.email,
 			subject: `Patronat PISiL został przyznany: ${submission.companyName}`,
 			replyTo: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,

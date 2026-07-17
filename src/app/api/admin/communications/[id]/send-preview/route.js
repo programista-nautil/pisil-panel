@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { uploadFileToGCS } from "@/lib/gcs";
-import nodemailer from "nodemailer";
+import { sendToOne } from "@/lib/mailer";
 import { buildCommunicationHtml } from "@/lib/communicationHtml";
 
 export async function POST(request, { params }) {
@@ -39,23 +39,12 @@ export async function POST(request, { params }) {
     const htmlFileName = `${numLabel}.html`;
 
     // Wyślij email na ADMIN_EMAIL (do podglądu)
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-
     const numDisplay =
       comm.number != null
         ? `${comm.number}/${String(comm.month).padStart(2, "0")}/${comm.year}`
         : comm.title;
 
-    await transporter.sendMail({
-      from: `"PISiL Info" <${process.env.SMTP_USER}>`,
+    await sendToOne({
       to: process.env.ADMIN_EMAIL,
       subject: `[Komunikat ${numDisplay}] ${comm.subject || comm.title}`,
       html,

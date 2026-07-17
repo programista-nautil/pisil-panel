@@ -13,9 +13,7 @@ jest.mock('@/lib/prisma', () => ({
 		attachment: { create: jest.fn() },
 	},
 }))
-jest.mock('nodemailer', () => ({
-	createTransport: jest.fn(() => ({ sendMail: jest.fn().mockResolvedValue({}) })),
-}))
+jest.mock('@/lib/mailer', () => ({ sendToOne: jest.fn().mockResolvedValue({}) }))
 jest.mock('fs/promises', () => ({ readFile: jest.fn().mockResolvedValue(Buffer.from('plik')) }))
 jest.mock('pizzip', () => jest.fn())
 jest.mock('docxtemplater', () =>

@@ -3,7 +3,7 @@ import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
 import { sanitizeFilename } from '@/lib/utils'
-import nodemailer from 'nodemailer'
+import { sendToOne } from '@/lib/mailer'
 import path from 'path'
 import crypto from 'crypto'
 import { generateCommunicationDoc } from '@/lib/services/communicationService'
@@ -125,13 +125,6 @@ export async function POST(request) {
 			return submission
 		})
 
-		const transporter = nodemailer.createTransport({
-			host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-			port: 587,
-			secure: false,
-			auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-		})
-
 		if (formType === 'DEKLARACJA_CZLONKOWSKA') {
 			if (initialStatus === 'APPROVED') {
 				// Numer wspólny z pozostałymi okólnikami: globalny max z obu tabel + 1
@@ -151,7 +144,7 @@ export async function POST(request) {
 					// Stowarzyszony: numer okólnika nadany wyżej (trafia do spisu),
 					// ale BEZ generowania komunikatu i BEZ masowej wysyłki do członków.
 					if (shouldSendEmails) {
-						await transporter.sendMail({
+						await sendToOne({
 							from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 							to: newSubmission.email,
 							replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
@@ -172,7 +165,7 @@ export async function POST(request) {
 					)
 					const commGcsPath = await uploadFileToGCS(commBuffer, `communications/${commFileName}`)
 
-					await transporter.sendMail({
+					await sendToOne({
 						from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 						to: newSubmission.email,
 						replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
@@ -203,7 +196,7 @@ export async function POST(request) {
 						? 'Wysłano powiadomienie do kandydata oraz URUCHOMIONO wysyłkę masową do członków (w tle).'
 						: 'Wysłano powiadomienie do kandydata, ale POMINIĘTO wysyłkę masową do członków.'
 
-					await transporter.sendMail({
+					await sendToOne({
 						from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 						to: process.env.ADMIN_EMAIL,
 						subject: `[SYSTEM] Wygenerowano komunikat: ${companyName}`,
@@ -246,7 +239,7 @@ export async function POST(request) {
 
 			// 3. W TRAKCIE (PENDING)
 			else {
-				await transporter.sendMail({
+				await sendToOne({
 					from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 					to: newSubmission.email,
 					replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
@@ -269,7 +262,7 @@ export async function POST(request) {
 				<p>Pozdrawiamy,<br>Zespół PISiL</p>
             `
 
-			await transporter.sendMail({
+			await sendToOne({
 				from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 				to: newSubmission.email,
 				replyTo: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,

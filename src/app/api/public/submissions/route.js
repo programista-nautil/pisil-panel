@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
+import { sendToOne } from '@/lib/mailer'
 import { PDFDocument, PDFSignature } from 'pdf-lib'
 import prisma from '@/lib/prisma'
 import { uploadFileToGCS } from '@/lib/gcs'
@@ -101,23 +101,12 @@ export async function POST(request) {
 			},
 		})
 
-		const transporter = nodemailer.createTransport({
-			host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-			port: 587,
-			secure: false,
-			auth: {
-				user: process.env.SMTP_USER || 'programista@nautil.pl',
-				pass: process.env.SMTP_PASS || 'your-app-password',
-			},
-		})
-
 		const supportEmail = isDeclaration ? EMAILS.DEKLARACJE : formType === 'PATRONAT' ? EMAILS.PATRONATY : EMAILS.DEFAULT
 
 		const isSurvey = formType === 'ANKIETA_SPEDYTOR_ROKU' || formType === 'MLODY_SPEDYTOR_ROKU'
 		const stowSuffix = userData.czlonekStowarzyszony ? ' (członek stowarzyszony)' : ''
 
 		const adminMailOptions = {
-			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 			to: supportEmail,
 			subject: isDeclaration
 				? `Nowa deklaracja członkowska${stowSuffix} - ${displayCompanyOrOrg}`
@@ -161,7 +150,6 @@ export async function POST(request) {
 		}
 
 		const userMailOptions = {
-			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 			to: userData.email,
 			replyTo: supportEmail,
 			subject: isDeclaration
@@ -228,8 +216,8 @@ export async function POST(request) {
 		}
 
 		try {
-			await transporter.sendMail(adminMailOptions)
-			await transporter.sendMail(userMailOptions)
+			await sendToOne(adminMailOptions)
+			await sendToOne(userMailOptions)
 
 			return NextResponse.json({
 				message: 'Plik został przesłany pomyślnie',

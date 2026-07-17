@@ -1,6 +1,8 @@
 const { Worker } = require('bullmq')
 const IORedis = require('ioredis')
-const nodemailer = require('nodemailer')
+// Brama wysyłkowa (CommonJS) — ten sam kod, przez który idą maile z tras Next.js.
+// Wymusza „jeden adres w DO" i blokuje wysyłkę poza produkcją bez MAIL_CATCH_ALL/ALLOW_REAL_SMTP.
+const { sendToOne } = require('../src/lib/mailer')
 const { PrismaClient } = require('@prisma/client')
 const path = require('path')
 const fs = require('fs')
@@ -65,20 +67,6 @@ const worker = new Worker(
 					return
 				}
 
-				const transporter = nodemailer.createTransport({
-					host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-					port: 587,
-					secure: false,
-					pool: true,
-					maxConnections: 5,
-					maxMessages: 50,
-					rateLimit: 2,
-					auth: {
-						user: process.env.SMTP_USER,
-						pass: process.env.SMTP_PASS,
-					},
-				})
-
 				// 2. Konfiguracja "bąbelkowania" (małe partie dla testu)
 				const BATCH_SIZE = 20 // Wyślij po 10 maili
 				const DELAY_MS = 5000 // 3 sekundy przerwy
@@ -91,8 +79,7 @@ const worker = new Worker(
 					await Promise.all(
 						batch.map(async emailAddress => {
 							try {
-								await transporter.sendMail({
-									from: `"PISiL Info" <${process.env.SMTP_USER}>`,
+								await sendToOne({
 									to: emailAddress,
 									replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
 									subject: `Nowy kandydat na członka PISiL: ${companyName}`,
@@ -139,7 +126,7 @@ const worker = new Worker(
 
 				if (adminEmail) {
 					try {
-						await transporter.sendMail({
+						await sendToOne({
 							from: `"PISiL Info" <${process.env.SMTP_USER}>`,
 							to: adminEmail,
 							subject: `[RAPORT] Zakończono wysyłkę komunikatu: ${companyName}`,
@@ -173,16 +160,7 @@ const worker = new Worker(
 
 				if (adminEmail) {
 					try {
-						// Tworzymy transporter tutaj awaryjnie, bo błąd mógł wystąpić ZANIM zdefiniowaliśmy go w bloku try
-						const emergencyTransporter = nodemailer.createTransport({
-							host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-							port: 587,
-							secure: false,
-							auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-						})
-
-						await emergencyTransporter.sendMail({
-							from: `"PISiL Info" <${process.env.SMTP_USER}>`,
+						await sendToOne({
 							to: adminEmail,
 							subject: `[BŁĄD KRYTYCZNY] Niepowodzenie wysyłki komunikatów: ${companyName}`,
 							html: `

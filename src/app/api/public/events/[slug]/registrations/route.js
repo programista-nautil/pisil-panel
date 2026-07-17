@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
+import { sendToOne } from '@/lib/mailer'
 import prisma from '@/lib/prisma'
 import { isValidNip, normalizeNip } from '@/lib/nip'
 import { computeRegistration } from '@/lib/services/eventPricing'
@@ -177,13 +177,6 @@ function publicRegistration(r) {
 }
 
 async function sendConfirmationEmail(event, registration) {
-	const transporter = nodemailer.createTransport({
-		host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-		port: 587,
-		secure: false,
-		auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-	})
-
 	const platne = Number(registration.kwota) > 0
 	const bankAccount = event.bankAccount || DEFAULT_BANK_ACCOUNT
 	const naLiscieRezerwowej = registration.statusRejestracji === 'LISTA_REZERWOWA'
@@ -227,8 +220,7 @@ async function sendConfirmationEmail(event, registration) {
 	`
 
 	// Potwierdzenie dla uczestnika
-	await transporter.sendMail({
-		from: `"PISiL Info" <${process.env.SMTP_USER}>`,
+	await sendToOne({
 		to: registration.email,
 		replyTo: ADMIN_EVENTS_EMAIL,
 		subject: `Potwierdzenie zgłoszenia — ${event.title}`,
@@ -236,8 +228,7 @@ async function sendConfirmationEmail(event, registration) {
 	})
 
 	// Powiadomienie dla organizatora (Pani Teresa)
-	await transporter.sendMail({
-		from: `"PISiL Info" <${process.env.SMTP_USER}>`,
+	await sendToOne({
 		to: ADMIN_EVENTS_EMAIL,
 		subject: `Nowe zgłoszenie — ${event.title}`,
 		html: `

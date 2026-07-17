@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import * as nodemailer from 'nodemailer'
+import { sendToOne } from '@/lib/mailer'
 import { uploadFileToGCS } from '@/lib/gcs'
 import { generateSurveyResultsPDF } from '@/lib/surveyPdfGenerator'
 import { sanitizeFilename } from '@/lib/utils'
@@ -42,16 +42,8 @@ export async function POST(request) {
 		})
 
 		// 4. Wyślij e-maile
-		const transporter = nodemailer.createTransport({
-			host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-			port: 587,
-			secure: false,
-			auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-		})
-
 		// Mail do admina z załącznikiem PDF
-		await transporter.sendMail({
-			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
+		await sendToOne({
 			to: ADMIN_EMAIL,
 			subject: `Nowe zgłoszenie w ankiecie: ${pdfTitle}`,
 			html: `<p>W załączniku znajdują się wyniki ankiety od: <strong>${submitterName}</strong> (${submissionData.email}).</p>`,
@@ -65,8 +57,7 @@ export async function POST(request) {
 		})
 
 		// Mail do użytkownika
-		await transporter.sendMail({
-			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
+		await sendToOne({
 			to: submissionData.email,
 			subject: `Dziękujemy za udział w ankiecie: ${pdfTitle}`,
 			html: `<p>Dziękujemy za poświęcony czas i przesłanie ankiety. Twoje odpowiedzi zostały zarejestrowane.</p><p>Z pozdrowieniami,<br>Zespół PISiL</p>`,

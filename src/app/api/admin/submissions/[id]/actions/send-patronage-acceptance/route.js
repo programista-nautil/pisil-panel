@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import nodemailer from 'nodemailer'
+import { sendToOne } from '@/lib/mailer'
 
 const textToHtml = text => {
 	if (!text) return ''
@@ -26,18 +26,7 @@ export async function POST(request, { params }) {
 			return NextResponse.json({ message: 'Nie znaleziono zgłoszenia' }, { status: 404 })
 		}
 
-		const transporter = nodemailer.createTransport({
-			host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-			port: 587,
-			secure: false,
-			auth: {
-				user: process.env.SMTP_USER,
-				pass: process.env.SMTP_PASS,
-			},
-		})
-
-		await transporter.sendMail({
-			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
+		await sendToOne({
 			to: submission.email,
 			replyTo: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,
 			bcc: process.env.PATRONATY_EMAIL || process.env.ADMIN_EMAIL,

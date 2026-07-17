@@ -14,7 +14,7 @@ jest.mock('@/lib/prisma', () => ({
 	},
 }))
 jest.mock('@/lib/queue', () => ({ emailQueue: { add: jest.fn() } }))
-jest.mock('nodemailer', () => ({ createTransport: jest.fn() }))
+jest.mock('@/lib/mailer', () => ({ sendToOne: jest.fn().mockResolvedValue({}) }))
 jest.mock('@/lib/services/communicationService', () => ({
 	generateCommunicationDoc: jest.fn().mockResolvedValue({ buffer: Buffer.from('x'), fileName: 'Komunikat.docx' }),
 }))
@@ -22,11 +22,9 @@ jest.mock('@/lib/gcs', () => ({ uploadFileToGCS: jest.fn().mockResolvedValue('co
 
 import prisma from '@/lib/prisma'
 import { emailQueue } from '@/lib/queue'
-import nodemailer from 'nodemailer'
+import { sendToOne } from '@/lib/mailer'
 import { generateCommunicationDoc } from '@/lib/services/communicationService'
 import { POST } from './route'
-
-const sendMail = jest.fn().mockResolvedValue({})
 
 const req = (body = { shouldSendEmails: true }) => ({ json: jest.fn().mockResolvedValue(body) })
 const ctx = { params: { id: 'sub1' } }
@@ -44,7 +42,6 @@ const sub = overrides => ({
 describe('POST send-verification-email — wyjątek stowarzyszonego', () => {
 	beforeEach(() => {
 		jest.clearAllMocks()
-		nodemailer.createTransport.mockReturnValue({ sendMail })
 		prisma.submission.update.mockResolvedValue({})
 		prisma.communication.aggregate.mockResolvedValue({ _max: { number: 0 } })
 		prisma.submission.aggregate.mockResolvedValue({ _max: { communicationNumber: 0 } })
@@ -62,7 +59,7 @@ describe('POST send-verification-email — wyjątek stowarzyszonego', () => {
 		)
 		expect(generateCommunicationDoc).not.toHaveBeenCalled()
 		expect(emailQueue.add).not.toHaveBeenCalled()
-		expect(sendMail).toHaveBeenCalledTimes(1) // tylko kandydat
+		expect(sendToOne).toHaveBeenCalledTimes(1) // tylko kandydat
 	})
 
 	test('STOWARZYSZONY + shouldSendEmails=false: numer nadany, ale bez żadnych maili', async () => {
@@ -77,7 +74,7 @@ describe('POST send-verification-email — wyjątek stowarzyszonego', () => {
 		)
 		expect(generateCommunicationDoc).not.toHaveBeenCalled()
 		expect(emailQueue.add).not.toHaveBeenCalled()
-		expect(sendMail).not.toHaveBeenCalled()
+		expect(sendToOne).not.toHaveBeenCalled()
 	})
 
 	test('STOWARZYSZONY z istniejącym numerem: nie nadaje ponownie', async () => {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import crypto from 'crypto'
-import nodemailer from 'nodemailer'
+import { sendToOne } from '@/lib/mailer'
 
 export async function POST(request) {
 	try {
@@ -32,15 +32,7 @@ export async function POST(request) {
 
 		const resetUrl = `${process.env.NEXTAUTH_URL}/zmiana-hasla?token=${token}`
 
-		const transporter = nodemailer.createTransport({
-			host: process.env.SMTP_HOST || 'smtp.office365.com', requireTLS: true,
-			port: 587,
-			secure: false,
-			auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-		})
-
-		await transporter.sendMail({
-			from: `"PISiL Info" <${process.env.SMTP_USER}>`,
+		await sendToOne({
 			to: email,
 			subject: 'Reset hasła do Panelu Członka PISiL',
 			html: `
