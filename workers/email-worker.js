@@ -3,10 +3,13 @@ const IORedis = require('ioredis')
 // Brama wysyłkowa (CommonJS) — ten sam kod, przez który idą maile z tras Next.js.
 // Wymusza „jeden adres w DO" i blokuje wysyłkę poza produkcją bez MAIL_CATCH_ALL/ALLOW_REAL_SMTP.
 const { sendToOne } = require('../src/lib/mailer')
+const { wyslijMasowoIdempotentnie } = require('../src/lib/mailBatch')
 const { PrismaClient } = require('@prisma/client')
 const path = require('path')
 const fs = require('fs')
 const { Storage } = require('@google-cloud/storage')
+
+const prisma = new PrismaClient()
 
 // Ładujemy zmienne środowiskowe z pliku .env w głównym katalogu
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
@@ -30,11 +33,14 @@ const worker = new Worker(
 	'email-queue',
 	async job => {
 		if (job.name === 'notify-members') {
-			const { companyName, attachmentGcsPath, attachmentFileName, adminEmail } = job.data
+			const { companyName, attachmentGcsPath, attachmentFileName, adminEmail, submissionId } = job.data
 			console.log(`🚀 [Job ${job.id}] Kampania dla: ${companyName}. Raport trafi do: ${adminEmail}`)
 
-			let sentCount = 0
+			// Klucz idempotencji: to samo zgłoszenie = ta sama kampania. Fallback na job.id (stały między
+			// ponowieniami tego samego zadania) na wypadek braku submissionId.
+			const refId = submissionId || `job:${job.id}`
 			let totalRecipients = 0
+			let sentCount = 0 // w zewnętrznym zakresie — używane też przez awaryjny raport w catch
 
 			try {
 				let attachmentBuffer = null
@@ -67,62 +73,46 @@ const worker = new Worker(
 					return
 				}
 
-				// 2. Konfiguracja "bąbelkowania" (małe partie dla testu)
-				const BATCH_SIZE = 20 // Wyślij po 10 maili
-				const DELAY_MS = 5000 // 3 sekundy przerwy
+				const zalaczniki = attachmentBuffer
+					? [
+							{
+								filename: attachmentFileName,
+								content: attachmentBuffer,
+								contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+							},
+						]
+					: []
 
-				for (let i = 0; i < totalRecipients; i += BATCH_SIZE) {
-					const batch = recipients.slice(i, i + BATCH_SIZE)
-
-					console.log(`📦 Wysyłam partię ${Math.floor(i / BATCH_SIZE) + 1} (${batch.length} maili)...`)
-
-					await Promise.all(
-						batch.map(async emailAddress => {
-							try {
-								await sendToOne({
-									to: emailAddress,
-									replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
-									subject: `Nowy kandydat na członka PISiL: ${companyName}`,
-									html: `
-										<p>Szanowni Państwo,</p>
-										<p>Informujemy, że wpłynęła deklaracja członkowska od firmy: <strong>${companyName}</strong>.</p>
-										<p>W załączniku przesyłamy komunikat ze szczegółami zgłoszenia.</p>
-										<p>Pozdrawiamy,<br>Biuro PISiL</p>
-									`,
-									attachments: attachmentBuffer
-										? [
-												{
-													filename: attachmentFileName,
-													content: attachmentBuffer,
-													contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-												},
-											]
-										: [],
-								})
-
-								await sleep(100)
-								sentCount++
-							} catch (err) {
-								// UWAGA: zmienna pętli nazywa się `emailAddress`. Wcześniej było tu `member.email`,
-								// czyli zmienna, która w tym zakresie NIE ISTNIEJE. Skutek był odwrotny do zamierzonego:
-								// jeden zły adres → sendMail rzuca → ten catch (mający go wyciszyć) sam rzucał
-								// ReferenceError → odrzucona obietnica w Promise.all zabijała CAŁĄ partię → zewnętrzny
-								// catch robił `throw` → BullMQ ponawiał zadanie od zera i wysyłał komunikat wszystkim
-								// PONOWNIE (attempts: 3). Mechanizm chroniący przed jednym zepsutym adresem gwarantował,
-								// że ten adres położy całą wysyłkę.
-								console.error(`❌ Błąd wysyłki do ${emailAddress}:`, err.message)
-							}
+				// Wysyłka masowa: idempotentna (znacznik per odbiorca w bazie) + pacing pod limit Exchange
+				// Online (30 wiadomości/min → partie po 25 z przerwą 60 s). Ponowienie zadania NIE wyśle
+				// nikomu drugi raz. Logika i testy: src/lib/mailBatch.js.
+				const { wyslano, pominieto, bledy } = await wyslijMasowoIdempotentnie(
+					{
+						scope: 'notify-members',
+						refId,
+						odbiorcy: recipients,
+						budujWiadomosc: emailAddress => ({
+							to: emailAddress,
+							replyTo: process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL,
+							subject: `Nowy kandydat na członka PISiL: ${companyName}`,
+							html: `
+								<p>Szanowni Państwo,</p>
+								<p>Informujemy, że wpłynęła deklaracja członkowska od firmy: <strong>${companyName}</strong>.</p>
+								<p>W załączniku przesyłamy komunikat ze szczegółami zgłoszenia.</p>
+								<p>Pozdrawiamy,<br>Biuro PISiL</p>
+							`,
+							attachments: zalaczniki,
 						}),
-					)
+						batchSize: 25,
+						delayMs: 60000,
+					},
+					{ prisma, sendToOne, sleep, logger: console }
+				)
 
-					// Czekaj przed następną partią
-					if (i + BATCH_SIZE < totalRecipients) {
-						console.log(`⏳ Czekam ${DELAY_MS}ms...`)
-						await sleep(DELAY_MS)
-					}
-				}
-
-				console.log(`✅ Zakończono zadanie. Wysłano ${sentCount} z ${totalRecipients} maili.`)
+				sentCount = wyslano
+				console.log(
+					`✅ Zakończono zadanie. Wysłano ${wyslano}, pominięto (już wysłane) ${pominieto}, błędów ${bledy.length} z ${totalRecipients}.`
+				)
 
 				if (adminEmail) {
 					try {
@@ -135,8 +125,17 @@ const worker = new Worker(
                                 <p>Zadanie wysyłki komunikatu dotyczącego firmy <strong>${companyName}</strong> zostało zakończone.</p>
                                 <ul>
                                     <li>Liczba odbiorców w bazie: <strong>${totalRecipients}</strong></li>
-                                    <li>Pomyślnie wysłano: <strong>${sentCount}</strong></li>
+                                    <li>Pomyślnie wysłano: <strong>${wyslano}</strong></li>
+                                    <li>Pominięto (już wysłane wcześniej): <strong>${pominieto}</strong></li>
+                                    <li>Błędy: <strong>${bledy.length}</strong></li>
                                 </ul>
+                                ${
+									bledy.length
+										? `<p><strong>Nie dotarło do:</strong></p><ul>${bledy
+												.map(b => `<li>${b.email} — ${b.error}</li>`)
+												.join('')}</ul><p>Do tych osób można wysłać ponownie ręcznie.</p>`
+										: ''
+								}
 								<p>W załączniku znajduje się kopia wysłanego komunikatu.</p>
                                 <p>System PISiL</p>
                             `,
@@ -186,10 +185,24 @@ const worker = new Worker(
 			}
 		}
 	},
-	{ connection },
+	{
+		connection,
+		// concurrency 1: zadania idą JEDNO PO DRUGIM, więc dwie kampanie się nie nakładają i łącznie
+		// nie przekroczą limitu Exchange. Właściwe dławienie tempa robi pacing partii wewnątrz zadania
+		// (mailBatch: 25 maili / 60 s). Limiter poniżej to dodatkowe zabezpieczenie na tempo STARTU zadań.
+		concurrency: 1,
+		limiter: { max: 25, duration: 60000 },
+	},
 )
 
 // Obsługa błędów workera
 worker.on('failed', (job, err) => {
-	console.error(`🔥 Zadanie ${job.id} nie powiodło się: ${err.message}`)
+	console.error(`🔥 Zadanie ${job?.id} nie powiodło się: ${err.message}`)
+})
+
+// „stalled" = worker stracił blokadę zadania (restart/OOM/przeciążenie) i wróciło ono do kolejki.
+// Jego wystąpienie oznacza, że zadanie może być przetwarzane DRUGI raz — właśnie dlatego wysyłka jest
+// idempotentna (znacznik per odbiorca). Logujemy, żeby było widać, że to się dzieje.
+worker.on('stalled', jobId => {
+	console.warn(`⚠️ Zadanie ${jobId} „stalled" — wróciło do kolejki. Idempotencja chroni przed podwójną wysyłką.`)
 })

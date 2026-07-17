@@ -402,3 +402,20 @@ model EventRegistration {
   @@index([eventId])
   @@index([eventId, firmaNip])
 }
+// Ślad wysyłki masowej PER ODBIORCA — gwarancja „dokładnie raz" przy ponowieniu zadania.
+// BullMQ gwarantuje „co najmniej raz" (restart procesu w połowie partii = zadanie wykona się drugi raz),
+// więc gwarancję jednokrotnej wysyłki musi dać nasz kod. Znacznik zakładamy PRZED wysyłką: naruszenie
+// unikalności (P2002) = do tej osoby już poszło → pomijamy. Baza przeżywa restart, pamięć procesu nie.
+// Dodatkowo pełni rolę audytu „kto dostał jaki mail i kiedy" oraz listy nieudanych (status=BLAD).
+model MailSendLog {
+  id     String @id @default(cuid())
+  scope  String // rodzaj wysyłki, np. "notify-members" albo "event:LINK"
+  refId  String // czego dotyczy: submissionId / eventId / communicationId
+  email  String // adres odbiorcy
+  status String   @default("WYSLANY") // WYSLANY | BLAD
+  error  String?
+  sentAt DateTime @default(now())
+
+  @@unique([scope, refId, email]) // to jest cały mechanizm idempotencji
+  @@index([scope, refId])
+}
