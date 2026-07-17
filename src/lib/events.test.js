@@ -1,4 +1,4 @@
-import { isRegistrationOpen, sortPublicEvents, registrationClosedReason } from './events'
+import { isRegistrationOpen, sortPublicEvents, registrationClosedReason, serializePublicEvent } from './events'
 
 // Bazowe wydarzenie: opublikowane, bez limitu, start w przyszłości.
 const bazowe = {
@@ -86,6 +86,28 @@ describe('registrationClosedReason', () => {
 		expect(isRegistrationOpen(bazowe, 0, TERAZ)).toBe(registrationClosedReason(bazowe, 0, TERAZ) === null)
 		const pelny = { ...bazowe, limitMiejsc: 1 }
 		expect(isRegistrationOpen(pelny, 1, TERAZ)).toBe(registrationClosedReason(pelny, 1, TERAZ) === null)
+	})
+})
+
+describe('serializePublicEvent — link do spotkania nie wycieka', () => {
+	const ev = {
+		id: 'e1',
+		slug: 'konf',
+		typ: 'KONFERENCJA',
+		tryb: 'ONLINE',
+		title: 'Konferencja',
+		startAt: new Date('2030-01-01T10:00:00Z'),
+		onlineUrl: 'https://teams.microsoft.com/l/meetup-join/TAJNY',
+		limitMiejsc: null,
+		pulaGratisNaFirme: 0,
+	}
+
+	it('wystawia podstawowe pola (pozytyw), ale NIE zawiera onlineUrl (negatyw)', () => {
+		const out = serializePublicEvent(ev, 0)
+		expect(out.slug).toBe('konf') // pozytyw: serializacja się odbyła
+		expect(out.title).toBe('Konferencja')
+		expect('onlineUrl' in out).toBe(false) // link nie wychodzi publicznie
+		expect(JSON.stringify(out)).not.toContain('teams.microsoft.com')
 	})
 })
 

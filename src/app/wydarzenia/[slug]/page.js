@@ -137,7 +137,7 @@ export default function WydarzenieDetailPage() {
                 <dd className="text-gray-800 font-medium">{event.prowadzacy}</dd>
               </div>
             )}
-            {event.tryb === "ONLINE" && event.onlineUrl && (
+            {event.tryb === "ONLINE" && (
               <div>
                 <dt className="text-gray-500">Forma</dt>
                 <dd className="text-gray-800 font-medium">Online</dd>

@@ -75,7 +75,9 @@ export function serializePublicEvent(event, confirmedCount = 0) {
 		endAt: event.endAt,
 		prowadzacy: event.prowadzacy,
 		address: event.address,
-		onlineUrl: event.onlineUrl,
+		// UWAGA: `onlineUrl` (link do spotkania) CELOWO nie jest wystawiany publicznie. Wcześniej wychodził
+		// przez /api/public/events bez logowania — każdy pobierał link bez zapisu i płatności. Link wysyła
+		// organizator świadomą akcją z panelu, wyłącznie do wybranych osób (mail „link do spotkania").
 		limitMiejsc: event.limitMiejsc,
 		registrationDeadline: event.registrationDeadline,
 		bankAccount: event.bankAccount,
