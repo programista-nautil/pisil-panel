@@ -62,6 +62,8 @@ export default function EventRegistrationsView({ event, onBack }) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null); // modal anulowania (z dynamiczną rezerwą)
+  const [promoteTarget, setPromoteTarget] = useState(null); // modal przeniesienia z listy rezerwowej
 
   useEffect(() => {
     fetchRegistrations();
@@ -133,6 +135,27 @@ export default function EventRegistrationsView({ event, onBack }) {
   const handleAdded = (reg) => {
     setRegistrations((prev) => [...prev, reg]);
     setIsAddOpen(false);
+  };
+
+  // Pierwsza osoba z listy rezerwowej = najstarsze zgłoszenie (tak samo liczy serwer).
+  const pierwszyRezerwowy = useMemo(() => {
+    return registrations
+      .filter((r) => r.statusRejestracji === "LISTA_REZERWOWA")
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))[0] || null;
+  }, [registrations]);
+
+  // Zmiana statusu w tabeli. Dwa przejścia niosą maila i wymagają decyzji, więc otwierają modal
+  // zamiast zapisywać po cichu: ANULOWANA (+ ewentualne przeniesienie rezerwowego) oraz
+  // LISTA_REZERWOWA → POTWIERDZONA (mail „zwolniło się miejsce"). Reszta zapisuje się od razu.
+  const handleStatusChange = (reg, nowy) => {
+    if (nowy === reg.statusRejestracji) return;
+    if (nowy === "ANULOWANA") {
+      setCancelTarget(reg);
+    } else if (nowy === "POTWIERDZONA" && reg.statusRejestracji === "LISTA_REZERWOWA") {
+      setPromoteTarget(reg);
+    } else {
+      patchReg(reg, { statusRejestracji: nowy });
+    }
   };
 
   const handleSaved = (reg) => {
@@ -292,7 +315,7 @@ export default function EventRegistrationsView({ event, onBack }) {
                     <td className="px-3 py-2">
                       <select
                         value={r.statusRejestracji}
-                        onChange={(e) => patchReg(r, { statusRejestracji: e.target.value })}
+                        onChange={(e) => handleStatusChange(r, e.target.value)}
                         className={selectCls}
                       >
                         {REJESTRACJA_OPTS.map(([v, l]) => (
@@ -342,6 +365,31 @@ export default function EventRegistrationsView({ event, onBack }) {
           registration={editing}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
+        />
+      )}
+
+      {cancelTarget && (
+        <CancelModal
+          eventId={event.id}
+          reg={cancelTarget}
+          pierwszyRezerwowy={pierwszyRezerwowy}
+          onClose={() => setCancelTarget(null)}
+          onDone={() => {
+            setCancelTarget(null);
+            fetchRegistrations();
+          }}
+        />
+      )}
+
+      {promoteTarget && (
+        <PromoteModal
+          eventId={event.id}
+          reg={promoteTarget}
+          onClose={() => setPromoteTarget(null)}
+          onDone={() => {
+            setPromoteTarget(null);
+            fetchRegistrations();
+          }}
         />
       )}
 
@@ -855,6 +903,183 @@ function AddParticipantModal({ eventId, onClose, onAdded }) {
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// -------- Modal anulowania (z dynamicznym przeniesieniem pierwszej osoby z listy rezerwowej) --------
+function CancelModal({ eventId, reg, pierwszyRezerwowy, onClose, onDone }) {
+  // Nie proponujemy przeniesienia osoby, którą właśnie anulujemy (gdy sama jest na liście rezerwowej).
+  const rezerwa = pierwszyRezerwowy && pierwszyRezerwowy.id !== reg.id ? pierwszyRezerwowy : null;
+
+  const [powiadomAnulowanego, setPowiadomAnulowanego] = useState(!!reg.email);
+  const [przeniesRezerwowego, setPrzeniesRezerwowego] = useState(!!rezerwa);
+  const [powiadomRezerwowego, setPowiadomRezerwowego] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const potwierdz = async () => {
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}/registrations/${reg.id}/actions/anuluj`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          powiadomAnulowanego,
+          przeniesRezerwowego: !!rezerwa && przeniesRezerwowego,
+          powiadomRezerwowego,
+        }),
+      });
+      if (!res.ok) throw new Error("Nie udało się anulować.");
+      const w = await res.json();
+      const czesci = ["Anulowano zgłoszenie"];
+      if (w.maile?.anulowanego?.wyslano) czesci.push("wysłano powiadomienie");
+      if (w.przeniesiony)
+        czesci.push(`przeniesiono ${w.przeniesiony.firstName} ${w.przeniesiony.lastName} z listy rezerwowej`);
+      toast.success(czesci.join(", ") + ".");
+      onDone();
+    } catch (e) {
+      toast.error(e.message);
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-900/50 z-50 flex justify-center items-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-bold text-gray-800">Anuluj zgłoszenie</h3>
+        <p className="text-sm text-gray-600">
+          Anulujesz zgłoszenie: <span className="font-medium text-gray-800">{reg.firstName} {reg.lastName}</span>
+          {reg.email ? ` (${reg.email})` : ""}. Zostanie w historii ze statusem „Anulowana", ale wypadnie z podsumowań.
+        </p>
+
+        <label className="flex items-start gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={powiadomAnulowanego}
+            disabled={!reg.email}
+            onChange={(e) => setPowiadomAnulowanego(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#005698] focus:ring-[#005698]"
+          />
+          <span>Wyślij mail o anulowaniu {reg.email ? `do ${reg.email}` : "(brak e-maila — nie wyślemy)"}</span>
+        </label>
+
+        {rezerwa && (
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-3 space-y-2">
+            <p className="text-sm text-gray-700">
+              Na liście rezerwowej pierwsza:{" "}
+              <span className="font-medium">{rezerwa.firstName} {rezerwa.lastName}</span>
+              <span className="text-gray-500"> (zapisana {formatDzien(rezerwa.createdAt)})</span>
+            </p>
+            <label className="flex items-start gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={przeniesRezerwowego}
+                onChange={(e) => setPrzeniesRezerwowego(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#005698] focus:ring-[#005698]"
+              />
+              <span>Przenieś ją na zwolnione miejsce (status → Potwierdzona)</span>
+            </label>
+            {przeniesRezerwowego && (
+              <label className="flex items-start gap-2 text-sm text-gray-700 pl-6">
+                <input
+                  type="checkbox"
+                  checked={powiadomRezerwowego}
+                  disabled={!rezerwa.email}
+                  onChange={(e) => setPowiadomRezerwowego(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#005698] focus:ring-[#005698]"
+                />
+                <span>i wyślij jej „zwolniło się miejsce" (kwota, konto, prośba o potwierdzenie)</span>
+              </label>
+            )}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSaving}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+          >
+            Zamknij
+          </button>
+          <button
+            type="button"
+            onClick={potwierdz}
+            disabled={isSaving}
+            className="px-4 py-2 text-sm font-medium text-white bg-[#005698] rounded-md hover:bg-[#005698]/90 disabled:opacity-50"
+          >
+            {isSaving ? "Anuluję…" : "Anuluj zgłoszenie"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------- Modal przeniesienia z listy rezerwowej na potwierdzone --------
+function PromoteModal({ eventId, reg, onClose, onDone }) {
+  const [powiadom, setPowiadom] = useState(!!reg.email);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const potwierdz = async () => {
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}/registrations/${reg.id}/actions/przenies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ powiadom }),
+      });
+      if (!res.ok) throw new Error("Nie udało się przenieść.");
+      const w = await res.json();
+      toast.success(w.mail?.wyslano ? "Przeniesiono i wysłano powiadomienie." : "Przeniesiono na miejsce potwierdzone.");
+      onDone();
+    } catch (e) {
+      toast.error(e.message);
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-900/50 z-50 flex justify-center items-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-bold text-gray-800">Przenieś z listy rezerwowej</h3>
+        <p className="text-sm text-gray-600">
+          Przenosisz <span className="font-medium text-gray-800">{reg.firstName} {reg.lastName}</span> na miejsce
+          potwierdzone. Status zmieni się od razu — miejsce przestanie być wolne, więc nikt z formularza go nie podbierze.
+        </p>
+        <label className="flex items-start gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={powiadom}
+            disabled={!reg.email}
+            onChange={(e) => setPowiadom(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#005698] focus:ring-[#005698]"
+          />
+          <span>
+            Wyślij mail „zwolniło się miejsce" (kwota, konto, prośba o potwierdzenie w ciągu 3 dni)
+            {!reg.email && " — brak e-maila, nie wyślemy"}
+          </span>
+        </label>
+        <div className="flex justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSaving}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+          >
+            Zamknij
+          </button>
+          <button
+            type="button"
+            onClick={potwierdz}
+            disabled={isSaving}
+            className="px-4 py-2 text-sm font-medium text-white bg-[#005698] rounded-md hover:bg-[#005698]/90 disabled:opacity-50"
+          >
+            {isSaving ? "Przenoszę…" : "Przenieś"}
+          </button>
+        </div>
       </div>
     </div>
   );
