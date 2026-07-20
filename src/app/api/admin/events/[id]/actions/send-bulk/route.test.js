@@ -177,3 +177,39 @@ test('zalogowany CZŁONEK (nie admin) → 401, bez kampanii i bez kolejki', asyn
 	expect(prisma.eventMailing.create).not.toHaveBeenCalled()
 	expect(emailQueue.add).not.toHaveBeenCalled()
 })
+
+// --- Zalaczniki: sciezki przychodza z przegladarki, plik idzie do WSZYSTKICH uczestnikow ---
+
+const OK_PATH = 'wydarzenia/ev1/maile/1_program.pdf'
+
+test('poprawny zalacznik jest zapisywany przy kampanii', async () => {
+	const res = await POST(zadanie({ attachments: [{ path: OK_PATH, filename: 'program.pdf', size: 1024, mimeType: 'application/pdf' }] }), ctx)
+	expect(res.status).toBe(202)
+	const dane = prisma.eventMailing.create.mock.calls[0][0].data
+	expect(dane.attachments.create).toEqual([
+		expect.objectContaining({ path: OK_PATH, filename: 'program.pdf', size: 1024 }),
+	])
+})
+
+test.each([
+	['plik z CUDZEGO wydarzenia', 'wydarzenia/INNY/maile/1_x.pdf'],
+	['plik spoza katalogu kampanii', 'czlonkowie/tajne/umowa.pdf'],
+	['proba wyjscia w gore drzewa', 'wydarzenia/ev1/maile/../../../czlonkowie/umowa.pdf'],
+])('%s → 400, nic nie wychodzi', async (_opis, path) => {
+	const res = await POST(zadanie({ attachments: [{ path, filename: 'x.pdf', size: 10 }] }), ctx)
+	expect(res.status).toBe(400)
+	expect(prisma.eventMailing.create).not.toHaveBeenCalled()
+	expect(emailQueue.add).not.toHaveBeenCalled()
+})
+
+test('zalaczniki ponad limit → 400', async () => {
+	const res = await POST(zadanie({ attachments: [{ path: OK_PATH, filename: 'duzy.pdf', size: 99 * 1024 * 1024 }] }), ctx)
+	expect(res.status).toBe(400)
+	expect(emailQueue.add).not.toHaveBeenCalled()
+})
+
+test('brak zalacznikow → kampania powstaje z pusta lista (nie wywala sie)', async () => {
+	const res = await POST(zadanie(), ctx)
+	expect(res.status).toBe(202)
+	expect(prisma.eventMailing.create.mock.calls[0][0].data.attachments.create).toEqual([])
+})

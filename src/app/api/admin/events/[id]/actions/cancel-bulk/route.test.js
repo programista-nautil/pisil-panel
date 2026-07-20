@@ -8,9 +8,11 @@ jest.mock('@/lib/prisma', () => ({
 	},
 }))
 jest.mock('@/lib/queue', () => ({ emailQueue: { getJob: jest.fn() } }))
+jest.mock('@/lib/gcs', () => ({ deleteFileFromGCS: jest.fn().mockResolvedValue() }))
 
 import prisma from '@/lib/prisma'
 import { emailQueue } from '@/lib/queue'
+import { deleteFileFromGCS } from '@/lib/gcs'
 import { POST } from './route'
 
 const req = body => ({ json: jest.fn().mockResolvedValue(body) })
@@ -28,7 +30,7 @@ function fakeJob({ state = 'delayed', name = 'event-bulk-mail', mailingId = 'm1'
 
 beforeEach(() => {
 	jest.clearAllMocks()
-	prisma.eventMailing.findUnique.mockResolvedValue({ eventId: 'ev1' })
+	prisma.eventMailing.findUnique.mockResolvedValue({ eventId: 'ev1', attachments: [] })
 	prisma.eventMailing.deleteMany.mockResolvedValue({ count: 1 })
 })
 
@@ -76,7 +78,7 @@ test('CUDZE zadanie (inny typ, np. wysyłka komunikatu) → 400, NIE usuwa go z 
 test('kampania z INNEGO wydarzenia → 404, NIE usuwa zadania', async () => {
 	const job = fakeJob()
 	emailQueue.getJob.mockResolvedValue(job)
-	prisma.eventMailing.findUnique.mockResolvedValue({ eventId: 'INNY' })
+	prisma.eventMailing.findUnique.mockResolvedValue({ eventId: 'INNY', attachments: [] })
 
 	const res = await POST(req({ jobId: 'job1', mailingId: 'm1' }), ctx)
 	expect(res.status).toBe(404)
@@ -109,4 +111,31 @@ test('zalogowany CZŁONEK (nie admin) → 401, bez dostępu do kolejki', async (
 	const res = await POST(req({ jobId: 'job1', mailingId: 'm1' }), ctx)
 	expect(res.status).toBe(401)
 	expect(emailQueue.getJob).not.toHaveBeenCalled()
+})
+
+test('cofnieta swieza wysylka kasuje TAKZE pliki zalacznikow z chmury (nie zostaja sieroty)', async () => {
+	emailQueue.getJob.mockResolvedValue(fakeJob({ onlyMissing: false }))
+	prisma.eventMailing.findUnique.mockResolvedValue({
+		eventId: 'ev1',
+		attachments: [{ path: 'wydarzenia/ev1/maile/1_program.pdf' }, { path: 'wydarzenia/ev1/maile/2_mapa.png' }],
+	})
+
+	const res = await POST(req({ jobId: 'job1', mailingId: 'm1' }), ctx)
+
+	expect((await res.json()).cancelled).toBe(true)
+	expect(deleteFileFromGCS).toHaveBeenCalledTimes(2)
+	expect(deleteFileFromGCS).toHaveBeenCalledWith('wydarzenia/ev1/maile/1_program.pdf')
+})
+
+test('cofnieta DOSYLKA nie rusza plikow (kampania zyje dalej)', async () => {
+	emailQueue.getJob.mockResolvedValue(fakeJob({ onlyMissing: true }))
+	prisma.eventMailing.findUnique.mockResolvedValue({
+		eventId: 'ev1',
+		attachments: [{ path: 'wydarzenia/ev1/maile/1_program.pdf' }],
+	})
+
+	await POST(req({ jobId: 'job1', mailingId: 'm1' }), ctx)
+
+	expect(deleteFileFromGCS).not.toHaveBeenCalled()
+	expect(prisma.eventMailing.deleteMany).not.toHaveBeenCalled()
 })

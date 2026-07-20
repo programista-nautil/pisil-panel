@@ -68,7 +68,10 @@ export default function DeleteConfirmationModal({
 	return (
 		<div
 			className='fixed inset-0 bg-gray-900/50 z-50 flex justify-center items-center p-4'
-			onClick={onClose}
+			// W trakcie potwierdzonej operacji tło NIE zamyka okna. Wcześniej przyciski były zablokowane,
+			// ale kliknięcie w tło je zamykało — dało się wtedy otworzyć modal ponownie i uruchomić tę samą
+			// akcję drugi raz (przy wysyłce = druga kampania do tych samych ludzi).
+			onClick={isDeleting ? undefined : onClose}
 		>
 			<div
 				className='bg-white rounded-lg shadow-xl w-full max-w-md p-6'

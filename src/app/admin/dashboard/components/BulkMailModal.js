@@ -4,6 +4,9 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import { TEMPLATES, getTemplate } from "@/lib/eventMailTemplate";
+import { MAX_ATTACHMENTS_BYTES } from "@/lib/services/eventBulkMail";
+
+const formatMb = (b) => `${(b / 1024 / 1024).toFixed(1)} MB`;
 
 const inputCls =
   "block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#005698] focus:ring-[#005698] sm:text-sm text-gray-700";
@@ -46,6 +49,8 @@ export default function BulkMailModal({ event, registrations, onClose, onEnqueue
 
   const [recipientFilter, setRecipientFilter] = useState(tpl.allowedFilters[0]);
   const [{ subject, body }, setTresc] = useState(() => tpl.build(event));
+  const [attachments, setAttachments] = useState([]); // {path, filename, size, mimeType}
+  const [isUploading, setIsUploading] = useState(false);
   const [testTo, setTestTo] = useState("");
   const [isTesting, setIsTesting] = useState(false);
   const [testedKey, setTestedKey] = useState(null); // treść, która przeszła test do siebie
@@ -81,12 +86,56 @@ export default function BulkMailModal({ event, registrations, onClose, onEnqueue
   const countFor = (f) =>
     new Set(registrations.filter((r) => matchesFilter(r, f)).filter(hasEmail).map((r) => normalize(r.email))).size;
 
+  const rozmiarZalacznikow = attachments.reduce((s, a) => s + a.size, 0);
+  const zaDuzo = rozmiarZalacznikow > MAX_ATTACHMENTS_BYTES;
+
   // Twarda walidacja: maila z linkiem nie da się wysłać, gdy wydarzenie nie ma zapisanego linku.
   const brakLinku = !!tpl.requiresOnlineUrl && !(event.onlineUrl || "").trim();
   const trescPusta = !subject.trim() || !body.trim();
   const brakOdbiorcow = stats.recipientCount === 0;
   const testZgodnyZTrescia = testedKey !== null && testedKey === contentKey(subject, body);
-  const zablokowane = trescPusta || brakOdbiorcow || brakLinku;
+  // isUploading w blokadzie: dopóki plik leci do chmury, nie wolno ani wysłać, ani testować — inaczej
+  // poszłaby wiadomość bez załącznika albo test bez niego.
+  const zablokowane = trescPusta || brakOdbiorcow || brakLinku || zaDuzo || isUploading;
+
+  // Plik ląduje w chmurze od razu przy wyborze — okno nie musi wtedy nieść megabajtów przy wysyłce,
+  // a test do siebie może użyć dokładnie tego samego pliku.
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // pozwala wybrać ten sam plik ponownie po usunięciu
+    if (!file) return;
+    if (rozmiarZalacznikow + file.size > MAX_ATTACHMENTS_BYTES) {
+      return toast.error(`Załączniki przekroczyłyby limit ${formatMb(MAX_ATTACHMENTS_BYTES)}.`);
+    }
+    // Test unieważniamy OD RAZU, jeszcze przed wysłaniem pliku. Gdyby dopiero po odpowiedzi serwera,
+    // przez cały czas wgrywania przycisk „Wyślij" zostawałby odblokowany starym testem i dało się wysłać
+    // kampanię BEZ załącznika, mimo że treść go obiecuje.
+    setTestedKey(null);
+    setIsUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/admin/events/${event.id}/actions/attachments`, { method: "POST", body: fd });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.message || "Nie udało się wgrać pliku.");
+      setAttachments((prev) => [...prev, d]);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveAttachment = async (path) => {
+    setAttachments((prev) => prev.filter((a) => a.path !== path));
+    setTestedKey(null);
+    // Sprzątamy plik z chmury — kampania jeszcze nie istnieje, więc nic go nie trzyma.
+    fetch(`/api/admin/events/${event.id}/actions/attachments`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
+    }).catch(() => {});
+  };
 
   const handleTest = async () => {
     if (trescPusta) return toast.error("Uzupełnij temat i treść przed wysyłką testową.");
@@ -97,7 +146,7 @@ export default function BulkMailModal({ event, registrations, onClose, onEnqueue
       const res = await fetch(`/api/admin/events/${event.id}/actions/send-test`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, body, to: testTo.trim() }),
+        body: JSON.stringify({ subject, body, to: testTo.trim(), attachments }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -119,7 +168,7 @@ export default function BulkMailModal({ event, registrations, onClose, onEnqueue
       const res = await fetch(`/api/admin/events/${event.id}/actions/send-bulk`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, body, recipientFilter, template }),
+        body: JSON.stringify({ subject, body, recipientFilter, template, attachments }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.message || "Nie udało się zakolejkować wysyłki.");
@@ -202,6 +251,43 @@ export default function BulkMailModal({ event, registrations, onClose, onEnqueue
               </div>
             </section>
 
+            {/* Załączniki — np. program w PDF. Plik trafia do chmury od razu, wysyłka dokleja go każdemu. */}
+            <section>
+              <label className={labelCls}>Załączniki</label>
+              {attachments.length > 0 && (
+                <ul className="mb-2 space-y-1">
+                  {attachments.map((a) => (
+                    <li
+                      key={a.path}
+                      className="flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+                    >
+                      <span className="text-gray-700 truncate">
+                        {a.filename} <span className="text-gray-400">({formatMb(a.size)})</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAttachment(a.path)}
+                        className="text-xs text-red-600 hover:text-red-800 flex-shrink-0"
+                      >
+                        Usuń
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <input
+                type="file"
+                onChange={handleUpload}
+                disabled={isUploading}
+                className="block w-full text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-[#005698]/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-[#005698] hover:file:bg-[#005698]/20 disabled:opacity-50"
+              />
+              <p className={`text-xs mt-1 ${zaDuzo ? "text-red-600" : "text-gray-500"}`}>
+                {isUploading
+                  ? "Wgrywam plik…"
+                  : `Łącznie ${formatMb(rozmiarZalacznikow)} z ${formatMb(MAX_ATTACHMENTS_BYTES)}. Każdy odbiorca dostaje własną kopię, więc duże pliki wydłużają wysyłkę.`}
+              </p>
+            </section>
+
             {/* Notatki o odbiorcach — w barwach aplikacji. Rozbicie sumuje się do liczby w grupie. */}
             {(stats.noEmail > 0 || (recipientFilter === "CONFIRMED" && stats.owed > 0)) && (
               <div className="rounded-md border border-[#005698]/20 bg-[#005698]/5 p-3 text-xs text-[#005698] space-y-1">
@@ -231,7 +317,7 @@ export default function BulkMailModal({ event, registrations, onClose, onEnqueue
                 <button
                   type="button"
                   onClick={handleTest}
-                  disabled={isTesting || trescPusta || brakLinku}
+                  disabled={isTesting || isUploading || trescPusta || brakLinku}
                   className="px-4 py-2 text-sm font-medium text-[#005698] bg-white border border-[#005698]/40 rounded-md hover:bg-[#005698]/5 disabled:opacity-50 whitespace-nowrap"
                 >
                   {isTesting ? "Wysyłam…" : "Wyślij testowy"}
@@ -249,7 +335,11 @@ export default function BulkMailModal({ event, registrations, onClose, onEnqueue
           <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg flex-shrink-0">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs text-gray-500">
-                {brakLinku
+                {isUploading
+                  ? "Trwa wgrywanie załącznika…"
+                  : zaDuzo
+                  ? `Załączniki przekraczają limit ${formatMb(MAX_ATTACHMENTS_BYTES)}.`
+                  : brakLinku
                   ? "Brakuje linku do spotkania."
                   : brakOdbiorcow
                     ? "Brak odbiorców w wybranej grupie."

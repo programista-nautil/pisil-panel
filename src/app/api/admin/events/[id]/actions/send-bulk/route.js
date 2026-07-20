@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { emailQueue } from '@/lib/queue'
-import { targetEmails, isValidFilter } from '@/lib/services/eventBulkMail'
+import {
+	targetEmails,
+	isValidFilter,
+	isOwnAttachmentPath,
+	MAX_ATTACHMENTS_BYTES,
+} from '@/lib/services/eventBulkMail'
 import { getTemplate, isAllowedPair } from '@/lib/eventMailTemplate'
 
 const ADMIN_EVENTS_EMAIL = process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL || 'programista@nautil.pl'
@@ -57,6 +62,22 @@ export async function POST(request, { params }) {
 			)
 		}
 
+		// Załączniki: ścieżki przychodzą z przeglądarki, więc każdą sprawdzamy — plik pójdzie mailem do
+		// wszystkich uczestników, a bez tej kontroli dałoby się kazać rozesłać dowolny plik z chmury.
+		const attachments = Array.isArray(body.attachments) ? body.attachments : []
+		for (const a of attachments) {
+			if (!a || !isOwnAttachmentPath(id, a.path) || !a.filename) {
+				return NextResponse.json({ message: 'Nieprawidłowy załącznik.' }, { status: 400 })
+			}
+		}
+		const lacznyRozmiar = attachments.reduce((s, a) => s + (Number(a.size) || 0), 0)
+		if (lacznyRozmiar > MAX_ATTACHMENTS_BYTES) {
+			return NextResponse.json(
+				{ message: `Załączniki są za duże (limit ${Math.round(MAX_ATTACHMENTS_BYTES / 1024 / 1024)} MB łącznie).` },
+				{ status: 400 }
+			)
+		}
+
 		// Liczymy distinct adresy (nie wiersze) — tyle maili faktycznie wyjdzie.
 		const count = (await targetEmails(prisma, id, recipientFilter)).length
 		if (count === 0) {
@@ -64,7 +85,21 @@ export async function POST(request, { params }) {
 		}
 
 		const mailing = await prisma.eventMailing.create({
-			data: { eventId: id, subject, body: tresc, recipientFilter, template },
+			data: {
+				eventId: id,
+				subject,
+				body: tresc,
+				recipientFilter,
+				template,
+				attachments: {
+					create: attachments.map(a => ({
+						path: a.path,
+						filename: a.filename,
+						size: Number(a.size) || 0,
+						mimeType: a.mimeType || null,
+					})),
+				},
+			},
 			select: { id: true },
 		})
 

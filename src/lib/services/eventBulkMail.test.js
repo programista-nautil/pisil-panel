@@ -94,3 +94,28 @@ describe('whereForFilter — nowe grupy', () => {
 		}
 	})
 })
+
+// --- Straznik sciezek zalacznikow (plik idzie mailem do WSZYSTKICH uczestnikow) ---
+
+describe('isOwnAttachmentPath', () => {
+	const { isOwnAttachmentPath, attachmentPrefix, MAX_ATTACHMENTS_BYTES } = require('./eventBulkMail')
+
+	it('przepuszcza wlasny zalacznik tego wydarzenia', () => {
+		expect(isOwnAttachmentPath('ev1', `${attachmentPrefix('ev1')}1234_program.pdf`)).toBe(true)
+	})
+
+	it.each([
+		['cudze wydarzenie', 'wydarzenia/INNY/maile/1_program.pdf'],
+		['zupelnie inny katalog', 'czlonkowie/tajne/umowa.pdf'],
+		['wyjscie w gore drzewa', 'wydarzenia/ev1/maile/../../../czlonkowie/umowa.pdf'],
+		['pusty', ''],
+		['nie-string', null],
+	])('odrzuca: %s', (_opis, sciezka) => {
+		expect(isOwnAttachmentPath('ev1', sciezka)).toBe(false)
+	})
+
+	it('limit zalacznikow jest sensowny (1-25 MB)', () => {
+		expect(MAX_ATTACHMENTS_BYTES).toBeGreaterThan(1024 * 1024)
+		expect(MAX_ATTACHMENTS_BYTES).toBeLessThanOrEqual(25 * 1024 * 1024)
+	})
+})

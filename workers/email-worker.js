@@ -193,8 +193,12 @@ const worker = new Worker(
 		// tych, do których jeszcze nie dotarło (brak wiersza WYSLANY); nieudane (BLAD) najpierw czyścimy.
 		if (job.name === 'event-bulk-mail') {
 			const { mailingId, onlyMissing, adminEmail } = job.data
+			try {
 
-			const mailing = await prisma.eventMailing.findUnique({ where: { id: mailingId } })
+			const mailing = await prisma.eventMailing.findUnique({
+				where: { id: mailingId },
+				include: { attachments: true },
+			})
 			if (!mailing) {
 				console.log(`ℹ️ [Job ${job.id}] Kampania ${mailingId} nie istnieje (cofnięta?) — nic nie wysyłam.`)
 				return
@@ -229,12 +233,32 @@ const worker = new Worker(
 			const html = textToHtml(mailing.body)
 			const replyTo = process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL
 
+			// Załączniki pobieramy RAZ na kampanię i reużywamy bufory dla wszystkich odbiorców — inaczej
+			// przy 40 osobach byłoby 40 pobrań tego samego pliku z chmury. Błąd pobrania celowo przerywa
+			// zadanie (rzuca): lepiej ponowić, niż wysłać wiadomość obiecującą załącznik, którego nie ma.
+			const attachments = []
+			for (const a of mailing.attachments) {
+				console.log(`📎 Pobieram załącznik: ${a.filename}`)
+				const [buffer] = await storage.bucket(bucketName).file(a.path).download()
+				attachments.push({
+					filename: a.filename,
+					content: buffer,
+					contentType: a.mimeType || 'application/octet-stream',
+				})
+			}
+
 			const { sent, skipped, errors } = await sendBulkIdempotent(
 				{
 					scope: SCOPE,
 					refId: mailingId,
 					recipients,
-					buildMessage: emailAddress => ({ to: emailAddress, replyTo, subject: mailing.subject, html }),
+					buildMessage: emailAddress => ({
+						to: emailAddress,
+						replyTo,
+						subject: mailing.subject,
+						html,
+						attachments,
+					}),
 					batchSize: 25,
 					delayMs: 60000,
 				},
@@ -274,6 +298,27 @@ const worker = new Worker(
 				} catch (reportError) {
 					console.error('Błąd wysyłania raportu do admina:', reportError)
 				}
+			}
+
+			} catch (error) {
+				// Awaria PRZED wysyłką (np. nie udało się pobrać załącznika) przerywa zadanie, zanim wyjdzie
+				// choćby jeden mail. Bez tego raportu admin nie miał jak się dowiedzieć, że kampania padła —
+				// w panelu wyglądałaby na zakolejkowaną i nic by się nie działo.
+				console.error('Błąd krytyczny wysyłki do zapisanych:', error)
+				if (adminEmail) {
+					await sendToOne({
+						to: adminEmail,
+						subject: '[BŁĄD KRYTYCZNY] Wysyłka do zapisanych nie doszła do skutku',
+						html: `
+							<h3 style="color:#b91c1c;">Wysyłka do zapisanych została przerwana</h3>
+							<p>Kampania: <strong>${mailingId}</strong></p>
+							<p><strong>Treść błędu:</strong> ${error.message}</p>
+							<p>Jeśli błąd dotyczy załącznika — sprawdź, czy plik nie został usunięty. Zadanie zostanie
+							ponowione automatycznie; jeśli błąd się powtórzy, wyślij kampanię ponownie z panelu.</p>
+						`,
+					}).catch(e => console.error('Nie udało się wysłać maila o błędzie:', e))
+				}
+				throw error
 			}
 		}
 	},

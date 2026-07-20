@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
+import { deleteFileFromGCS } from '@/lib/gcs'
 
 // Szczegóły wydarzenia + zgłoszenia (panel admina).
 export async function GET(request, { params }) {
@@ -80,6 +81,16 @@ export async function DELETE(request, { params }) {
 				{ status: 409 }
 			)
 		}
+		// Wiersze (kampanie, załączniki, sekcje) znikną kaskadą, ale PLIKI w chmurze trzeba skasować jawnie —
+		// inaczej po każdym usuniętym wydarzeniu zostają tam sieroty, do których nic już nie prowadzi.
+		const [zalaczniki, sekcje] = await Promise.all([
+			prisma.eventMailingAttachment.findMany({ where: { mailing: { eventId: id } }, select: { path: true } }),
+			prisma.eventSection.findMany({ where: { eventId: id, plikPath: { not: null } }, select: { plikPath: true } }),
+		])
+		for (const p of [...zalaczniki.map(a => a.path), ...sekcje.map(s => s.plikPath)]) {
+			await deleteFileFromGCS(p).catch(() => {})
+		}
+
 		await prisma.event.delete({ where: { id } })
 		return NextResponse.json({ message: 'Usunięto wydarzenie' }, { status: 200 })
 	} catch (error) {

@@ -9,6 +9,23 @@
 // Scope w MailSendLog dla kampanii wydarzeniowych. refId = id kampanii (EventMailing.id).
 const SCOPE = 'event-bulk'
 
+// Łączny limit załączników jednej kampanii. Exchange Online przyjmuje ~25-35 MB na wiadomość, ale
+// kodowanie załącznika powiększa go o ~1/3, a każdy odbiorca dostaje własną kopię — 10 MB to bezpieczny
+// pułap dla programu w PDF i nie zamula wysyłki do kilkudziesięciu osób.
+const MAX_ATTACHMENTS_BYTES = 10 * 1024 * 1024
+
+// Katalog w chmurze, w którym wolno trzymać załączniki kampanii TEGO wydarzenia.
+function attachmentPrefix(eventId) {
+	return `wydarzenia/${eventId}/maile/`
+}
+
+// Czy ścieżka na pewno wskazuje załącznik tego wydarzenia. KLUCZOWE: ścieżki przychodzą z przeglądarki,
+// a plik trafia mailem do wszystkich uczestników — bez tej kontroli dałoby się kazać systemowi rozesłać
+// dowolny plik z chmury (np. cudzy dokument członkowski).
+function isOwnAttachmentPath(eventId, path) {
+	return typeof path === 'string' && path.startsWith(attachmentPrefix(eventId)) && !path.includes('..')
+}
+
 // Grupy odbiorców. Anulowani NIGDY nie dostają nic — nie ma tu na nich wariantu i nie wolno go dodać
 // bez świadomej decyzji (osoba, która się wypisała, nie powinna dostawać maili o wydarzeniu).
 const RECIPIENT_FILTERS = {
@@ -58,4 +75,15 @@ async function missingEmails(prisma, mailing) {
 	return targets.filter(e => !sent.has(e))
 }
 
-module.exports = { SCOPE, RECIPIENT_FILTERS, isValidFilter, whereForFilter, normalizeEmail, targetEmails, missingEmails }
+module.exports = {
+	SCOPE,
+	RECIPIENT_FILTERS,
+	MAX_ATTACHMENTS_BYTES,
+	attachmentPrefix,
+	isOwnAttachmentPath,
+	isValidFilter,
+	whereForFilter,
+	normalizeEmail,
+	targetEmails,
+	missingEmails,
+}

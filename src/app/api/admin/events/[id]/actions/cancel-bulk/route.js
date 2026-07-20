@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { emailQueue } from '@/lib/queue'
+import { deleteFileFromGCS } from '@/lib/gcs'
 
 // „Cofnij" wysyłkę w oknie opóźnienia. Zadanie jeszcze nie ruszyło (stan delayed/waiting) → usuwamy je
 // z kolejki i nic nie wychodzi. Jeśli zdążyło wystartować (active/completed) — za późno, zwracamy false.
@@ -26,7 +27,10 @@ export async function POST(request, { params }) {
 		if (job.name !== 'event-bulk-mail' || !mailingId) {
 			return NextResponse.json({ message: 'To zadanie nie jest wysyłką do zapisanych.' }, { status: 400 })
 		}
-		const mailing = await prisma.eventMailing.findUnique({ where: { id: mailingId }, select: { eventId: true } })
+		const mailing = await prisma.eventMailing.findUnique({
+			where: { id: mailingId },
+			select: { eventId: true, attachments: { select: { path: true } } },
+		})
 		if (!mailing || mailing.eventId !== id) {
 			return NextResponse.json({ message: 'Zadanie dotyczy innego wydarzenia.' }, { status: 404 })
 		}
@@ -43,6 +47,10 @@ export async function POST(request, { params }) {
 		// pokazywałby wysyłkę, której nie było). Przy dosyłce do brakujących kampania zostaje — anulujemy
 		// samą dosyłkę. Źródłem prawdy jest typ zadania (onlyMissing), nie liczba wierszy w logu.
 		if (job.data.onlyMissing === false) {
+			// Wiersze załączników znikną kaskadą, ale pliki w chmurze trzeba skasować jawnie.
+			for (const a of mailing.attachments) {
+				await deleteFileFromGCS(a.path).catch(() => {})
+			}
 			await prisma.eventMailing.deleteMany({ where: { id: mailingId, eventId: id } })
 		}
 

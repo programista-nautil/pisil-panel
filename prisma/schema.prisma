@@ -364,7 +364,27 @@ model EventMailing {
   // gdy ta wiadomość poszła. Nullable ze względu na kampanie sprzed wprowadzenia pola.
   template        String?
 
+  attachments EventMailingAttachment[]
+
   @@index([eventId])
+}
+
+// Załącznik kampanii (np. program w PDF). Plik leży w GCS — w bazie tylko ścieżka, tak jak przy
+// pozostałych plikach w projekcie. Worker pobiera go RAZ na kampanię i dokleja do każdej wiadomości,
+// więc liczba odbiorców nie zwielokrotnia pobrań z chmury.
+model EventMailingAttachment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  mailing   EventMailing @relation(fields: [mailingId], references: [id], onDelete: Cascade)
+  mailingId String
+
+  path     String // ścieżka w GCS (nie publiczny URL)
+  filename String // oryginalna nazwa, którą zobaczy odbiorca
+  size     Int
+  mimeType String?
+
+  @@index([mailingId])
 }
 
 // Jeden rozwijany blok na stronie wydarzenia. Każdy może mieć tekst, plik i/lub link — dowolna

@@ -94,6 +94,8 @@ export default function EventsManagement() {
       if (exists) return prev.map((e) => (e.id === saved.id ? { ...e, ...saved } : e));
       return [{ ...saved, _count: { registrations: 0 } }, ...prev];
     });
+    // Zmiana terminu/statusu przelicza flagi „czeka na wysyłkę" — te liczy wyłącznie GET listy.
+    fetchEvents();
     setIsFormOpen(false);
   };
 
@@ -107,6 +109,9 @@ export default function EventsManagement() {
       if (!res.ok) throw new Error("Błąd zmiany statusu");
       const updated = await res.json();
       setEvents((prev) => prev.map((e) => (e.id === updated.id ? { ...e, ...updated } : e)));
+      // Serwer nie zwraca tu `doZrobienia` (liczy je tylko GET listy), a zmiana statusu wprost wpływa na te
+      // flagi — np. zarchiwizowanie ma zgasić kropkę „czeka na wysyłka". Bez odświeżenia zostałaby stara.
+      fetchEvents();
       toast.success(komunikat || "Zaktualizowano status wydarzenia.");
     } catch (error) {
       toast.error(error.message);
@@ -163,6 +168,11 @@ export default function EventsManagement() {
     const zgloszen = event._count?.registrations ?? 0;
     const poTerminie = czyPoTerminie(event);
     const maZgloszenia = zgloszen > 0;
+    // Flagi liczy serwer (wspólne reguły z widokiem zgłoszeń) — tu tylko etykiety.
+    const czeka = [
+      event.doZrobienia?.przypomnienie && "przypomnienie",
+      event.doZrobienia?.rezerwowa && "lista rezerwowa",
+    ].filter(Boolean);
 
     return (
       <div
@@ -180,6 +190,17 @@ export default function EventsManagement() {
             <span className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium bg-white text-gray-600 ring-1 ring-gray-200">
               {TYP_LABEL[event.typ]} · {TRYB_LABEL[event.tryb]}
             </span>
+            {/* „Czeka na wysyłkę" — te same reguły co podpowiedzi w środku wydarzenia (src/lib/events.js).
+                Bez tego trzeba było wejść w każde wydarzenie, żeby się dowiedzieć, że coś czeka. */}
+            {czeka.length > 0 && (
+              <span
+                title={`Czeka na wysyłkę: ${czeka.join(", ")}. Wejdź w zgłoszenia, żeby wysłać.`}
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-[#005698]/10 text-[#005698]"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-[#005698]" />
+                {czeka.length === 1 ? czeka[0] : `${czeka.length} wysyłki czekają`}
+              </span>
+            )}
           </div>
           <h3 className="text-base font-semibold text-gray-800 truncate">{event.title}</h3>
           <p className="text-sm text-gray-500">

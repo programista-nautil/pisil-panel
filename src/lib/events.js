@@ -32,6 +32,46 @@ export function isRegistrationOpen(event, confirmedCount, now = new Date()) {
 	return registrationClosedReason(event, confirmedCount, now) === null
 }
 
+// Okno, w którym proponujemy przypomnienie. Szersze niż doba celowo: podpowiedź ma się pokazać także,
+// gdy panel otwiera się dwa dni przed wydarzeniem, a nie tylko dokładnie „dzień przed".
+const OKNO_PRZYPOMNIENIA_MS = 48 * 60 * 60 * 1000
+
+/**
+ * Czy zapisy są DEFINITYWNIE zamknięte (nie ma już szans na miejsce).
+ * Świadomie NIE traktujemy tak powodu „LIMIT": komplet miejsc znaczy tylko tyle, że teraz jest pełno —
+ * ktoś może zrezygnować i miejsce się zwolni. Rozróżnienie jest istotne dla maila „niestety nie udało się”,
+ * który przy samym limicie byłby przedwczesny i nieprawdziwy.
+ */
+export function registrationDefinitivelyClosed(event, confirmedCount, now = new Date()) {
+	const powod = registrationClosedReason(event, confirmedCount, now)
+	if (powod === 'DEADLINE') return true
+	if (powod === 'STATUS') return event.status === 'CLOSED' || event.status === 'ARCHIVED'
+	return false
+}
+
+/**
+ * Czy proponować poinformowanie listy rezerwowej („niestety nie udało się”).
+ * @param {object} liczby { confirmed, waitlist, sentTemplates }
+ */
+export function waitlistNeedsInfo(event, { confirmed = 0, waitlist = 0, sentTemplates = [] }, now = new Date()) {
+	if (waitlist <= 0) return false
+	if (sentTemplates.includes('WAITLIST_REJECTED')) return false
+	return registrationDefinitivelyClosed(event, confirmed, now)
+}
+
+/**
+ * Czy proponować przypomnienie przed wydarzeniem. Szkiców i archiwów nie ruszamy, po starcie
+ * przypominanie nie ma już sensu.
+ */
+export function reminderDue(event, { confirmed = 0, sentTemplates = [] }, now = new Date()) {
+	if (!event.startAt) return false
+	if (event.status === 'DRAFT' || event.status === 'ARCHIVED') return false
+	if (confirmed <= 0) return false
+	if (sentTemplates.includes('REMINDER')) return false
+	const doStartu = new Date(event.startAt).getTime() - now.getTime()
+	return doStartu > 0 && doStartu <= OKNO_PRZYPOMNIENIA_MS
+}
+
 /**
  * Kolejność wydarzeń na stronie: najpierw NADCHODZĄCE (od najbliższego), potem MINIONE
  * (od najnowszego). Zwykłe sortowanie rosnąco po dacie wypychałoby najstarsze wydarzenia

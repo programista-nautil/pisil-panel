@@ -1,4 +1,4 @@
-import { isRegistrationOpen, sortPublicEvents, registrationClosedReason, serializePublicEvent } from './events'
+import { isRegistrationOpen, sortPublicEvents, registrationClosedReason, serializePublicEvent, waitlistNeedsInfo, reminderDue } from './events'
 
 // Bazowe wydarzenie: opublikowane, bez limitu, start w przyszłości.
 const bazowe = {
@@ -140,5 +140,63 @@ describe('sortPublicEvents', () => {
 	it('same minione: od najnowszego', () => {
 		const lista = [ev('a', '2020-01-01T10:00:00Z'), ev('c', '2026-01-01T10:00:00Z'), ev('b', '2023-01-01T10:00:00Z')]
 		expect(sortPublicEvents(lista, TERAZ).map(e => e.slug)).toEqual(['c', 'b', 'a'])
+	})
+})
+
+// --- Reguly podpowiedzi (wspolne dla listy wydarzen i widoku zgloszen) ---
+
+describe('waitlistNeedsInfo (#5)', () => {
+	const bazowe = { status: 'CLOSED', startAt: new Date('2026-12-01T10:00:00Z'), limitMiejsc: 10 }
+
+	it('zapisy zamkniete recznie + ktos na rezerwowej → podpowiadamy', () => {
+		expect(waitlistNeedsInfo(bazowe, { confirmed: 5, waitlist: 2, sentTemplates: [] })).toBe(true)
+	})
+
+	it('KOMPLET MIEJSC to za malo — ktos moze zrezygnowac, wiec NIE podpowiadamy', () => {
+		const pelne = { status: 'PUBLISHED', startAt: new Date('2099-01-01T10:00:00Z'), limitMiejsc: 5 }
+		expect(waitlistNeedsInfo(pelne, { confirmed: 5, waitlist: 3, sentTemplates: [] })).toBe(false)
+		// para pozytywna: po recznym zamknieciu ta sama sytuacja JUZ podpowiada
+		expect(waitlistNeedsInfo({ ...pelne, status: 'CLOSED' }, { confirmed: 5, waitlist: 3, sentTemplates: [] })).toBe(true)
+	})
+
+	it('po minieciu terminu → podpowiadamy', () => {
+		const poTerminie = { status: 'PUBLISHED', startAt: new Date('2020-01-01T10:00:00Z') }
+		expect(waitlistNeedsInfo(poTerminie, { confirmed: 1, waitlist: 1, sentTemplates: [] })).toBe(true)
+	})
+
+	it('nie podpowiadamy gdy juz wyslano albo nikogo nie ma na rezerwowej', () => {
+		expect(waitlistNeedsInfo(bazowe, { confirmed: 5, waitlist: 2, sentTemplates: ['WAITLIST_REJECTED'] })).toBe(false)
+		expect(waitlistNeedsInfo(bazowe, { confirmed: 5, waitlist: 0, sentTemplates: [] })).toBe(false)
+	})
+})
+
+describe('reminderDue (#10)', () => {
+	const teraz = new Date('2026-09-16T10:00:00Z')
+	const zaDobe = { status: 'PUBLISHED', startAt: new Date('2026-09-17T10:00:00Z') }
+
+	it('start za dobe, sa potwierdzeni, nie wyslano → podpowiadamy', () => {
+		expect(reminderDue(zaDobe, { confirmed: 3, sentTemplates: [] }, teraz)).toBe(true)
+	})
+
+	it('poza oknem 48 h → nie podpowiadamy', () => {
+		const zaTydzien = { status: 'PUBLISHED', startAt: new Date('2026-09-23T10:00:00Z') }
+		expect(reminderDue(zaTydzien, { confirmed: 3, sentTemplates: [] }, teraz)).toBe(false)
+	})
+
+	it('po starcie wydarzenia → nie podpowiadamy', () => {
+		const wczoraj = { status: 'PUBLISHED', startAt: new Date('2026-09-15T10:00:00Z') }
+		expect(reminderDue(wczoraj, { confirmed: 3, sentTemplates: [] }, teraz)).toBe(false)
+	})
+
+	it('szkic i archiwum pomijamy, mimo ze termin pasuje', () => {
+		expect(reminderDue({ ...zaDobe, status: 'DRAFT' }, { confirmed: 3, sentTemplates: [] }, teraz)).toBe(false)
+		expect(reminderDue({ ...zaDobe, status: 'ARCHIVED' }, { confirmed: 3, sentTemplates: [] }, teraz)).toBe(false)
+		// para pozytywna: zamkniete zapisy to nadal wydarzenie, ktore sie odbedzie
+		expect(reminderDue({ ...zaDobe, status: 'CLOSED' }, { confirmed: 3, sentTemplates: [] }, teraz)).toBe(true)
+	})
+
+	it('brak potwierdzonych albo juz wyslano → nie podpowiadamy', () => {
+		expect(reminderDue(zaDobe, { confirmed: 0, sentTemplates: [] }, teraz)).toBe(false)
+		expect(reminderDue(zaDobe, { confirmed: 3, sentTemplates: ['REMINDER'] }, teraz)).toBe(false)
 	})
 })

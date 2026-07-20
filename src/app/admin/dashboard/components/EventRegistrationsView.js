@@ -12,7 +12,7 @@ import { CheckCircleIcon as CheckCircleSolid } from "@heroicons/react/24/solid";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import BulkMailModal from "./BulkMailModal";
 import PaymentConfirmModal from "./PaymentConfirmModal";
-import { registrationClosedReason } from "@/lib/events";
+import { waitlistNeedsInfo, reminderDue } from "@/lib/events";
 
 const TIER_LABEL = {
   CZLONEK_GRATIS: "Członek (gratis)",
@@ -217,28 +217,22 @@ export default function EventRegistrationsView({ event, onBack }) {
     setIsAddOpen(false);
   };
 
-  // Podpowiedź #5: zaproponuj poinformowanie listy rezerwowej, ale TYLKO gdy zapisy są definitywnie
-  // zamknięte. Świadomie pomijamy powód „LIMIT" (komplet miejsc) — wtedy ktoś może jeszcze zrezygnować
-  // i miejsce się zwolni, więc „niestety nie udało się" byłoby przedwczesne i nieprawdziwe.
-  const zapisyZamkniete = useMemo(() => {
-    const powod = registrationClosedReason(event, summary.potwierdzone);
-    if (powod === "DEADLINE") return true;
-    if (powod === "STATUS") return event.status === "CLOSED" || event.status === "ARCHIVED";
-    return false;
-  }, [event, summary.potwierdzone]);
+  // Reguły podpowiedzi trzyma src/lib/events.js — tych samych używa lista wydarzeń do kropki
+  // „coś czeka na wysyłkę". Jedno źródło prawdy, żeby lista i wnętrze wydarzenia nie mówiły co innego.
+  const podpowiedzRezerwowa = useMemo(
+    () =>
+      waitlistNeedsInfo(event, {
+        confirmed: summary.potwierdzone,
+        waitlist: summary.rezerwowa,
+        sentTemplates,
+      }),
+    [event, summary.potwierdzone, summary.rezerwowa, sentTemplates]
+  );
 
-  const podpowiedzRezerwowa =
-    zapisyZamkniete && summary.rezerwowa > 0 && !sentTemplates.includes("WAITLIST_REJECTED");
-
-  // Podpowiedź #10: wydarzenie tuż-tuż, a przypomnienie jeszcze nie poszło. Okno 48 h (nie 24 h),
-  // żeby podpowiedź zdążyła się pokazać, nawet gdy panel otwiera się dzień wcześniej. Nie pokazujemy
-  // jej dla szkiców i archiwów ani po starcie wydarzenia — wtedy przypominanie nie ma już sensu.
-  const podpowiedzPrzypomnienie = useMemo(() => {
-    if (!event.startAt || event.status === "DRAFT" || event.status === "ARCHIVED") return false;
-    const doStartu = new Date(event.startAt).getTime() - Date.now();
-    if (doStartu <= 0 || doStartu > 48 * 60 * 60 * 1000) return false;
-    return summary.potwierdzone > 0 && !sentTemplates.includes("REMINDER");
-  }, [event.startAt, event.status, summary.potwierdzone, sentTemplates]);
+  const podpowiedzPrzypomnienie = useMemo(
+    () => reminderDue(event, { confirmed: summary.potwierdzone, sentTemplates }),
+    [event, summary.potwierdzone, sentTemplates]
+  );
 
   // Pierwsza osoba z listy rezerwowej = najstarsze zgłoszenie (tak samo liczy serwer).
   const firstWaitlisted = useMemo(() => {
