@@ -7,12 +7,15 @@ import {
   CheckCircleIcon,
   ChatBubbleBottomCenterTextIcon,
   EnvelopeIcon,
+  ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon as CheckCircleSolid } from "@heroicons/react/24/solid";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import BulkMailModal from "./BulkMailModal";
 import PaymentConfirmModal from "./PaymentConfirmModal";
+import RowActionsMenu from "./RowActionsMenu";
 import { waitlistNeedsInfo, reminderDue } from "@/lib/events";
+import { registrationIssues } from "@/lib/services/eventPricing";
 
 const TIER_LABEL = {
   CZLONEK_GRATIS: "Członek (gratis)",
@@ -42,10 +45,17 @@ const REJESTRACJA_OPTS = [
 ];
 
 const formatPln = (v) => `${Number(v || 0).toFixed(2).replace(".", ",")} zł`;
+
+// Rozjazdy „kwota vs status płatności" — dla anulowanych nie mają znaczenia, więc ich nie zaśmiecamy.
+const issuesFor = (r) => (r.statusRejestracji === "ANULOWANA" ? [] : registrationIssues(r));
 const formatDzien = (d) => (d ? new Date(d).toLocaleDateString("pl-PL") : "");
 
+// Rozwijane pola w spoczynku wygladaja jak zwykly tekst statusu — ramka i tlo pojawiaja sie dopiero
+// przy najechaniu i przy edycji. Tabele czyta sie duzo czesciej, niz edytuje, a osiem ramek na ekranie
+// robilo z niej kratownice. Kontrolka zostaje NATYWNA (klawiatura, dostepnosc) — zmieniamy tylko styl.
 const selectCls =
-  "text-xs border border-gray-300 rounded px-1.5 py-1 text-gray-700 focus:outline-none focus:border-[#005698]";
+  "text-xs rounded px-1.5 py-1 text-gray-700 bg-transparent border border-transparent cursor-pointer " +
+  "hover:border-gray-300 hover:bg-white focus:border-[#005698] focus:bg-white focus:outline-none transition-colors";
 const inputCls =
   "block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#005698] focus:ring-[#005698] sm:text-sm text-gray-700";
 const labelCls = "block text-sm font-medium text-gray-700 mb-1";
@@ -307,11 +317,15 @@ export default function EventRegistrationsView({ event, onBack }) {
       </div>
 
       {/* Podsumowanie */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatBox label="Potwierdzone" value={summary.potwierdzone} />
         <StatBox label="Lista rezerwowa" value={summary.rezerwowa} />
-        <StatBox label="Należność" value={formatPln(summary.naleznosc)} />
-        <StatBox label="Opłacone" value={formatPln(summary.oplacone)} />
+        {/* Naleznosc i wplaty to jedna informacja — osobno trzeba bylo je w glowie dzielic przez siebie */}
+        <StatBox
+          label="Wpłaty"
+          value={formatPln(summary.oplacone)}
+          sub={`z ${formatPln(summary.naleznosc)} należności`}
+        />
         <StatBox label="Do sprawdzenia" value={summary.doSprawdzenia} przygaszony={summary.doSprawdzenia === 0} />
       </div>
 
@@ -379,7 +393,7 @@ export default function EventRegistrationsView({ event, onBack }) {
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {["", "Uczestnik", "Firma / NIP", "Poziom", "Kwota", "Płatność", "Rejestracja", ...(lastMailing ? ["Wysyłka"] : []), ""].map(
+                {["✓", "Uczestnik", "Firma / NIP", "Poziom i kwota", "Płatność", "Rejestracja", ...(lastMailing ? ["Wysyłka"] : []), ""].map(
                   (h, i) => (
                     <th
                       key={i}
@@ -453,21 +467,28 @@ export default function EventRegistrationsView({ event, onBack }) {
                       )}
                     </td>
 
+                    {/* Poziom i kwota to jedna informacja — poziom determinuje cenę, więc dwie kolumny
+                        mówiły to samo dwa razy. Tu doklejamy też znacznik rozjazdu (kwota vs płatność). */}
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${TIER_STYLE[r.tier] || ""}`}
-                      >
-                        {TIER_LABEL[r.tier] || r.tier}
-                      </span>
-                    </td>
-
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className={anulowana ? "text-gray-400" : "text-gray-800"}>
-                        {formatPln(r.kwota)}
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${TIER_STYLE[r.tier] || ""}`}
+                        >
+                          {TIER_LABEL[r.tier] || r.tier}
+                        </span>
+                        {issuesFor(r).length > 0 && (
+                          <span
+                            title={`Do poprawienia: ${issuesFor(r).join(" ")}`}
+                            className="inline-flex cursor-help text-[#005698]"
+                          >
+                            <ExclamationCircleIcon className="h-4 w-4" />
+                          </span>
+                        )}
                       </div>
-                      {r.oplaconeAt && (
-                        <div className="text-xs text-gray-400">wpłata: {formatDzien(r.oplaconeAt)}</div>
-                      )}
+                      <div className={`text-xs mt-0.5 ${anulowana ? "text-gray-400" : "text-gray-600"}`}>
+                        {formatPln(r.kwota)}
+                        {r.oplaconeAt && <span className="text-gray-400"> · wpłata {formatDzien(r.oplaconeAt)}</span>}
+                      </div>
                     </td>
 
                     <td className="px-3 py-2">
@@ -505,18 +526,12 @@ export default function EventRegistrationsView({ event, onBack }) {
                     )}
 
                     <td className="px-3 py-2 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => setEditing(r)}
-                        className="text-xs font-medium text-[#005698] hover:underline mr-3"
-                      >
-                        Edytuj
-                      </button>
-                      <button
-                        onClick={() => setDeleting(r)}
-                        className="text-xs text-red-600 hover:text-red-800"
-                      >
-                        Usuń
-                      </button>
+                      <RowActionsMenu
+                        actions={[
+                          { label: "Edytuj", onClick: () => setEditing(r) },
+                          { label: "Usuń", onClick: () => setDeleting(r), danger: true },
+                        ]}
+                      />
                     </td>
                   </tr>
                 );
@@ -650,13 +665,14 @@ function MailStatusChip({ status }) {
   return <span className="text-xs text-gray-300">—</span>;
 }
 
-function StatBox({ label, value, przygaszony = false }) {
+function StatBox({ label, value, sub, przygaszony = false }) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
       <p className="text-xs text-gray-500">{label}</p>
       <p className={`text-lg font-semibold ${przygaszony ? "text-gray-300" : "text-[#005698]"}`}>
         {value}
       </p>
+      {sub && <p className="text-xs text-gray-400">{sub}</p>}
     </div>
   );
 }

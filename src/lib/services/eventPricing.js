@@ -46,3 +46,35 @@ export function computeRegistration(event, { isMember, gratisUsed = 0 }) {
 		statusPlatnosci: cenaCzlonek > 0 ? 'OCZEKUJE' : 'ZWOLNIONY',
 	}
 }
+
+const formatPln = v => `${toNumber(v).toFixed(2).replace('.', ',')} zł`
+
+/**
+ * Rozjazdy między poziomem, kwotą a statusem płatności — czyli kombinacje, których reguły wyżej
+ * NIGDY by nie wyprodukowały. Powstają przy ręcznych korektach (admin zmienia jedno pole, zapominając
+ * o drugim) i cicho psują rozliczenia: „zwolniony" wypada z należności, a „oczekuje" przy zerowej
+ * kwocie każe czekać na przelew, którego nie będzie. Panel pokazuje je jako podpowiedź do poprawienia.
+ *
+ * @param {{tier?: string, kwota?: any, statusPlatnosci?: string}} reg
+ * @returns {string[]} lista opisów po polsku; pusta = wiersz spójny
+ */
+export function registrationIssues(reg) {
+	if (!reg) return []
+	const kwota = toNumber(reg.kwota)
+	const problemy = []
+
+	if (kwota > 0 && reg.statusPlatnosci === 'ZWOLNIONY') {
+		problemy.push(`Zwolniony z opłaty, ale kwota to ${formatPln(kwota)} — nie liczy się do należności.`)
+	}
+	if (kwota === 0 && reg.statusPlatnosci === 'OCZEKUJE') {
+		problemy.push('Oczekuje na wpłatę, ale kwota to 0 zł — nie ma na co czekać.')
+	}
+	if (reg.tier === 'CZLONEK_GRATIS' && kwota > 0) {
+		problemy.push(`Poziom „członek (gratis)", ale kwota to ${formatPln(kwota)}.`)
+	}
+	if (kwota === 0 && reg.statusPlatnosci === 'OPLACONE') {
+		problemy.push('Odnotowana wpłata przy kwocie 0 zł.')
+	}
+
+	return problemy
+}

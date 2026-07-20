@@ -57,3 +57,55 @@ describe('computeRegistration — ceny zerowe/brak', () => {
 		expect(computeRegistration(ev, { isMember: true }).kwota).toBe(250)
 	})
 })
+
+// --- Rozjazdy kwota vs status platnosci (podpowiedz w panelu) ---
+
+describe('registrationIssues', () => {
+	const { registrationIssues } = require('./eventPricing')
+
+	it('spójny wiersz nie zgłasza nic', () => {
+		expect(registrationIssues({ tier: 'CZLONEK_PLATNY', kwota: 300, statusPlatnosci: 'OCZEKUJE' })).toEqual([])
+		expect(registrationIssues({ tier: 'CZLONEK_GRATIS', kwota: 0, statusPlatnosci: 'ZWOLNIONY' })).toEqual([])
+		expect(registrationIssues({ tier: 'NIECZLONEK', kwota: 600, statusPlatnosci: 'OPLACONE' })).toEqual([])
+	})
+
+	it('zwolniony przy kwocie > 0 — wypada z należności', () => {
+		const out = registrationIssues({ tier: 'CZLONEK_PLATNY', kwota: 300, statusPlatnosci: 'ZWOLNIONY' })
+		expect(out).toHaveLength(1)
+		expect(out[0]).toMatch(/zwolniony/i)
+		expect(out[0]).toContain('300,00 zł') // konkret, nie ogólnik
+	})
+
+	it('oczekuje na wpłatę przy kwocie 0 — nie ma na co czekać', () => {
+		const out = registrationIssues({ tier: 'CZLONEK_GRATIS', kwota: 0, statusPlatnosci: 'OCZEKUJE' })
+		expect(out).toHaveLength(1)
+		expect(out[0]).toMatch(/oczekuje/i)
+	})
+
+	it('gratis z kwotą > 0 zgłasza OBA rozjazdy (poziom i płatność)', () => {
+		const out = registrationIssues({ tier: 'CZLONEK_GRATIS', kwota: 500, statusPlatnosci: 'ZWOLNIONY' })
+		expect(out).toHaveLength(2)
+		expect(out.join(' ')).toMatch(/gratis/i)
+	})
+
+	it('wpłata przy kwocie 0', () => {
+		expect(registrationIssues({ tier: 'CZLONEK_GRATIS', kwota: 0, statusPlatnosci: 'OPLACONE' })).toHaveLength(1)
+	})
+
+	it('brak danych nie wywraca funkcji', () => {
+		expect(registrationIssues(null)).toEqual([])
+		expect(registrationIssues({})).toEqual([]) // kwota 0 + brak statusu = brak rozjazdu
+	})
+
+	it('to, co wylicza computeRegistration, jest ZAWSZE spójne', () => {
+		const warianty = [
+			[{ typ: 'KONFERENCJA', pulaGratisNaFirme: 2, cenaCzlonek: 300, cenaNieczlonek: 600 }, { isMember: true, gratisUsed: 0 }],
+			[{ typ: 'KONFERENCJA', pulaGratisNaFirme: 2, cenaCzlonek: 300, cenaNieczlonek: 600 }, { isMember: true, gratisUsed: 5 }],
+			[{ typ: 'SZKOLENIE', cenaCzlonek: 300, cenaNieczlonek: 600 }, { isMember: false }],
+			[{ typ: 'SZKOLENIE', cenaCzlonek: 0, cenaNieczlonek: 0 }, { isMember: true }],
+		]
+		for (const [event, ctx] of warianty) {
+			expect(registrationIssues(computeRegistration(event, ctx))).toEqual([])
+		}
+	})
+})
