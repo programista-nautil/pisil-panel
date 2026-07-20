@@ -393,7 +393,7 @@ export default function EventRegistrationsView({ event, onBack }) {
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {["✓", "Uczestnik", "Firma / NIP", "Poziom i kwota", "Płatność", "Rejestracja", ...(lastMailing ? ["Wysyłka"] : []), ""].map(
+                {["Uczestnik", "Firma / NIP", "Poziom i kwota", "Płatność", "Rejestracja", ...(lastMailing ? ["Wysyłka"] : []), ""].map(
                   (h, i) => (
                     <th
                       key={i}
@@ -413,45 +413,48 @@ export default function EventRegistrationsView({ event, onBack }) {
                     key={r.id}
                     className={anulowana ? "bg-gray-50/70 text-gray-400" : "hover:bg-gray-50"}
                   >
-                    {/* Szybkie oznaczenie „sprawdzone” — jeden klik, bez otwierania okna */}
-                    <td className="pl-3 pr-0 py-2">
-                      <button
-                        onClick={() => patchReg(r, { zweryfikowane: !r.zweryfikowane })}
-                        title={
-                          r.zweryfikowane
-                            ? `Sprawdzone${r.zweryfikowaneAt ? ` — ${formatDzien(r.zweryfikowaneAt)}` : ""}. Kliknij, aby cofnąć.`
-                            : "Oznacz jako sprawdzone (poziom i kwota zweryfikowane)"
-                        }
-                        className="align-middle"
-                      >
-                        {r.zweryfikowane ? (
-                          <CheckCircleSolid className="h-5 w-5 text-[#005698]" />
-                        ) : (
-                          <CheckCircleIcon className="h-5 w-5 text-gray-300 hover:text-gray-400" />
-                        )}
-                      </button>
-                    </td>
-
+                    {/* Ptaszek „sprawdzone” siedzi przy nazwisku, a nie w osobnej kolumnie — kolumna bez
+                        treści tylko rozpychała tabelę, a znacznik i tak dotyczy tej konkretnej osoby. */}
                     <td className="px-3 py-2">
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className={`font-medium ${anulowana ? "line-through text-gray-400" : "text-gray-800"}`}
+                      <div className="flex items-start gap-2">
+                        <button
+                          onClick={() => patchReg(r, { zweryfikowane: !r.zweryfikowane })}
+                          title={
+                            r.zweryfikowane
+                              ? `Sprawdzone${r.zweryfikowaneAt ? ` — ${formatDzien(r.zweryfikowaneAt)}` : ""}. Kliknij, aby cofnąć.`
+                              : "Oznacz jako sprawdzone (poziom i kwota zweryfikowane)"
+                          }
+                          className="mt-0.5 flex-shrink-0"
                         >
-                          {r.firstName} {r.lastName}
-                        </span>
-                        {r.zrodlo === "ADMIN" && (
-                          <span className="inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-500 ring-1 ring-gray-200">
-                            ręczne
-                          </span>
-                        )}
-                        {r.notatka && (
-                          <span title={r.notatka} className="inline-flex cursor-help">
-                            <ChatBubbleBottomCenterTextIcon className="h-3.5 w-3.5 text-gray-400" />
-                          </span>
-                        )}
+                          {r.zweryfikowane ? (
+                            <CheckCircleSolid className="h-5 w-5 text-[#005698]" />
+                          ) : (
+                            <CheckCircleIcon className="h-5 w-5 text-gray-300 hover:text-gray-400" />
+                          )}
+                        </button>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`font-medium ${anulowana ? "line-through text-gray-400" : "text-gray-800"}`}
+                            >
+                              {r.firstName} {r.lastName}
+                            </span>
+                            {r.zrodlo === "ADMIN" && (
+                              <span className="inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-500 ring-1 ring-gray-200">
+                                ręczne
+                              </span>
+                            )}
+                            {r.notatka && (
+                              <span title={r.notatka} className="inline-flex cursor-help">
+                                <ChatBubbleBottomCenterTextIcon className="h-3.5 w-3.5 text-gray-400" />
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500">{r.email || "— brak e-maila —"}</div>
+                          <div className="text-xs text-gray-400">zgłoszenie: {formatDzien(r.createdAt)}</div>
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500">{r.email || "— brak e-maila —"}</div>
-                      <div className="text-xs text-gray-400">zgłoszenie: {formatDzien(r.createdAt)}</div>
                     </td>
 
                     <td className="px-3 py-2">
@@ -669,10 +672,11 @@ function StatBox({ label, value, sub, przygaszony = false }) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
       <p className="text-xs text-gray-500">{label}</p>
+      {/* Podpis OBOK kwoty, nie pod nią — jako osobna linia rozpychał w górę wszystkie kafelki w rzędzie. */}
       <p className={`text-lg font-semibold ${przygaszony ? "text-gray-300" : "text-[#005698]"}`}>
         {value}
+        {sub && <span className="ml-2 text-xs font-normal text-gray-400">{sub}</span>}
       </p>
-      {sub && <p className="text-xs text-gray-400">{sub}</p>}
     </div>
   );
 }
