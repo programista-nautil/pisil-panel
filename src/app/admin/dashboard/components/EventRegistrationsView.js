@@ -14,6 +14,7 @@ import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import BulkMailModal from "./BulkMailModal";
 import PaymentConfirmModal from "./PaymentConfirmModal";
 import RowActionsMenu from "./RowActionsMenu";
+import StatusSelect from "./StatusSelect";
 import { waitlistNeedsInfo, reminderDue } from "@/lib/events";
 import { registrationIssues } from "@/lib/services/eventPricing";
 
@@ -38,6 +39,11 @@ const PLATNOSC_OPTS = [
   ["OCZEKUJE", "Oczekuje"],
   ["OPLACONE", "Opłacone"],
 ];
+const OBECNOSC_OPTS = [
+  ["", "Nieoznaczona"],
+  ["true", "Obecny"],
+  ["false", "Nieobecny"],
+];
 const REJESTRACJA_OPTS = [
   ["POTWIERDZONA", "Potwierdzona"],
   ["LISTA_REZERWOWA", "Lista rezerwowa"],
@@ -50,12 +56,6 @@ const formatPln = (v) => `${Number(v || 0).toFixed(2).replace(".", ",")} zł`;
 const issuesFor = (r) => (r.statusRejestracji === "ANULOWANA" ? [] : registrationIssues(r));
 const formatDzien = (d) => (d ? new Date(d).toLocaleDateString("pl-PL") : "");
 
-// Rozwijane pola w spoczynku wygladaja jak zwykly tekst statusu — ramka i tlo pojawiaja sie dopiero
-// przy najechaniu i przy edycji. Tabele czyta sie duzo czesciej, niz edytuje, a osiem ramek na ekranie
-// robilo z niej kratownice. Kontrolka zostaje NATYWNA (klawiatura, dostepnosc) — zmieniamy tylko styl.
-const selectCls =
-  "text-xs rounded px-1.5 py-1 text-gray-700 bg-transparent border border-transparent cursor-pointer " +
-  "hover:border-gray-300 hover:bg-white focus:border-[#005698] focus:bg-white focus:outline-none transition-colors";
 const inputCls =
   "block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#005698] focus:ring-[#005698] sm:text-sm text-gray-700";
 const labelCls = "block text-sm font-medium text-gray-700 mb-1";
@@ -495,31 +495,21 @@ export default function EventRegistrationsView({ event, onBack }) {
                     </td>
 
                     <td className="px-3 py-2">
-                      <select
+                      <StatusSelect
                         value={r.statusPlatnosci}
-                        onChange={(e) => handlePaymentChange(r, e.target.value)}
-                        className={selectCls}
-                      >
-                        {PLATNOSC_OPTS.map(([v, l]) => (
-                          <option key={v} value={v}>
-                            {l}
-                          </option>
-                        ))}
-                      </select>
+                        options={PLATNOSC_OPTS}
+                        onChange={(v) => handlePaymentChange(r, v)}
+                        title="Status płatności"
+                      />
                     </td>
 
                     <td className="px-3 py-2">
-                      <select
+                      <StatusSelect
                         value={r.statusRejestracji}
-                        onChange={(e) => handleStatusChange(r, e.target.value)}
-                        className={selectCls}
-                      >
-                        {REJESTRACJA_OPTS.map(([v, l]) => (
-                          <option key={v} value={v}>
-                            {l}
-                          </option>
-                        ))}
-                      </select>
+                        options={REJESTRACJA_OPTS}
+                        onChange={(v) => handleStatusChange(r, v)}
+                        title="Status rejestracji"
+                      />
                     </td>
 
                     {lastMailing && (
@@ -854,17 +844,7 @@ function EditRegistrationModal({ event, registration, onClose, onSaved }) {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className={labelCls}>Poziom</label>
-                    <select
-                      value={form.tier}
-                      onChange={(e) => handleTierChange(e.target.value)}
-                      className={inputCls}
-                    >
-                      {TIER_OPTS.map(([v, l]) => (
-                        <option key={v} value={v}>
-                          {l}
-                        </option>
-                      ))}
-                    </select>
+                    <StatusSelect full value={form.tier} options={TIER_OPTS} onChange={handleTierChange} />
                   </div>
                   <div>
                     <label className={labelCls}>Kwota (zł)</label>
@@ -879,45 +859,32 @@ function EditRegistrationModal({ event, registration, onClose, onSaved }) {
                   </div>
                   <div>
                     <label className={labelCls}>Płatność</label>
-                    <select
+                    <StatusSelect
+                      full
                       value={form.statusPlatnosci}
-                      onChange={(e) => set("statusPlatnosci", e.target.value)}
-                      className={inputCls}
-                    >
-                      {PLATNOSC_OPTS.map(([v, l]) => (
-                        <option key={v} value={v}>
-                          {l}
-                        </option>
-                      ))}
-                    </select>
+                      options={PLATNOSC_OPTS}
+                      onChange={(v) => set("statusPlatnosci", v)}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelCls}>Rejestracja</label>
-                    <select
+                    <StatusSelect
+                      full
                       value={form.statusRejestracji}
-                      onChange={(e) => set("statusRejestracji", e.target.value)}
-                      className={inputCls}
-                    >
-                      {REJESTRACJA_OPTS.map(([v, l]) => (
-                        <option key={v} value={v}>
-                          {l}
-                        </option>
-                      ))}
-                    </select>
+                      options={REJESTRACJA_OPTS}
+                      onChange={(v) => set("statusRejestracji", v)}
+                    />
                   </div>
                   <div>
                     <label className={labelCls}>Obecność</label>
-                    <select
+                    <StatusSelect
+                      full
                       value={form.obecny}
-                      onChange={(e) => set("obecny", e.target.value)}
-                      className={inputCls}
-                    >
-                      <option value="">Nieoznaczona</option>
-                      <option value="true">Obecny</option>
-                      <option value="false">Nieobecny</option>
-                    </select>
+                      options={OBECNOSC_OPTS}
+                      onChange={(v) => set("obecny", v)}
+                    />
                   </div>
                 </div>
               </div>
