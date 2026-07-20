@@ -78,3 +78,44 @@ describe('#7 mail potwierdzenia wpłaty', () => {
 		expect(html).not.toMatch(WZORZEC_KWOTY)
 	})
 })
+
+// --- Tytul przelewu (zeby biuro rozpoznalo wplate w wyciagu bankowym) ---
+
+describe('transferTitle', () => {
+	const { transferTitle } = require('./eventMails')
+
+	it('laczy nazwe wydarzenia z nazwiskiem uczestnika', () => {
+		expect(transferTitle({ title: 'Konferencja Spedycyjna 2026' }, { firstName: 'Anna', lastName: 'Nowak' }))
+			.toBe('Konferencja Spedycyjna 2026 — Anna Nowak')
+	})
+
+	it('skraca bardzo dluga nazwe, zeby zmiescic sie w limicie tytulu przelewu', () => {
+		const dlugi = 'x'.repeat(200)
+		const out = transferTitle({ title: dlugi }, { firstName: 'Anna', lastName: 'Nowak' })
+		expect(out.length).toBeLessThanOrEqual(140) // limit tytulu przelewu
+		expect(out).toContain('Anna Nowak') // pozytyw: nazwisko NIE zostalo obciete
+	})
+
+	it('bez danych osoby zwraca sama nazwe wydarzenia (bez wiszacego mysnika)', () => {
+		expect(transferTitle({ title: 'Szkolenie X' }, {})).toBe('Szkolenie X')
+		expect(transferTitle({ title: 'Szkolenie X' }, {})).not.toContain('—')
+	})
+})
+
+describe('#4 mail „zwolnilo sie miejsce" — tytul przelewu', () => {
+	const { buildSpotFreedEmail } = require('./eventMails')
+
+	it('PLATNE: podaje gotowy tytul przelewu z nazwiskiem i prosbe o jego uzycie', () => {
+		const { html } = buildSpotFreedEmail(event, { email: 'a@b.pl', kwota: 500, firstName: 'Anna', lastName: 'Nowak' })
+		expect(html).toMatch(/Tytu[łl] przelewu/i) // pozytyw: sekcja istnieje
+		expect(html).toContain('Szkolenie testowe — Anna Nowak') // konkret, nie ogolnik
+		expect(html).toMatch(/dok[łl]adnie taki tytu[łl]/i) // prosba o uzycie
+		expect(html).not.toMatch(/prosimy poda[ćc] nazw[ęe] wydarzenia i firm[ęe]/i) // stary ogolnik zniknal
+	})
+
+	it('BEZPLATNE: bez tytulu przelewu (nie ma czego tytulowac)', () => {
+		const { html } = buildSpotFreedEmail(event, { email: 'a@b.pl', kwota: 0, firstName: 'Anna', lastName: 'Nowak' })
+		expect(html).toMatch(/bezp[łl]atny/i) // pozytyw
+		expect(html).not.toMatch(/Tytu[łl] przelewu/i)
+	})
+})

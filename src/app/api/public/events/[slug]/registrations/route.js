@@ -5,6 +5,7 @@ import { isValidNip, normalizeNip } from '@/lib/nip'
 import { computeRegistration } from '@/lib/services/eventPricing'
 import { registrationClosedReason } from '@/lib/events'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+import { paymentHtml } from '@/lib/services/eventMails'
 
 const CORS = {
 	'Access-Control-Allow-Origin': '*',
@@ -193,9 +194,7 @@ async function sendConfirmationEmail(event, registration) {
 	const platnoscHtml = naLiscieRezerwowej
 		? ''
 		: platne
-			? `<p><strong>Do zapłaty:</strong> ${formatPln(registration.kwota)}</p>
-			   <p><strong>Płatność:</strong> przelew na konto${bankAccount ? `: <strong>${bankAccount}</strong>` : ' (numer konta prześlemy w osobnej wiadomości)'}<br>
-			   W tytule przelewu prosimy podać nazwę wydarzenia i firmę.</p>`
+			? paymentHtml(event, registration, { bankAccount })
 			: `<p><strong>Udział bezpłatny.</strong></p>`
 
 	const rezerwowaHtml = naLiscieRezerwowej

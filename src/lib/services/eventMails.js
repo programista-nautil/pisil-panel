@@ -13,6 +13,32 @@ const formatDay = d => (d ? new Date(d).toLocaleDateString('pl-PL') : '')
 
 const FOOTER = '<p>Z poważaniem,<br>Polska Izba Spedycji i Logistyki</p>'
 
+/**
+ * Proponowany tytuł przelewu — gotowy do skopiowania, ten sam we WSZYSTKICH mailach z kwotą.
+ *
+ * Po co: bez tego biuro widzi w wyciągu bankowym samą nazwę firmy i kwotę, i musi dopytywać, za kogo
+ * i za co jest wpłata. Podajemy nazwisko UCZESTNIKA, a nie firmę — firma i tak jest widoczna jako
+ * nadawca przelewu, a przy jednej firmie płacącej za kilka osób to właśnie uczestnika nie da się
+ * z wyciągu odczytać. Nazwę wydarzenia skracamy, żeby całość zmieściła się w limicie tytułu (140 znaków).
+ */
+export function transferTitle(event, reg) {
+	const nazwa = ((event && event.title) || '').trim()
+	const skrocona = nazwa.length > 90 ? `${nazwa.slice(0, 89)}…` : nazwa
+	const osoba = [reg && reg.firstName, reg && reg.lastName].filter(Boolean).join(' ').trim()
+	return osoba ? `${skrocona} — ${osoba}` : skrocona
+}
+
+// Blok „jak zapłacić" wspólny dla maili z kwotą (potwierdzenie zapisu i „zwolniło się miejsce").
+export function paymentHtml(event, reg, { bankAccount } = {}) {
+	const konto = bankAccount || (event && event.bankAccount) || DEFAULT_BANK
+	return `
+		<p><strong>Do zapłaty:</strong> ${formatPln(reg.kwota)}</p>
+		<p><strong>Płatność:</strong> przelew na konto${konto ? `: <strong>${konto}</strong>` : ' (numer konta prześlemy w osobnej wiadomości)'}</p>
+		<p><strong>Tytuł przelewu:</strong> <span style="background:#eef4f9;padding:2px 6px;">${transferTitle(event, reg)}</span><br>
+		Prosimy o dokładnie taki tytuł — dzięki temu od razu rozpoznamy wpłatę i nie będziemy dopytywać.</p>
+	`
+}
+
 // ---------- SZABLONY (czyste) ----------
 
 // #6 Anulowanie zgłoszenia. To NIE jest wezwanie do zapłaty — bez kwoty i konta. Bez linku do spotkania.
@@ -33,11 +59,8 @@ export function buildCancellationEmail(event, reg) {
 // Z terminem na potwierdzenie udziału, żeby miejsce nie blokowało się w nieskończoność.
 export function buildSpotFreedEmail(event, reg, { deadline, bankAccount } = {}) {
 	const platne = Number(reg.kwota) > 0
-	const konto = bankAccount || event.bankAccount || DEFAULT_BANK
 	const platnoscHtml = platne
-		? `<p><strong>Do zapłaty:</strong> ${formatPln(reg.kwota)}</p>
-		   <p><strong>Płatność:</strong> przelew na konto${konto ? `: <strong>${konto}</strong>` : ' (numer konta prześlemy w osobnej wiadomości)'}<br>
-		   W tytule przelewu prosimy podać nazwę wydarzenia i firmę.</p>`
+		? paymentHtml(event, reg, { bankAccount })
 		: `<p><strong>Udział bezpłatny.</strong></p>`
 	return {
 		subject: `Zwolniło się miejsce — ${event.title}`,
