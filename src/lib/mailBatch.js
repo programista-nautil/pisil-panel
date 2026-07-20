@@ -34,9 +34,13 @@ async function sendBulkIdempotent(opcje, deps) {
 
 		await Promise.all(
 			batch.map(async email => {
-				// 1) Znacznik PRZED wysyłką. Jeśli już istnieje — do tej osoby poszło, nie wysyłamy drugi raz.
+				// 1) Znacznik PRZED wysyłką — ale ze statusem „W_TRAKCIE", nie „WYSLANY". Rezerwuje miejsce
+				// (idempotencja: kto ma wiersz, tego pomijamy), a jednocześnie NIE kłamie, że mail dotarł.
+				// Gdyby proces zginął między tym zapisem a wysyłką (restart workera przy deployu, OOM),
+				// wiersz zostaje „W_TRAKCIE" — czyli poza „dostarczonymi", więc widać go jako brakującego
+				// i da się dosłać. Wcześniej domyślny status WYSLANY czynił takiego ducha nieodzyskiwalnym.
 				try {
-					await prisma.mailSendLog.create({ data: { scope, refId, email } })
+					await prisma.mailSendLog.create({ data: { scope, refId, email, status: 'W_TRAKCIE' } })
 				} catch (e) {
 					if (e.code === 'P2002') {
 						skipped++
@@ -49,6 +53,15 @@ async function sendBulkIdempotent(opcje, deps) {
 				try {
 					await sendToOne(buildMessage(email))
 					sent++
+					// Dopiero teraz „dostarczone". Nieudany zapis statusu jest bezpieczny w jedną stronę:
+					// wiersz zostanie „W_TRAKCIE" i trafi do brakujących (ryzyko duplikatu przy dosyłce
+					// zamiast cichego pominięcia — świadomie wolimy powtórkę niż brak wiadomości).
+					await prisma.mailSendLog
+						.update({
+							where: { scope_refId_email: { scope, refId, email } },
+							data: { status: 'WYSLANY', error: null },
+						})
+						.catch(() => {})
 				} catch (sendErr) {
 					const msg = String(sendErr && sendErr.message ? sendErr.message : sendErr)
 					errors.push({ email, error: msg })

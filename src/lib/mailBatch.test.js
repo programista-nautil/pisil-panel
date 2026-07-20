@@ -103,3 +103,51 @@ test('pacing: przerwa MIĘDZY partiami, nie po ostatniej', async () => {
 	expect(d.sleep).toHaveBeenCalledTimes(2)
 	expect(d.sleep).toHaveBeenCalledWith(60000)
 })
+
+// --- Znacznik nie może od razu twierdzić „dostarczone" (inaczej crash w trakcie partii daje ducha,
+// którego nic nie odzyska: liczy się jako wysłany, a mail nigdy nie wyszedł). ---
+
+test('znacznik zakładany PRZED wysyłką ma status W_TRAKCIE, nie WYSLANY', async () => {
+	const prisma = fakePrisma()
+	const sendToOne = jest.fn().mockResolvedValue({})
+
+	await sendBulkIdempotent(
+		{ scope: 'event-bulk', refId: 'm1', recipients: ['a@x.pl'], buildMessage, batchSize: 5 },
+		deps(prisma, sendToOne)
+	)
+
+	const dane = prisma.mailSendLog.create.mock.calls[0][0].data
+	expect(dane.status).toBe('W_TRAKCIE')
+	expect(dane.status).not.toBe('WYSLANY') // dopiero udana wysyłka może to podbić
+})
+
+test('po UDANEJ wysyłce status podbijany na WYSLANY', async () => {
+	const prisma = fakePrisma()
+	const sendToOne = jest.fn().mockResolvedValue({})
+
+	await sendBulkIdempotent(
+		{ scope: 'event-bulk', refId: 'm1', recipients: ['a@x.pl'], buildMessage, batchSize: 5 },
+		deps(prisma, sendToOne)
+	)
+
+	expect(prisma.mailSendLog.update).toHaveBeenCalledWith(
+		expect.objectContaining({
+			where: { scope_refId_email: { scope: 'event-bulk', refId: 'm1', email: 'a@x.pl' } },
+			data: expect.objectContaining({ status: 'WYSLANY' }),
+		})
+	)
+})
+
+test('gdy wysyłka rzuci — status NIE jest podbijany na WYSLANY (zostaje BLAD)', async () => {
+	const prisma = fakePrisma()
+	const sendToOne = jest.fn().mockRejectedValue(new Error('SMTP padł'))
+
+	await sendBulkIdempotent(
+		{ scope: 'event-bulk', refId: 'm1', recipients: ['a@x.pl'], buildMessage, batchSize: 5 },
+		deps(prisma, sendToOne)
+	)
+
+	const statusy = prisma.mailSendLog.update.mock.calls.map(c => c[0].data.status)
+	expect(statusy).toContain('BLAD')
+	expect(statusy).not.toContain('WYSLANY')
+})
