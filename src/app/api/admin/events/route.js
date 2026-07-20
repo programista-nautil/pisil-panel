@@ -19,7 +19,7 @@ async function uniqueSlug(title) {
 // Lista wszystkich wydarzeń (panel admina) — z liczbą zgłoszeń.
 export async function GET() {
 	const session = await auth()
-	if (!session) return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	if (!session || session.user?.role !== 'admin') return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 
 	try {
 		const events = await prisma.event.findMany({
@@ -36,7 +36,7 @@ export async function GET() {
 // Utworzenie nowego wydarzenia.
 export async function POST(request) {
 	const session = await auth()
-	if (!session) return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	if (!session || session.user?.role !== 'admin') return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 
 	try {
 		const b = await request.json()

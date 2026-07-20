@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma'
 // Szczegóły wydarzenia + zgłoszenia (panel admina).
 export async function GET(request, { params }) {
 	const session = await auth()
-	if (!session) return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	if (!session || session.user?.role !== 'admin') return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 
 	try {
 		const { id } = await params
@@ -24,7 +24,7 @@ export async function GET(request, { params }) {
 // Edycja wydarzenia. Slug pozostaje stały (nie łamiemy istniejących URL-i).
 export async function PATCH(request, { params }) {
 	const session = await auth()
-	if (!session) return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	if (!session || session.user?.role !== 'admin') return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 
 	try {
 		const { id } = await params
@@ -69,7 +69,7 @@ export async function PATCH(request, { params }) {
 // Usunięcie wydarzenia. Gdy ma zgłoszenia — blokujemy (steruj na archiwizację).
 export async function DELETE(request, { params }) {
 	const session = await auth()
-	if (!session) return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	if (!session || session.user?.role !== 'admin') return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 
 	try {
 		const { id } = await params

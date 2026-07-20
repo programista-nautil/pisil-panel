@@ -8,7 +8,7 @@ import { normalizeNip } from '@/lib/nip'
 // obecność oraz znacznik „sprawdzone”. Każde pole ustawiane tylko wtedy, gdy przyszło w żądaniu.
 export async function PATCH(request, { params }) {
 	const session = await auth()
-	if (!session) return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	if (!session || session.user?.role !== 'admin') return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 
 	try {
 		const { rid } = await params
@@ -92,7 +92,7 @@ export async function PATCH(request, { params }) {
 // Usunięcie zgłoszenia.
 export async function DELETE(request, { params }) {
 	const session = await auth()
-	if (!session) return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	if (!session || session.user?.role !== 'admin') return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 
 	try {
 		const { rid } = await params

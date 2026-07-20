@@ -9,7 +9,7 @@ import { sendCancellationEmail, sendSpotFreedEmail } from '@/lib/services/eventM
 // wyścigu o to, kto naprawdę jest firstWaitlisted.
 export async function POST(request, { params }) {
 	const session = await auth()
-	if (!session) return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	if (!session || session.user?.role !== 'admin') return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 
 	try {
 		const { id, rid } = await params

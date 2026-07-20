@@ -11,7 +11,7 @@ const KLUCZE = ['INFORMACJE', 'PROGRAM', 'GALERIA', 'RELACJA']
 // dzięki temu na stronie nie pojawia się belka bez treści.
 export async function PUT(request, { params }) {
 	const session = await auth()
-	if (!session) return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	if (!session || session.user?.role !== 'admin') return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 
 	try {
 		const { id, klucz } = await params

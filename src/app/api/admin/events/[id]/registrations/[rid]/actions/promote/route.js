@@ -8,7 +8,7 @@ import { sendSpotFreedEmail } from '@/lib/services/eventMails'
 // z formularza go nie podbierze. Mail „zwolniło się miejsce" (z kwotą, kontem, terminem) TYLKO na życzenie.
 export async function POST(request, { params }) {
 	const session = await auth()
-	if (!session) return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	if (!session || session.user?.role !== 'admin') return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 
 	try {
 		const { id, rid } = await params
