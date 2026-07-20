@@ -53,6 +53,28 @@ export function buildSpotFreedEmail(event, reg, { deadline, bankAccount } = {}) 
 	}
 }
 
+// #7 Potwierdzenie wpłaty. Wpłata już wpłynęła, więc BEZWZGLĘDNIE bez numeru konta i bez kwoty
+// „do zapłaty" — inaczej wyglądałoby jak ponowne wezwanie do zapłaty i ludzie płaciliby drugi raz.
+// Bez linku do spotkania (ten idzie osobno, świadomą wysyłką). Kwotę podajemy tylko informacyjnie.
+export function buildPaymentConfirmedEmail(event, reg) {
+	const platne = Number(reg.kwota) > 0
+	const kwotaHtml = platne
+		? `<p><strong>Odnotowana wpłata:</strong> ${formatPln(reg.kwota)}</p>`
+		: ''
+	return {
+		subject: `Potwierdzenie wpłaty — ${event.title}`,
+		html: `
+			<p>Szanowni Państwo,</p>
+			<p>Potwierdzamy otrzymanie wpłaty za udział w wydarzeniu <strong>${event.title}</strong>
+			(${formatDateTime(event.startAt)}). Państwa udział jest w pełni potwierdzony.</p>
+			${kwotaHtml}
+			<p>Szczegóły organizacyjne prześlemy w osobnej wiadomości przed wydarzeniem.</p>
+			<p>W razie pytań prosimy o kontakt: <a href="mailto:${REPLY_TO}">${REPLY_TO}</a>.</p>
+			${FOOTER}
+		`,
+	}
+}
+
 // ---------- WYSYŁKA + ŚLAD ----------
 
 async function sendAndLog(scope, event, reg, tresc) {
@@ -85,4 +107,8 @@ export function sendCancellationEmail(event, reg) {
 
 export function sendSpotFreedEmail(event, reg, opcje) {
 	return sendAndLog('event:ZWOLNIONE_MIEJSCE', event, reg, buildSpotFreedEmail(event, reg, opcje))
+}
+
+export function sendPaymentConfirmedEmail(event, reg) {
+	return sendAndLog('event:WPLATA', event, reg, buildPaymentConfirmedEmail(event, reg))
 }

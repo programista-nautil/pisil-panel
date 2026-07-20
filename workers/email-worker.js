@@ -4,6 +4,8 @@ const IORedis = require('ioredis')
 // Wymusza „jeden adres w DO" i blokuje wysyłkę poza produkcją bez MAIL_CATCH_ALL/ALLOW_REAL_SMTP.
 const { sendToOne } = require('../src/lib/mailer')
 const { sendBulkIdempotent } = require('../src/lib/mailBatch')
+const { textToHtml } = require('../src/lib/eventMailTemplate')
+const { SCOPE, targetEmails, missingEmails } = require('../src/lib/services/eventBulkMail')
 const { PrismaClient } = require('@prisma/client')
 const path = require('path')
 const fs = require('fs')
@@ -182,6 +184,96 @@ const worker = new Worker(
 				}
 
 				throw error
+			}
+		}
+
+		// Masowa wysyłka maila do zapisanych na wydarzenie (informacje organizacyjne / link / odwołanie).
+		// Treść bierzemy z kampanii EventMailing (ta sama dla wszystkich — WYSIWYG). Idempotencja per
+		// odbiorca w MailSendLog (scope "event-bulk", refId = id kampanii). onlyMissing → dosyłka tylko do
+		// tych, do których jeszcze nie dotarło (brak wiersza WYSLANY); nieudane (BLAD) najpierw czyścimy.
+		if (job.name === 'event-bulk-mail') {
+			const { mailingId, onlyMissing, adminEmail } = job.data
+
+			const mailing = await prisma.eventMailing.findUnique({ where: { id: mailingId } })
+			if (!mailing) {
+				console.log(`ℹ️ [Job ${job.id}] Kampania ${mailingId} nie istnieje (cofnięta?) — nic nie wysyłam.`)
+				return
+			}
+
+			const event = await prisma.event.findUnique({ where: { id: mailing.eventId }, select: { title: true } })
+			const eventTitle = event?.title || '(wydarzenie)'
+			console.log(
+				`🚀 [Job ${job.id}] Wysyłka do zapisanych — „${eventTitle}", filtr ${mailing.recipientFilter}${onlyMissing ? ', tylko brakujący' : ''}.`
+			)
+
+			let recipients
+			if (onlyMissing) {
+				// Nieudane (BLAD) i zawieszone (W_TRAKCIE — proces zginął w trakcie wysyłki) mają wiersz,
+				// więc idempotencja by je pominęła. Kasujemy je, żeby dało się dosłać. Bezpieczne, bo worker
+				// ma concurrency 1: żadna inna wysyłka tej kampanii nie leci w tym momencie.
+				await prisma.mailSendLog.deleteMany({
+					where: { scope: SCOPE, refId: mailingId, status: { in: ['BLAD', 'W_TRAKCIE'] } },
+				})
+				recipients = await missingEmails(prisma, mailing)
+			} else {
+				recipients = await targetEmails(prisma, mailing.eventId, mailing.recipientFilter)
+			}
+
+			const totalRecipients = recipients.length
+			console.log(`📧 Odbiorców: ${totalRecipients}.`)
+			if (totalRecipients === 0) {
+				console.log('⚠️ Brak odbiorców. Kończę zadanie.')
+				return
+			}
+
+			const html = textToHtml(mailing.body)
+			const replyTo = process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL
+
+			const { sent, skipped, errors } = await sendBulkIdempotent(
+				{
+					scope: SCOPE,
+					refId: mailingId,
+					recipients,
+					buildMessage: emailAddress => ({ to: emailAddress, replyTo, subject: mailing.subject, html }),
+					batchSize: 25,
+					delayMs: 60000,
+				},
+				{ prisma, sendToOne, sleep, logger: console }
+			)
+
+			console.log(
+				`✅ Zakończono wysyłkę do zapisanych. Wysłano ${sent}, pominięto ${skipped}, błędów ${errors.length} z ${totalRecipients}.`
+			)
+
+			if (adminEmail) {
+				try {
+					await sendToOne({
+						to: adminEmail,
+						subject: `[RAPORT] Wysyłka do zapisanych: ${eventTitle}`,
+						html: `
+							<h3>Raport z wysyłki do zapisanych${onlyMissing ? ' (ponowienie do brakujących)' : ''}</h3>
+							<p>Wydarzenie: <strong>${eventTitle}</strong></p>
+							<p>Temat wiadomości: <strong>${mailing.subject}</strong></p>
+							<ul>
+								<li>Odbiorców w tej wysyłce (filtr ${mailing.recipientFilter}): <strong>${totalRecipients}</strong></li>
+								<li>Pomyślnie wysłano: <strong>${sent}</strong></li>
+								<li>Pominięto (już wysłane wcześniej): <strong>${skipped}</strong></li>
+								<li>Błędy: <strong>${errors.length}</strong></li>
+							</ul>
+							${
+								errors.length
+									? `<p><strong>Nie dotarło do:</strong></p><ul>${errors
+											.map(b => `<li>${b.email} — ${b.error}</li>`)
+											.join('')}</ul><p>Do tych osób można wysłać ponownie z panelu („ponów do brakujących").</p>`
+									: ''
+							}
+							<p>System PISiL</p>
+						`,
+					})
+					console.log(`📨 Wysłano raport do admina: ${adminEmail}`)
+				} catch (reportError) {
+					console.error('Błąd wysyłania raportu do admina:', reportError)
+				}
 			}
 		}
 	},

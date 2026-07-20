@@ -6,9 +6,13 @@ import {
   ArrowLeftIcon,
   CheckCircleIcon,
   ChatBubbleBottomCenterTextIcon,
+  EnvelopeIcon,
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon as CheckCircleSolid } from "@heroicons/react/24/solid";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
+import BulkMailModal from "./BulkMailModal";
+import PaymentConfirmModal from "./PaymentConfirmModal";
+import { registrationClosedReason } from "@/lib/events";
 
 const TIER_LABEL = {
   CZLONEK_GRATIS: "Członek (gratis)",
@@ -64,6 +68,17 @@ export default function EventRegistrationsView({ event, onBack }) {
   const [deleting, setDeleting] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null); // modal anulowania (z dynamiczną rezerwą)
   const [promoteTarget, setPromoteTarget] = useState(null); // modal przeniesienia z listy rezerwowej
+  const [paymentTarget, setPaymentTarget] = useState(null); // modal odnotowania wpłaty (#7)
+  const [bulkMailOpen, setBulkMailOpen] = useState(false); // ekran masowej wysyłki do zapisanych
+  const [bulkMailTemplate, setBulkMailTemplate] = useState("INFO"); // z jakim rodzajem otworzyć okno
+  const [lastMailing, setLastMailing] = useState(null); // podsumowanie ostatniej kampanii (kolumna + banner)
+  const [sentTemplates, setSentTemplates] = useState([]); // rodzaje wiadomości już wysłane dla wydarzenia
+  const [resendConfirm, setResendConfirm] = useState(false); // potwierdzenie „ponów do brakujących"
+
+  const openBulkMail = (kind = "INFO") => {
+    setBulkMailTemplate(kind);
+    setBulkMailOpen(true);
+  };
 
   useEffect(() => {
     fetchRegistrations();
@@ -75,11 +90,76 @@ export default function EventRegistrationsView({ event, onBack }) {
     try {
       const res = await fetch(`/api/admin/events/${event.id}/registrations`);
       if (!res.ok) throw new Error("Błąd ładowania zgłoszeń");
-      setRegistrations(await res.json());
+      const data = await res.json();
+      setRegistrations(data.registrations || []);
+      setLastMailing(data.lastMailing || null);
+      setSentTemplates(data.sentTemplates || []);
     } catch (error) {
       toast.error(error.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Wspólna obsługa zakolejkowanej wysyłki (masowej i ponowienia): toast z 10-sekundowym „Cofnij"
+  // (usuwa opóźnione zadanie z kolejki), a po oknie undo odświeżenie statusów w tabeli.
+  const enqueuedWithUndo = ({ jobId, mailingId, count, undoMs = 10000 }) => {
+    toast(
+      (t) => (
+        <span className="flex items-center gap-3">
+          <span>Wysyłam do {count} os.…</span>
+          <button
+            onClick={async () => {
+              // UWAGA: toasta z „Cofnij" zamykamy DOPIERO po udanej odpowiedzi. Gdy żądanie padnie
+              // (wygasła sesja, błąd serwera), przycisk musi zostać — zadanie wciąż czeka w kolejce
+              // i da się je cofnąć. Inaczej pokazywalibyśmy „za późno", choć wcale nie było za późno.
+              try {
+                const res = await fetch(`/api/admin/events/${event.id}/actions/cancel-bulk`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ jobId, mailingId }),
+                });
+                const d = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                  toast.error(d.message || "Nie udało się cofnąć — spróbuj jeszcze raz.");
+                  return;
+                }
+                toast.dismiss(t.id);
+                toast[d.cancelled ? "success" : "error"](
+                  d.cancelled ? "Cofnięto — wiadomość nie zostanie wysłana." : d.reason || "Za późno — wysyłka już ruszyła."
+                );
+                fetchRegistrations();
+              } catch {
+                toast.error("Nie udało się cofnąć — spróbuj jeszcze raz.");
+              }
+            }}
+            className="font-medium text-[#005698] underline whitespace-nowrap"
+          >
+            Cofnij
+          </button>
+        </span>
+      ),
+      { duration: undoMs }
+    );
+    // Po oknie „Cofnij" (+ chwila na przetworzenie) odśwież statusy wysyłki w tabeli.
+    setTimeout(() => fetchRegistrations(), undoMs + 5000);
+  };
+
+  const handleResendMissing = async () => {
+    if (!lastMailing) return;
+    try {
+      const res = await fetch(`/api/admin/events/${event.id}/actions/resend-bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mailingId: lastMailing.id }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.message || "Nie udało się ponowić wysyłki.");
+      setResendConfirm(false);
+      enqueuedWithUndo({ jobId: d.jobId, mailingId: d.mailingId, count: d.count, undoMs: d.undoMs });
+    } catch (e) {
+      toast.error(e.message);
+      setResendConfirm(false);
     }
   };
 
@@ -137,6 +217,29 @@ export default function EventRegistrationsView({ event, onBack }) {
     setIsAddOpen(false);
   };
 
+  // Podpowiedź #5: zaproponuj poinformowanie listy rezerwowej, ale TYLKO gdy zapisy są definitywnie
+  // zamknięte. Świadomie pomijamy powód „LIMIT" (komplet miejsc) — wtedy ktoś może jeszcze zrezygnować
+  // i miejsce się zwolni, więc „niestety nie udało się" byłoby przedwczesne i nieprawdziwe.
+  const zapisyZamkniete = useMemo(() => {
+    const powod = registrationClosedReason(event, summary.potwierdzone);
+    if (powod === "DEADLINE") return true;
+    if (powod === "STATUS") return event.status === "CLOSED" || event.status === "ARCHIVED";
+    return false;
+  }, [event, summary.potwierdzone]);
+
+  const podpowiedzRezerwowa =
+    zapisyZamkniete && summary.rezerwowa > 0 && !sentTemplates.includes("WAITLIST_REJECTED");
+
+  // Podpowiedź #10: wydarzenie tuż-tuż, a przypomnienie jeszcze nie poszło. Okno 48 h (nie 24 h),
+  // żeby podpowiedź zdążyła się pokazać, nawet gdy panel otwiera się dzień wcześniej. Nie pokazujemy
+  // jej dla szkiców i archiwów ani po starcie wydarzenia — wtedy przypominanie nie ma już sensu.
+  const podpowiedzPrzypomnienie = useMemo(() => {
+    if (!event.startAt || event.status === "DRAFT" || event.status === "ARCHIVED") return false;
+    const doStartu = new Date(event.startAt).getTime() - Date.now();
+    if (doStartu <= 0 || doStartu > 48 * 60 * 60 * 1000) return false;
+    return summary.potwierdzone > 0 && !sentTemplates.includes("REMINDER");
+  }, [event.startAt, event.status, summary.potwierdzone, sentTemplates]);
+
   // Pierwsza osoba z listy rezerwowej = najstarsze zgłoszenie (tak samo liczy serwer).
   const firstWaitlisted = useMemo(() => {
     return registrations
@@ -147,6 +250,18 @@ export default function EventRegistrationsView({ event, onBack }) {
   // Zmiana statusu w tabeli. Dwa przejścia niosą maila i wymagają decyzji, więc otwierają modal
   // zamiast zapisywać po cichu: ANULOWANA (+ ewentualne przeniesienie rezerwowego) oraz
   // LISTA_REZERWOWA → POTWIERDZONA (email „zwolniło się miejsce"). Reszta zapisuje się od razu.
+  // Zmiana płatności w tabeli. Przejście na OPŁACONE może wysłać potwierdzenie, więc otwiera modal
+  // zamiast zapisywać po cichu (zasada: żaden mail bez świadomej decyzji). Pozostałe przejścia
+  // — w tym cofnięcie wpłaty — zapisują się od razu, bo nic nie wysyłają.
+  const handlePaymentChange = (reg, nowy) => {
+    if (nowy === reg.statusPlatnosci) return;
+    if (nowy === "OPLACONE") {
+      setPaymentTarget(reg);
+    } else {
+      patchReg(reg, { statusPlatnosci: nowy });
+    }
+  };
+
   const handleStatusChange = (reg, nowy) => {
     if (nowy === reg.statusRejestracji) return;
     if (nowy === "ANULOWANA") {
@@ -180,12 +295,21 @@ export default function EventRegistrationsView({ event, onBack }) {
             <p className="text-sm text-gray-500">Zgłoszenia na wydarzenie</p>
           </div>
         </div>
-        <button
-          onClick={() => setIsAddOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#005698] text-white font-medium rounded-md hover:bg-[#005698]/90 transition-colors shadow-sm flex-shrink-0"
-        >
-          + Dopisz uczestnika
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => openBulkMail("INFO")}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white text-[#005698] font-medium rounded-md border border-[#005698]/40 hover:bg-[#005698]/5 transition-colors shadow-sm"
+          >
+            <EnvelopeIcon className="h-5 w-5" />
+            Wyślij do zapisanych
+          </button>
+          <button
+            onClick={() => setIsAddOpen(true)}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#005698] text-white font-medium rounded-md hover:bg-[#005698]/90 transition-colors shadow-sm"
+          >
+            + Dopisz uczestnika
+          </button>
+        </div>
       </div>
 
       {/* Podsumowanie */}
@@ -197,6 +321,60 @@ export default function EventRegistrationsView({ event, onBack }) {
         <StatBox label="Do sprawdzenia" value={summary.doSprawdzenia} przygaszony={summary.doSprawdzenia === 0} />
       </div>
 
+      {/* Podpowiedź #10 — wydarzenie tuż-tuż, przypomnienie jeszcze nie poszło */}
+      {podpowiedzPrzypomnienie && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-md border border-[#005698]/20 bg-[#005698]/5 p-3">
+          <div className="text-sm text-gray-700">
+            <span className="font-medium text-[#005698]">Wydarzenie już wkrótce</span> (
+            {new Date(event.startAt).toLocaleString("pl-PL", { dateStyle: "long", timeStyle: "short" })}) — wysłać
+            przypomnienie do {summary.potwierdzone} os.?
+          </div>
+          <button
+            onClick={() => openBulkMail("REMINDER")}
+            className="px-3 py-1.5 text-sm font-medium text-white bg-[#005698] rounded-md hover:bg-[#005698]/90 whitespace-nowrap flex-shrink-0"
+          >
+            Wyślij przypomnienie ({summary.potwierdzone})
+          </button>
+        </div>
+      )}
+
+      {/* Podpowiedź #5 — zapisy zamknięte, a lista rezerwowa wciąż czeka na informację */}
+      {podpowiedzRezerwowa && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-md border border-[#005698]/20 bg-[#005698]/5 p-3">
+          <div className="text-sm text-gray-700">
+            <span className="font-medium text-[#005698]">Zapisy zamknięte.</span> Na liście rezerwowej czeka{" "}
+            {summary.rezerwowa} {summary.rezerwowa === 1 ? "osoba" : "os."} — poinformować, że nie udało się?
+          </div>
+          <button
+            onClick={() => openBulkMail("WAITLIST_REJECTED")}
+            className="px-3 py-1.5 text-sm font-medium text-white bg-[#005698] rounded-md hover:bg-[#005698]/90 whitespace-nowrap flex-shrink-0"
+          >
+            Poinformuj listę rezerwową ({summary.rezerwowa})
+          </button>
+        </div>
+      )}
+
+      {/* Ostatnia masowa wysyłka — podsumowanie + „ponów do brakujących" (w barwach marki) */}
+      {lastMailing && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-md border border-[#005698]/20 bg-[#005698]/5 p-3">
+          <div className="text-sm text-gray-700 min-w-0">
+            <span className="font-medium text-[#005698]">Ostatnia wysyłka:</span>{" "}
+            „{lastMailing.subject}" ({formatDzien(lastMailing.createdAt)}) — dotarła do {lastMailing.sent} z{" "}
+            {lastMailing.targetCount}
+            {lastMailing.failed > 0 ? `, błędy: ${lastMailing.failed}` : ""}
+            {lastMailing.missingCount > 0 ? `, brakuje: ${lastMailing.missingCount}` : ""}.
+          </div>
+          {lastMailing.missingCount > 0 && (
+            <button
+              onClick={() => setResendConfirm(true)}
+              className="px-3 py-1.5 text-sm font-medium text-white bg-[#005698] rounded-md hover:bg-[#005698]/90 whitespace-nowrap flex-shrink-0"
+            >
+              Wyślij ponownie do brakujących ({lastMailing.missingCount})
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Tabela */}
       {isLoading ? (
         <p className="text-center text-gray-500 py-8">Ładowanie zgłoszeń…</p>
@@ -207,7 +385,7 @@ export default function EventRegistrationsView({ event, onBack }) {
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {["", "Uczestnik", "Firma / NIP", "Poziom", "Kwota", "Płatność", "Rejestracja", ""].map(
+                {["", "Uczestnik", "Firma / NIP", "Poziom", "Kwota", "Płatność", "Rejestracja", ...(lastMailing ? ["Wysyłka"] : []), ""].map(
                   (h, i) => (
                     <th
                       key={i}
@@ -301,7 +479,7 @@ export default function EventRegistrationsView({ event, onBack }) {
                     <td className="px-3 py-2">
                       <select
                         value={r.statusPlatnosci}
-                        onChange={(e) => patchReg(r, { statusPlatnosci: e.target.value })}
+                        onChange={(e) => handlePaymentChange(r, e.target.value)}
                         className={selectCls}
                       >
                         {PLATNOSC_OPTS.map(([v, l]) => (
@@ -325,6 +503,12 @@ export default function EventRegistrationsView({ event, onBack }) {
                         ))}
                       </select>
                     </td>
+
+                    {lastMailing && (
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <MailStatusChip status={r.mailStatus} />
+                      </td>
+                    )}
 
                     <td className="px-3 py-2 text-right whitespace-nowrap">
                       <button
@@ -393,6 +577,43 @@ export default function EventRegistrationsView({ event, onBack }) {
         />
       )}
 
+      {paymentTarget && (
+        <PaymentConfirmModal
+          eventId={event.id}
+          reg={paymentTarget}
+          onClose={() => setPaymentTarget(null)}
+          onDone={() => {
+            setPaymentTarget(null);
+            fetchRegistrations();
+          }}
+        />
+      )}
+
+      {bulkMailOpen && (
+        <BulkMailModal
+          event={event}
+          registrations={registrations}
+          onClose={() => setBulkMailOpen(false)}
+          onEnqueued={enqueuedWithUndo}
+          initialTemplate={bulkMailTemplate}
+        />
+      )}
+
+      <DeleteConfirmationModal
+        isOpen={resendConfirm}
+        onClose={() => setResendConfirm(false)}
+        onConfirm={handleResendMissing}
+        variant="brand"
+        title="Wyślij ponownie do brakujących"
+        message={
+          lastMailing
+            ? `Wiadomość „${lastMailing.subject}" zostanie ponownie wysłana do ${lastMailing.missingCount} os., do których jeszcze nie dotarła (bez ruszania tych, które już dostały). Treść bez zmian.`
+            : ""
+        }
+        confirmButtonText={lastMailing ? `Wyślij do ${lastMailing.missingCount} os.` : "Wyślij"}
+        busyText="Kolejkuję…"
+      />
+
       <DeleteConfirmationModal
         isOpen={!!deleting}
         onClose={() => setDeleting(null)}
@@ -407,6 +628,32 @@ export default function EventRegistrationsView({ event, onBack }) {
       />
     </div>
   );
+}
+
+// Status ostatniej masowej wysyłki dla danego uczestnika. Wysłano = barwa marki; błąd = czerwień
+// (semantyka), bo to sygnał „coś nie dotarło"; brak = szara kreska (nie był adresatem albo nie poszło).
+function MailStatusChip({ status }) {
+  if (status === "WYSLANY")
+    return (
+      <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-[#005698]/10 text-[#005698]">
+        Wysłano
+      </span>
+    );
+  if (status === "BLAD")
+    return (
+      <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-red-50 text-red-700 ring-1 ring-red-200">
+        Błąd
+      </span>
+    );
+  // Wysyłka zaczęta, ale niepotwierdzona (np. worker zginął w trakcie). NIE twierdzimy, że dotarła —
+  // taka osoba liczy się jako brakująca i obejmie ją „ponów do brakujących".
+  if (status === "W_TRAKCIE")
+    return (
+      <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 ring-1 ring-gray-200">
+        W trakcie
+      </span>
+    );
+  return <span className="text-xs text-gray-300">—</span>;
 }
 
 function StatBox({ label, value, przygaszony = false }) {

@@ -3,19 +3,78 @@ import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { normalizeNip } from '@/lib/nip'
 import { computeRegistration } from '@/lib/services/eventPricing'
+import { SCOPE, normalizeEmail, targetEmails } from '@/lib/services/eventBulkMail'
 
-// Lista zgłoszeń danego wydarzenia.
+// Status ostatniej masowej wysyłki dla wydarzenia: mapa adres→status (do kolumny w tabeli) + podsumowanie
+// (do bannera „ponów do brakujących"). Null, gdy nic jeszcze nie wysłano.
+async function lastMailingInfo(id) {
+	const mailing = await prisma.eventMailing.findFirst({
+		where: { eventId: id },
+		orderBy: { createdAt: 'desc' },
+	})
+	if (!mailing) return { statusByEmail: {}, summary: null }
+
+	const logs = await prisma.mailSendLog.findMany({
+		where: { scope: SCOPE, refId: mailing.id },
+		select: { email: true, status: true },
+	})
+	const statusByEmail = {}
+	const delivered = new Set()
+	for (const l of logs) {
+		statusByEmail[l.email] = l.status
+		if (l.status === 'WYSLANY') delivered.add(l.email)
+	}
+
+	// WSZYSTKIE liczniki liczymy względem AKTUALNEGO zbioru odbiorców, nie względem historii logu.
+	// Inaczej po anulowaniu kilku zgłoszeń banner pokazywał „dotarła do 10 z 7" (dostarczone brane
+	// z logu, adresaci liczeni na żywo). Teraz zawsze zachodzi: sent + failed + reszta = targetCount.
+	const targets = await targetEmails(prisma, id, mailing.recipientFilter)
+	const sent = targets.filter(e => delivered.has(e)).length
+	const failed = targets.filter(e => statusByEmail[e] === 'BLAD').length
+
+	return {
+		statusByEmail,
+		summary: {
+			id: mailing.id,
+			subject: mailing.subject,
+			createdAt: mailing.createdAt,
+			recipientFilter: mailing.recipientFilter,
+			sent,
+			failed,
+			targetCount: targets.length,
+			missingCount: targets.length - sent,
+		},
+	}
+}
+
+// Lista zgłoszeń danego wydarzenia + status ostatniej masowej wysyłki (kolumna „Wysyłka").
 export async function GET(request, { params }) {
 	const session = await auth()
-	if (!session) return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	if (!session || session.user?.role !== 'admin') return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 
 	try {
 		const { id } = await params
-		const registrations = await prisma.eventRegistration.findMany({
-			where: { eventId: id },
-			orderBy: { createdAt: 'asc' },
-		})
-		return NextResponse.json(registrations, { status: 200 })
+		const [rows, mailing, kampanie] = await Promise.all([
+			prisma.eventRegistration.findMany({ where: { eventId: id }, orderBy: { createdAt: 'asc' } }),
+			lastMailingInfo(id),
+			// Rodzaje wiadomości, które dla tego wydarzenia już wysłano — panel na tej podstawie przestaje
+			// podpowiadać akcję, która została wykonana (np. „poinformuj listę rezerwową").
+			prisma.eventMailing.findMany({ where: { eventId: id }, select: { template: true }, distinct: ['template'] }),
+		])
+
+		const registrations = rows.map(r => ({
+			...r,
+			mailStatus: mailing.statusByEmail[normalizeEmail(r.email)] || null,
+		}))
+
+		return NextResponse.json(
+			{
+				registrations,
+				lastMailing: mailing.summary,
+				sentTemplates: kampanie.map(k => k.template).filter(Boolean),
+			},
+			{ status: 200 }
+		)
 	} catch (error) {
 		console.error('Błąd pobierania zgłoszeń:', error)
 		return NextResponse.json({ message: 'Wystąpił błąd serwera' }, { status: 500 })
@@ -26,7 +85,7 @@ export async function GET(request, { params }) {
 // ale admin może nadpisać tier/kwotę/statusy.
 export async function POST(request, { params }) {
 	const session = await auth()
-	if (!session) return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
+	if (!session || session.user?.role !== 'admin') return NextResponse.json({ message: 'Brak autoryzacji' }, { status: 401 })
 
 	try {
 		const { id } = await params

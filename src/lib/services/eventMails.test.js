@@ -54,3 +54,27 @@ describe('#4 mail „zwolniło się miejsce"', () => {
 		expect(html).not.toContain(event.bankAccount)
 	})
 })
+
+describe('#7 mail potwierdzenia wpłaty', () => {
+	const { buildPaymentConfirmedEmail } = require('./eventMails')
+
+	it('potwierdza wpłatę i podaje kwotę informacyjnie (pozytyw), ale NIE zawiera konta ani linku (negatyw)', () => {
+		const { subject, html } = buildPaymentConfirmedEmail(event, { email: 'jan@firma.pl', kwota: 500 })
+		const t = `${subject} ${html}`
+
+		expect(t).toContain(event.title) // pozytyw: treść powstała
+		expect(t).toMatch(/potwierdzamy otrzymanie wpłaty/i) // pozytyw: mówi o co chodzi
+		expect(t).toMatch(WZORZEC_KWOTY) // pozytyw: kwota informacyjnie
+
+		// Wpłata JUŻ wpłynęła — numer konta zrobiłby z tego ponowne wezwanie do zapłaty.
+		expect(t).not.toMatch(WZORZEC_KONTA)
+		expect(t).not.toMatch(/do zapłaty|prosimy o wpłat|przelew na konto/i)
+		expect(t).not.toContain(LINK) // link idzie osobną, świadomą wysyłką
+	})
+
+	it('kwota 0 zł: potwierdza udział, ale nie pokazuje kwoty', () => {
+		const { html } = buildPaymentConfirmedEmail(event, { email: 'jan@firma.pl', kwota: 0 })
+		expect(html).toMatch(/potwierdzamy otrzymanie wpłaty/i) // pozytyw
+		expect(html).not.toMatch(WZORZEC_KWOTY)
+	})
+})

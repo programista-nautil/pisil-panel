@@ -342,6 +342,29 @@ model Event {
 
   registrations EventRegistration[]
   sections      EventSection[]
+  mailings      EventMailing[]
+}
+
+// Jedna kampania masowej wysyłki do zapisanych (informacje organizacyjne, link do spotkania, odwołanie).
+// Przechowuje TREŚĆ wysłaną do wszystkich — dzięki temu „wyślij ponownie do brakujących" powtarza
+// dokładnie tę samą wiadomość, a nie każe jej wpisywać od nowa. Ślad „kto dostał" trzyma MailSendLog
+// (scope="event-bulk", refId = id tej kampanii). Świadoma druga wysyłka = NOWA kampania (nowy wiersz).
+model EventMailing {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+
+  subject         String
+  body            String @db.Text
+  recipientFilter String // CONFIRMED | PAID | WAITLIST | CONFIRMED_AND_WAITLIST — komu poszła (do liczenia „brakujących")
+  // Rodzaj wiadomości: INFO | LINK | CHANGE | WAITLIST_REJECTED. Treść i tak jest edytowalna, ale rodzaj
+  // pozwala panelowi wiedzieć, co już wysłano — m.in. nie podpowiadać „poinformuj listę rezerwową",
+  // gdy ta wiadomość poszła. Nullable ze względu na kampanie sprzed wprowadzenia pola.
+  template        String?
+
+  @@index([eventId])
 }
 
 // Jeden rozwijany blok na stronie wydarzenia. Każdy może mieć tekst, plik i/lub link — dowolna
