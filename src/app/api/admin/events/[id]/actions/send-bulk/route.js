@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { emailQueue } from '@/lib/queue'
+import { enqueue } from '@/lib/queue'
 import {
 	targetEmails,
 	isValidFilter,
@@ -107,7 +107,7 @@ export async function POST(request, { params }) {
 		// która nigdy nie ruszyła, i proponował „ponów do brakujących" dla wszystkich.
 		let job
 		try {
-			job = await emailQueue.add(
+			job = await enqueue(
 				'event-bulk-mail',
 				{ mailingId: mailing.id, onlyMissing: false, adminEmail: ADMIN_EVENTS_EMAIL },
 				{ delay: UNDO_DELAY_MS, attempts: 3, backoff: { type: 'exponential', delay: 5000 } }

@@ -9,10 +9,10 @@ jest.mock('@/lib/prisma', () => ({
 		eventMailing: { create: jest.fn(), delete: jest.fn() },
 	},
 }))
-jest.mock('@/lib/queue', () => ({ emailQueue: { add: jest.fn().mockResolvedValue({ id: 'job1' }) } }))
+jest.mock('@/lib/queue', () => ({ enqueue: jest.fn().mockResolvedValue({ id: 'job1' }) }))
 
 import prisma from '@/lib/prisma'
-import { emailQueue } from '@/lib/queue'
+import { enqueue } from '@/lib/queue'
 import { POST } from './route'
 
 const req = body => ({ json: jest.fn().mockResolvedValue(body) })
@@ -40,7 +40,7 @@ test('INFO/CONFIRMED: tworzy kampanię z rodzajem, kolejkuje z opóźnieniem (un
 			data: expect.objectContaining({ eventId: 'ev1', recipientFilter: 'CONFIRMED', template: 'INFO' }),
 		})
 	)
-	const [name, payload, opts] = emailQueue.add.mock.calls[0]
+	const [name, payload, opts] = enqueue.mock.calls[0]
 	expect(name).toBe('event-bulk-mail')
 	expect(payload).toEqual(expect.objectContaining({ mailingId: 'm1', onlyMissing: false }))
 	expect(opts).toEqual(expect.objectContaining({ delay: 10000, attempts: 3 }))
@@ -72,26 +72,26 @@ test('NIEDOZWOLONA para: „nie udało się" do POTWIERDZONYCH → 400, nic nie 
 	const res = await POST(zadanie({ template: 'WAITLIST_REJECTED', recipientFilter: 'CONFIRMED' }), ctx)
 	expect(res.status).toBe(400)
 	expect(prisma.eventMailing.create).not.toHaveBeenCalled()
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('NIEDOZWOLONA para: informacje organizacyjne do LISTY REZERWOWEJ → 400', async () => {
 	const res = await POST(zadanie({ template: 'INFO', recipientFilter: 'WAITLIST' }), ctx)
 	expect(res.status).toBe(400)
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('nieznana grupa odbiorców → 400 (BEZ cichego podstawienia potwierdzonych)', async () => {
 	const res = await POST(zadanie({ recipientFilter: 'WSZYSCY' }), ctx)
 	expect(res.status).toBe(400)
 	expect(prisma.eventRegistration.findMany).not.toHaveBeenCalled()
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('nieznany rodzaj wiadomości → 400', async () => {
 	const res = await POST(zadanie({ template: 'CZEGOS_TAKIEGO_NIE_MA' }), ctx)
 	expect(res.status).toBe(400)
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 // --- Twarda walidacja linku (#8) ---
@@ -101,20 +101,20 @@ test('LINK bez zapisanego onlineUrl → 400, nic nie wychodzi', async () => {
 	const res = await POST(zadanie({ template: 'LINK' }), ctx)
 	expect(res.status).toBe(400)
 	expect(prisma.eventMailing.create).not.toHaveBeenCalled()
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('LINK z samymi spacjami w onlineUrl → też 400 (puste znaczy puste)', async () => {
 	prisma.event.findUnique.mockResolvedValue({ id: 'ev1', onlineUrl: '   ' })
 	const res = await POST(zadanie({ template: 'LINK' }), ctx)
 	expect(res.status).toBe(400)
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('LINK z poprawnym onlineUrl → przechodzi i kolejkuje', async () => {
 	const res = await POST(zadanie({ template: 'LINK' }), ctx)
 	expect(res.status).toBe(202)
-	expect(emailQueue.add).toHaveBeenCalledTimes(1)
+	expect(enqueue).toHaveBeenCalledTimes(1)
 	expect(prisma.eventMailing.create.mock.calls[0][0].data.template).toBe('LINK')
 })
 
@@ -136,7 +136,7 @@ test('pusty temat → 400, bez kampanii i bez kolejki', async () => {
 	const res = await POST(zadanie({ subject: '  ' }), ctx)
 	expect(res.status).toBe(400)
 	expect(prisma.eventMailing.create).not.toHaveBeenCalled()
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('zero odbiorców → 409, bez kampanii i bez kolejki', async () => {
@@ -144,18 +144,18 @@ test('zero odbiorców → 409, bez kampanii i bez kolejki', async () => {
 	const res = await POST(zadanie(), ctx)
 	expect(res.status).toBe(409)
 	expect(prisma.eventMailing.create).not.toHaveBeenCalled()
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('nieistniejące wydarzenie → 404', async () => {
 	prisma.event.findUnique.mockResolvedValue(null)
 	const res = await POST(zadanie(), ctx)
 	expect(res.status).toBe(404)
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('gdy kolejkowanie padnie → kampania jest kasowana (bez sieroty w bazie)', async () => {
-	emailQueue.add.mockRejectedValueOnce(new Error('Redis padł'))
+	enqueue.mockRejectedValueOnce(new Error('Redis padł'))
 	const res = await POST(zadanie(), ctx)
 	expect(res.status).toBe(500)
 	expect(prisma.eventMailing.delete).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'm1' } }))
@@ -166,7 +166,7 @@ test('brak sesji → 401', async () => {
 	auth.mockResolvedValueOnce(null)
 	const res = await POST(zadanie(), ctx)
 	expect(res.status).toBe(401)
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('zalogowany CZŁONEK (nie admin) → 401, bez kampanii i bez kolejki', async () => {
@@ -175,7 +175,7 @@ test('zalogowany CZŁONEK (nie admin) → 401, bez kampanii i bez kolejki', asyn
 	const res = await POST(zadanie(), ctx)
 	expect(res.status).toBe(401)
 	expect(prisma.eventMailing.create).not.toHaveBeenCalled()
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 // --- Zalaczniki: sciezki przychodza z przegladarki, plik idzie do WSZYSTKICH uczestnikow ---
@@ -199,13 +199,13 @@ test.each([
 	const res = await POST(zadanie({ attachments: [{ path, filename: 'x.pdf', size: 10 }] }), ctx)
 	expect(res.status).toBe(400)
 	expect(prisma.eventMailing.create).not.toHaveBeenCalled()
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('zalaczniki ponad limit → 400', async () => {
 	const res = await POST(zadanie({ attachments: [{ path: OK_PATH, filename: 'duzy.pdf', size: 99 * 1024 * 1024 }] }), ctx)
 	expect(res.status).toBe(400)
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('brak zalacznikow → kampania powstaje z pusta lista (nie wywala sie)', async () => {

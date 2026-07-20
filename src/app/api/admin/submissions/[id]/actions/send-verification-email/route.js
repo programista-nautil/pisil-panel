@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { emailQueue } from '@/lib/queue'
+import { enqueue } from '@/lib/queue'
 import { sendToOne } from '@/lib/mailer'
 import { FormType } from '@prisma/client'
 import { generateCommunicationDoc } from '@/lib/services/communicationService' // Import serwisu
@@ -119,7 +119,7 @@ export async function POST(request, { params }) {
 		await sendToOne(mailOptions)
 
 		if (shouldSendEmails) {
-			await emailQueue.add(
+			await enqueue(
 				'notify-members',
 				{
 					submissionId: submission.id,

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { emailQueue } from '@/lib/queue'
+import { enqueue } from '@/lib/queue'
 import { missingEmails } from '@/lib/services/eventBulkMail'
 
 const ADMIN_EVENTS_EMAIL = process.env.DEKLARACJE_EMAIL || process.env.ADMIN_EMAIL || 'programista@nautil.pl'
@@ -29,7 +29,7 @@ export async function POST(request, { params }) {
 			return NextResponse.json({ message: 'Wszyscy odbiorcy już dostali tę wiadomość.' }, { status: 409 })
 		}
 
-		const job = await emailQueue.add(
+		const job = await enqueue(
 			'event-bulk-mail',
 			{ mailingId, onlyMissing: true, adminEmail: ADMIN_EVENTS_EMAIL },
 			{ delay: UNDO_DELAY_MS, attempts: 3, backoff: { type: 'exponential', delay: 5000 } }

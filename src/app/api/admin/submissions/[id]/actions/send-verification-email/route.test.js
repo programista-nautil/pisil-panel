@@ -13,7 +13,7 @@ jest.mock('@/lib/prisma', () => ({
 		communication: { aggregate: jest.fn() },
 	},
 }))
-jest.mock('@/lib/queue', () => ({ emailQueue: { add: jest.fn() } }))
+jest.mock('@/lib/queue', () => ({ enqueue: jest.fn() }))
 jest.mock('@/lib/mailer', () => ({ sendToOne: jest.fn().mockResolvedValue({}) }))
 jest.mock('@/lib/services/communicationService', () => ({
 	generateCommunicationDoc: jest.fn().mockResolvedValue({ buffer: Buffer.from('x'), fileName: 'Komunikat.docx' }),
@@ -21,7 +21,7 @@ jest.mock('@/lib/services/communicationService', () => ({
 jest.mock('@/lib/gcs', () => ({ uploadFileToGCS: jest.fn().mockResolvedValue('communications/x.docx') }))
 
 import prisma from '@/lib/prisma'
-import { emailQueue } from '@/lib/queue'
+import { enqueue } from '@/lib/queue'
 import { sendToOne } from '@/lib/mailer'
 import { generateCommunicationDoc } from '@/lib/services/communicationService'
 import { POST } from './route'
@@ -58,7 +58,7 @@ describe('POST send-verification-email — wyjątek stowarzyszonego', () => {
 			expect.objectContaining({ data: expect.objectContaining({ communicationNumber: 1 }) }),
 		)
 		expect(generateCommunicationDoc).not.toHaveBeenCalled()
-		expect(emailQueue.add).not.toHaveBeenCalled()
+		expect(enqueue).not.toHaveBeenCalled()
 		expect(sendToOne).toHaveBeenCalledTimes(1) // tylko kandydat
 	})
 
@@ -73,7 +73,7 @@ describe('POST send-verification-email — wyjątek stowarzyszonego', () => {
 			expect.objectContaining({ data: expect.objectContaining({ communicationNumber: 1 }) }),
 		)
 		expect(generateCommunicationDoc).not.toHaveBeenCalled()
-		expect(emailQueue.add).not.toHaveBeenCalled()
+		expect(enqueue).not.toHaveBeenCalled()
 		expect(sendToOne).not.toHaveBeenCalled()
 	})
 
@@ -93,6 +93,6 @@ describe('POST send-verification-email — wyjątek stowarzyszonego', () => {
 
 		expect(res.status).toBe(200)
 		expect(generateCommunicationDoc).toHaveBeenCalled()
-		expect(emailQueue.add).toHaveBeenCalledWith('notify-members', expect.any(Object), expect.any(Object))
+		expect(enqueue).toHaveBeenCalledWith('notify-members', expect.any(Object), expect.any(Object))
 	})
 })

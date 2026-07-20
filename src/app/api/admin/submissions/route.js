@@ -8,7 +8,7 @@ import path from 'path'
 import crypto from 'crypto'
 import { generateCommunicationDoc } from '@/lib/services/communicationService'
 import { processAcceptance } from '@/lib/services/acceptanceService'
-import { emailQueue } from '@/lib/queue'
+import { enqueue } from '@/lib/queue'
 
 export async function GET() {
 	const session = await auth()
@@ -180,7 +180,7 @@ export async function POST(request) {
 					})
 
 					if (shouldSendEmails) {
-						await emailQueue.add(
+						await enqueue(
 							'notify-members',
 							{
 								submissionId: newSubmission.id,

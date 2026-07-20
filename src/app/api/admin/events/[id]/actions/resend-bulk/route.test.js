@@ -9,10 +9,10 @@ jest.mock('@/lib/prisma', () => ({
 		mailSendLog: { findMany: jest.fn() },
 	},
 }))
-jest.mock('@/lib/queue', () => ({ emailQueue: { add: jest.fn().mockResolvedValue({ id: 'job9' }) } }))
+jest.mock('@/lib/queue', () => ({ enqueue: jest.fn().mockResolvedValue({ id: 'job9' }) }))
 
 import prisma from '@/lib/prisma'
-import { emailQueue } from '@/lib/queue'
+import { enqueue } from '@/lib/queue'
 import { POST } from './route'
 
 const req = body => ({ json: jest.fn().mockResolvedValue(body) })
@@ -33,7 +33,7 @@ test('kolejkuje ponowienie tylko do brakujących (onlyMissing=true), licznik = b
 
 	expect(res.status).toBe(202)
 	expect(out).toEqual({ enqueued: true, count: 2, mailingId: 'm1', jobId: 'job9', undoMs: 10000 })
-	const [name, payload, opts] = emailQueue.add.mock.calls[0]
+	const [name, payload, opts] = enqueue.mock.calls[0]
 	expect(name).toBe('event-bulk-mail')
 	expect(payload).toEqual(expect.objectContaining({ mailingId: 'm1', onlyMissing: true }))
 	expect(opts).toEqual(expect.objectContaining({ delay: 10000 }))
@@ -43,27 +43,27 @@ test('wszyscy już dostali → 409, bez kolejki', async () => {
 	prisma.mailSendLog.findMany.mockResolvedValue(rows(['a@x.pl', 'b@x.pl', 'c@x.pl']))
 	const res = await POST(req({ mailingId: 'm1' }), ctx)
 	expect(res.status).toBe(409)
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('kampania nie istnieje → 404', async () => {
 	prisma.eventMailing.findUnique.mockResolvedValue(null)
 	const res = await POST(req({ mailingId: 'nieistnieje' }), ctx)
 	expect(res.status).toBe(404)
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('kampania z innego wydarzenia → 404 (nie wolno ponowić cudzej)', async () => {
 	prisma.eventMailing.findUnique.mockResolvedValue({ id: 'm1', eventId: 'INNY', recipientFilter: 'CONFIRMED' })
 	const res = await POST(req({ mailingId: 'm1' }), ctx)
 	expect(res.status).toBe(404)
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('brak mailingId → 400', async () => {
 	const res = await POST(req({}), ctx)
 	expect(res.status).toBe(400)
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('brak sesji → 401', async () => {
@@ -71,7 +71,7 @@ test('brak sesji → 401', async () => {
 	auth.mockResolvedValueOnce(null)
 	const res = await POST(req({ mailingId: 'm1' }), ctx)
 	expect(res.status).toBe(401)
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
 
 test('zalogowany CZŁONEK (nie admin) → 401, bez kolejki', async () => {
@@ -79,5 +79,5 @@ test('zalogowany CZŁONEK (nie admin) → 401, bez kolejki', async () => {
 	auth.mockResolvedValueOnce({ user: { role: 'member' } })
 	const res = await POST(req({ mailingId: 'm1' }), ctx)
 	expect(res.status).toBe(401)
-	expect(emailQueue.add).not.toHaveBeenCalled()
+	expect(enqueue).not.toHaveBeenCalled()
 })
